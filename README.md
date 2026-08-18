@@ -2,129 +2,176 @@
 
 (BS Express Daily Branch Work Report System)
 
-This repository contains a lightweight, offline-first web application for creating and exporting daily branch work reports that match the company's official A4 report format. The original README had Khmer content and a merge conflict marker; this file has been translated to English and expanded with details about the code and how the project is organized.
-
----
+A lightweight, offline-first single-page web application for creating, previewing, exporting and archiving daily branch work reports that match the company’s official A4 report layout.
 
 ## Key Features
 
-- Official A4-standard report layout (matches company image/template).
-  - Official header: Kingdom of Cambodia text (Khmer header text included in the HTML template).
-  - Company name: BS Express
-  - Report meta table: branch, date, reporter name, position
-  - Two reporting times per day (Opening and Closing), with dedicated sections for Opening Shift, Daily Operations, and Closing Shift
-  - Signatures & official stamp area
-  - Company address in footer
-
-- Smart Form Builder (interactive web form)
-  - Select from branches (25 provinces / major branches)
-  - Quick tags for commonly used phrases
-  - "Load sample data" button to prefill example branch data
-  - Automatic watermarking of uploaded photos with branch name, time, and date (client-side)
-
-- Sharing & Export
-  - Telegram/Messenger friendly text formatting (emoji + header)
-  - Print / Save as PDF: A4-ready layout
-  - Export CSV / Excel
-  - JSON Backup & Restore
-
-- Branch analytics & history
-  - Dashboard showing total reports, active branches, staff present count, and pending issues
-  - Search & filter by branch and date
-
----
+- Official A4-standard document layout (matches company template).
+  - Official header (Kingdom of Cambodia, Khmer typography), company name, meta table (branch / date / reporter / position).
+  - Three sections: Opening Shift, Daily Operation, Closing Shift.
+  - Signatures & official stamp area and footer address.
+- Interactive Smart Form Builder:
+  - Branch selector with a list of provinces/major branches.
+  - Quick tags for repeated phrases.
+  - “Load sample data” to prefill example reports.
+  - Client-side watermarking for uploaded photos (branch name, date, time, verification badge).
+- Sharing & Export:
+  - Telegram / Messenger friendly text format (emoji + headers).
+  - Print / Save as PDF (A4 layout).
+  - Export CSV / Excel that preserves Khmer characters.
+  - JSON backup & restore of all reports stored locally.
+- Branch analytics & history:
+  - Dashboard with total reports, active branches, staff totals, and tracked issues.
+  - Search & filter by branch and date.
 
 ## How to run
 
-There are two simple ways to run the app locally:
+### Option 1 — Node.js (recommended for local testing)
+1. From the repository root:
+   - npm install   (optional if you add server dependencies)
+   - node server.js
+2. Open http://localhost:3000
 
-Option 1: Run with Node.js (recommended for local testing)
+### Option 2 — Static
+- Open `index.html` directly in any modern browser (Chrome, Edge, Firefox, Safari). Most UI flows work, but some local-network convenience (LAN access) is easier when using the Node server.
 
-```bash
-# from repository root
-npm install   # (optional; project is a static app except for server.js)
-node server.js
-```
+## Project structure (important files)
 
-Then open your browser at: http://localhost:3000
+- `index.html`
+  - The single-page UI (Khmer default, English toggle via data-i18n attributes).
+  - 5-step wizard: Branch info → Opening → Operations → Closing → Review & Export.
+  - Live A4 preview that mirrors form data and is used for printing/exporting.
+  - Photo upload inputs for opening & closing sections.
+- `server.js`
+  - Small ES module HTTP server that serves static files from the repository directory.
+  - Prints both localhost and LAN IPv4 addresses at startup.
+- `package.json`
+  - Minimal metadata and start script: `\"start\": \"node server.js\"`.
+- `css/`
+  - `style.css`, `print.css` (A4 print styles and UI).
+- `js/`
+  - `app.js` — main client-side application logic (wizard, UI wiring, event handlers, preview updates).
+  - `export-util.js` — export and sharing helpers (Telegram formatting, CSV export, print).
+  - `storage.js` — localStorage-backed persistence, sample data, user management, import/export JSON.
+  - `watermark.js` — client-side image watermarking using HTML5 Canvas.
+- `assets/`
+  - Logos and images referenced in the A4 template and UI.
+- `manifest.json`
+  - Web app manifest metadata for installability / PWA behavior.
+- `Open-In-Chrome.bat`, `start.bat`, `start.ps1`
+  - Helper scripts for quickly opening or launching the project on Windows.
 
-Option 2: Open the static HTML directly
+## Source file details and responsibilities
 
-Double-click (or open) `index.html` in any modern browser (Chrome / Edge / Firefox / Safari). This works for most UI/testing flows but some features (like file serving from a small Node server or local network access) are easier with Option 1.
+### server.js
+- Purpose: a tiny, dependency-free ES module HTTP server for local testing.
+- Key behavior:
+  - Resolves requested path relative to the repository directory, strips query strings.
+  - Maps file extension → Content-Type using a MIME_TYPES table.
+  - Reads files with `fs.readFile` and returns them with correct Content-Type.
+  - Returns 404 for missing files, 500 for other FS errors.
+  - `getLocalIPs()` enumerates `os.networkInterfaces()` and logs local IPv4 addresses so other devices on the LAN can access the server.
+- Notes:
+  - Uses `type: "module"` in `package.json` so `server.js` is run as an ES module.
+  - Good for local testing; consider path normalization and streaming for production (see Implementation Notes).
 
----
+### index.html
+- Purpose: main SPA markup and A4 printable layout.
+- Key elements:
+  - Authentication gateway (login/register) and a "guest" continue button for demo/testing.
+  - Top navigation with language and theme toggles.
+  - Stepper/form wizard controlling five steps (branch info, opening, operations, closing, review).
+  - Live preview area with A4 document layout (header, three sections, footer, signature block).
+  - Buttons for saving, exporting (Telegram, Print, CSV/Excel), and viewing full A4 document.
+- i18n:
+  - HTML uses `data-i18n` attributes to allow dynamic label switching between Khmer and English.
+- Photo uploads:
+  - `<input type="file">` controls for opening & closing photos; client JS applies watermark and shows preview.
 
-## Project structure and important files
+### js/app.js (main client app)
+- Role (overview):
+  - Orchestrates UI flow: wizard navigation, progress bar, form validation, live preview binding, handling of load-sample, reset, and save actions.
+  - Binds DOM elements, reacts to input changes (updates preview fields), wires up export actions (calls ExportUtil), and delegates storage to Storage.
+  - Handles user session (persisting current user in localStorage via Storage.setCurrentUser / getCurrentUser).
+  - Coordinates photo uploads: reads selected files, calls `WatermarkUtil.addWatermark(file, meta)` to get a watermarked data URL, displays previews, and stores watermarked images in the report object.
+- Large single file, packed with helper functions and UI view manipulations (controls the primary UX).
 
-- index.html
-  - Main single-page application UI. Contains the full Khmer/English UI and the A4 document layout used for print/PDF export and the live preview.
-  - Uses data attributes and JS to populate branch lists, quick tags, live preview values, and trigger export/save operations.
+### js/export-util.js
+- Purpose: central utilities to format & export report data.
+- Main functions:
+  - `formatForTelegram(report, lang)`
+    - Returns a Markdown-like text block suitable for pasting into Telegram / Messenger groups.
+    - Produces Khmer or English output with emojis and labeled sections.
+  - `exportToCsv(reports)`
+    - Converts an array of report objects to CSV.
+    - Uses UTF-8 BOM (`\uFEFF`) so Excel opens Khmer correctly.
+    - Escapes quotes and replaces newlines to keep CSV well-formed.
+    - Triggers a browser download with a timestamped filename.
+  - `printReport()`
+    - Calls `window.print()` to invoke the browser print dialog for A4/PDF export.
+- Implementation notes:
+  - CSV headers include both Khmer field labels and the usual metadata fields (ID, branch, date, reporter, etc.)
+  - The CSV download is generated client-side using Blob and object URLs.
 
-- server.js
-  - Small Node HTTP server (ES module) that serves static files from the repository directory.
-  - Listens on port 3000 by default (PORT environment variable supported) and prints both localhost and local-network (LAN) addresses for easy mobile access.
-  - Basic content-type handling is implemented by the MIME_TYPES table and file extension lookup.
-  - If a file is not found the server returns 404; other file system errors return 500 with the code.
+### js/watermark.js
+- Purpose: apply a consistent, attractive watermark badge onto uploaded photos using the HTML5 Canvas API.
+- `addWatermark(file, meta): Promise<string>`
+  - Reads the image file via FileReader → loads into Image.
+  - Resizes image to a maximum dimension (maxDim = 1200) to bound memory and file size.
+  - Draws the original photo to canvas and overlays a semi-transparent badge in the bottom-right containing:
+    - Branch name (meta.branch or default),
+    - Date and time (meta.date/meta.time or computed),
+    - A short verified text (localized Khmer text plus an icon).
+  - Uses `canvas.toDataURL('image/jpeg', 0.85)` to return a JPEG data URL.
+- Visual styling:
+  - Semi-opaque dark box, left accent stripe (orange), white & colored text; font sizes scale with image width.
+- Notes:
+  - Uses canvas.roundRect and other modern Canvas features (supported in modern browsers).
+  - Returns base64 data URLs which are stored with the report (good for offline/portable reports).
 
-- package.json
-  - Minimal package metadata and a start script: `node server.js`.
+### js/storage.js
+- Purpose: client-side persistence and user/session management using localStorage.
+- Keys used:
+  - `STORAGE_KEY = 'bs_express_daily_reports'` — stores the report array as JSON.
+  - `SETTINGS_KEY = 'bs_express_settings'` — app settings.
+  - `bs_express_users` — local users and authentication demo.
+  - `bs_express_session` — current logged-in session.
+- Main features:
+  - `INITIAL_REPORTS` and `SAMPLE_REPORT`: seeded demo data that matches the official A4 sample image and demonstrates multi-branch data.
+  - `getReports()`, `saveReports(reports)`, `saveReport(report)`, `getReportById(id)`, `deleteReport(id)` — CRUD operations for reports.
+  - `exportAllAsJson()` / `importFromJson(json)` — backup & restore workflow for portability.
+- User management & auth:
+  - `getUsers()`, `saveUsers()`, `findUserByUsername(username)`, `registerUser({...})`, `authenticateUser(username, password)`, `deleteUser(id)`, `updateUserPassword(username, newPassword)`.
+  - Ensures one default `sys_admin` user is present.
+  - `getCurrentUser()` / `setCurrentUser(user)` / `logout()` manage session data in localStorage.
+- Branch list and roles:
+  - `BRANCH_LIST` constant includes many branch names (Khmer), exposed as `window.BRANCH_LIST` for UI to populate selects.
+  - `USER_ROLES` and `INITIAL_USERS` provide role metadata and a sample admin user.
+- Notes:
+  - Storage module seeds demo data if no data is present (convenient for first-run demos).
+  - All persistence is localStorage-only (client-side). Import/export enables moving to another browser or backing up to files.
 
-- css/
-  - CSS stylesheets for the app UI and print styles (A4 layout). Files are referenced from index.html as `css/style.css` and `css/print.css`.
+## Implementation notes & considerations
 
-- js/
-  - JavaScript modules and scripts implementing the interactive behavior: form wizard, preview, file upload watermarking, saving/exporting data, and UI helpers.
+- Path resolution & server safety:
+  - `server.js` works for simple local testing. For production or sharing publicly, add path normalization and guard against path traversal (ensure resolved paths stay inside the repository root).
+  - Consider using streaming (`fs.createReadStream`) to serve large files efficiently and adding cache-control headers for static assets.
+- MIME types:
+  - `server.js` contains a common mapping; consider expanding it (woff2, webp, mp4, etc.) if you add those asset types.
+- SPA routing:
+  - The project is a static SPA; if you add client-side routing, the server should fall back unknown HTML routes to `index.html`.
+- Data persistence:
+  - Current persistence is localStorage + JSON export/import. For shared, multi-device persistence add a small server API and lightweight DB (SQLite or JSON file).
+- Browser support:
+  - The watermark and canvas features require modern browsers; if older browser support is required, add feature detection/fallbacks.
 
-- assets/
-  - Static assets (images, logo, icons) used in the document header and UI.
+## Contributing & repository hygiene
 
-- manifest.json
-  - Web app manifest metadata for installable PWA-style behavior.
+- Add `.gitignore` entries for `node_modules`, build artifacts, OS files.
+- Add `LICENSE` and `CONTRIBUTING.md` for open-source clarity.
+- Add a short `CHANGELOG` and README badges (node version, license).
+- If you add server-side dependencies later, document them and add an npm start script that runs the server via `package.json` (already contains a simple start script).
 
-- Open-In-Chrome.bat / start.bat / start.ps1
-  - Helper scripts for Windows PowerShell / batch environments to open the app in Chrome or start the server.
+## Credits
 
----
-
-## Implementation notes (code-level details)
-
-- server.js details
-  - Uses modern ES modules (package.json contains "type": "module").
-  - Uses the `http` module to create a simple HTTP server and `fs.readFile` to serve files. It resolves the requested path relative to the repository folder and strips query strings.
-  - The server contains a minimal mapping of file extensions to MIME types (MIME_TYPES). If the extension is not known it falls back to `application/octet-stream`.
-  - A helper `getLocalIPs()` enumerates the machine's network interfaces via `os.networkInterfaces()` and prints available IPv4 addresses so other devices on the LAN can reach the server.
-
-- index.html details
-  - Marked up in Khmer by default with translation toggles for English (UI supports both Khmer and English labels via data-i18n attributes).
-  - Contains a 5-step wizard UI: branch info, opening shift, daily operations, closing shift, review & export.
-  - Live A4 preview on the right updates as fields are modified in the form. The A4 layout is split into sections that match the official template.
-  - Photo upload areas (opening & closing) accept multiple images and the client-side JS generates previews and applies a timestamp/branch watermark.
-  - Export actions: Save report (persists to localStorage or JSON export), Telegram-format text modal, Print / Save as PDF using window.print, and CSV/Excel export utilities.
-
-- Client-side storage & export
-  - The app stores reports in browser storage (localStorage) and offers JSON backup & restore for portability.
-  - CSV/Excel export is generated client-side by converting the report objects to CSV and triggering a download.
-
----
-
-## Contributing
-
-If you want to improve the project:
-
-- Fixes, UI improvements, or translations are welcome.
-- If you add Node-side features (e.g. persistent storage, API endpoints), consider adding a simple express server or an API folder and document the endpoints.
-- Please keep A4 layout and Khmer typography intact when changing print styles.
-
----
-
-## Notes and next steps
-
-- This update removed the merge conflict markers and replaced the original Khmer README with an English translation plus technical details about the code and structure.
-- If you'd like, I can further expand this README with:
-  - A dependency list and code excerpts/examples (e.g., server.js annotated snippet)
-  - Development notes for building a production-ready server (Express + SQLite / file DB)
-  - Automated tests or CI workflow (GitHub Actions) for linting and previewing the build
-
----
-
-© 2026 BS Express • Project maintained by vidjeng
+© 2026 BS Express • Maintained by vidjeng
