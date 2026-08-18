@@ -46,7 +46,7 @@ A lightweight, offline-first single-page web application for creating, previewin
   - Small ES module HTTP server that serves static files from the repository directory.
   - Prints both localhost and LAN IPv4 addresses at startup.
 - `package.json`
-  - Minimal metadata and start script: `\"start\": \"node server.js\"`.
+  - Minimal metadata and start script: `"start": "node server.js"`.
 - `css/`
   - `style.css`, `print.css` (A4 print styles and UI).
 - `js/`
