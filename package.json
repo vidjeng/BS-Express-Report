@@ -1,0 +1,9 @@
+{
+  "name": "bs-express-daily-report",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "BS Express Daily Work Report Web Application",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

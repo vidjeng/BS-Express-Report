@@ -1,0 +1,21 @@
+{
+  "name": "BS Express - ប្រព័ន្ធរបាយការណ៍ការងារប្រចាំថ្ងៃ",
+  "short_name": "BS Express",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#0b5ed7",
+  "description": "ប្រព័ន្ធគ្រប់គ្រង និងរបាយការណ៍ការងារប្រចាំថ្ងៃតាមសាខា ក្រុមហ៊ុន ប៊ីអេស អ៊ិចប្រេស",
+  "icons": [
+    {
+      "src": "assets/bs-express-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/bs-express-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

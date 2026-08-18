@@ -1,0 +1,78 @@
+@page {
+  size: A4 portrait;
+  margin: 12mm 15mm 15mm 15mm;
+}
+
+@media print {
+  body {
+    background: transparent !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .navbar,
+  .nav-tabs,
+  .nav-actions,
+  .form-layout-grid > div:first-child,
+  .preview-toolbar,
+  .table-filter-bar,
+  .btn,
+  .modal-overlay,
+  .toast-container,
+  .mobile-fab-container,
+  .no-print {
+    display: none !important;
+  }
+
+  .main-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .tab-content {
+    display: block !important;
+  }
+
+  #form-tab,
+  #history-tab,
+  #settings-tab {
+    display: none !important;
+  }
+
+  #document-tab {
+    display: block !important;
+  }
+
+  .a4-document-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .a4-page {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: avoid;
+  }
+
+  .doc-meta-value,
+  .doc-content-block,
+  .doc-highlight-inline {
+    background-color: transparent !important;
+    border-bottom: 1px dotted #999 !important;
+    border-radius: 0 !important;
+  }
+
+  .doc-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+}
