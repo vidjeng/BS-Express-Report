@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # BS Express - ប្រព័ន្ធគ្រប់គ្រង និងរបាយការណ៍ការងារប្រចាំថ្ងៃតាមសាខា
 ### (BS Express Daily Branch Work Report System)
 
@@ -47,3 +48,6 @@ node server.js
 
 ### ជម្រើសទី ២: បើកឯកសារ `index.html` ដោយផ្ទាល់
 អ្នកអាចចុចទ្វេដង (Double Click) លើឯកសារ `index.html` ក្នុងកម្មវិធីរុករក (Chrome, Edge, Firefox, Safari)។
+=======
+# BS-Express-Report
+>>>>>>> 606bfcfcd3c04883c176d835a47f201fb82c07a4
