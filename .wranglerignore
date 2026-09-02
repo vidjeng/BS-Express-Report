@@ -1,0 +1,12 @@
+node_modules
+.git
+.vscode
+.vercel
+scratch
+*.log
+deploy-cloudflare.bat
+start.bat
+start.ps1
+Open-In-Chrome.bat
+package-lock.json
+wrangler.jsonc

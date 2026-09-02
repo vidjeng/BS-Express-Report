@@ -1,78 +1,509 @@
 @page {
   size: A4 portrait;
-  margin: 12mm 15mm 15mm 15mm;
+  margin: 10mm 15mm 10mm 15mm;
 }
 
 @media print {
-  body {
+  *, *::before, *::after {
     background: transparent !important;
     color: #000000 !important;
-    font-size: 11pt !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 
-  .navbar,
-  .nav-tabs,
-  .nav-actions,
-  .form-layout-grid > div:first-child,
-  .preview-toolbar,
-  .table-filter-bar,
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10pt !important;
+    line-height: 1.55 !important;
+    font-family: 'Khmer OS Siemreap', 'Siemreap', 'Kantumruy Pro', sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .shadcn-navbar,
+  .auth-gateway-screen,
+  .stepperize-container,
+  .stepwise-form-col,
+  .no-print,
   .btn,
   .modal-overlay,
   .toast-container,
-  .mobile-fab-container,
-  .no-print {
-    display: none !important;
-  }
-
-  .main-container {
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  .tab-content {
-    display: block !important;
-  }
-
+  .navbar-actions,
+  .doc-action-bar,
   #form-tab,
+  #morning-tab,
+  #issues-tab,
   #history-tab,
   #settings-tab {
     display: none !important;
   }
 
+  /* Exclude all uploaded photos strictly from Print and PDF Export */
+  .doc-photo-gallery,
+  .doc-photo-item,
+  .doc-gallery-img,
+  .doc-photo-gallery img,
+  #doc-opening-photos,
+  #doc-closing-photos,
+  #doc-morning-photo-gallery,
+  #print-opening-photos,
+  #print-closing-photos,
+  #print-update-photos,
+  .doc-opening-photos-container,
+  .doc-closing-photos-container,
+  .photo-card,
+  .photo-preview-grid {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+  }
+
+  #main-app-wrapper,
+  .shadcn-container,
   #document-tab {
     display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   .a4-document-wrapper {
     margin: 0 !important;
     padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   .a4-page {
     width: 100% !important;
     min-height: auto !important;
+    height: auto !important;
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none !important;
     border: none !important;
-    page-break-after: avoid;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: block !important;
   }
 
-  .doc-meta-value,
-  .doc-content-block,
-  .doc-highlight-inline {
-    background-color: transparent !important;
-    border-bottom: 1px dotted #999 !important;
+  /* Document Header & Branding */
+  .doc-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 0.8rem !important;
+  }
+
+  .doc-company-brand {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.3rem !important;
+  }
+
+  .doc-company-logo-img {
+    height: 62px !important;
+    width: auto !important;
+    object-fit: contain !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .doc-company-title {
+    color: #000000 !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .doc-kingdom-title {
+    text-align: center !important;
+  }
+
+  .doc-kingdom-title .kingdom-name {
+    font-size: 1.05rem !important;
+    font-family: var(--font-moul) !important;
+  }
+
+  .doc-kingdom-title .motto {
+    font-size: 0.95rem !important;
+    font-family: var(--font-moul) !important;
+    margin-top: 0.15rem !important;
+  }
+
+  .doc-kingdom-title .ornament {
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: 0.2rem !important;
+  }
+
+  .doc-kingdom-title .ornament svg {
+    width: 85px !important;
+    height: 10px !important;
+  }
+
+  /* Title & Meta Box */
+  .doc-title-section {
+    margin: 0.5rem 0 0.8rem 0 !important;
+    text-align: center !important;
+  }
+
+  .doc-main-title {
+    font-size: 1.25rem !important;
+    font-family: var(--font-moul) !important;
+    margin-bottom: 0.65rem !important;
+    text-underline-offset: 4px !important;
+  }
+
+  .doc-meta-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0.4rem 0 !important;
+  }
+
+  .doc-meta-table td {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 9.6pt !important;
+  }
+
+  .doc-meta-label {
+    width: 14% !important;
+    font-weight: 700 !important;
+  }
+
+  .doc-meta-value {
+    width: 36% !important;
+    padding: 0.15rem 0.3rem !important;
+    font-size: 9.6pt !important;
+    font-weight: 600 !important;
+  }
+
+  /* Schedule Notice */
+  .doc-schedule-box {
+    margin: 0.65rem 0 0.75rem 0 !important;
+    font-size: 9.5pt !important;
+    line-height: 1.55 !important;
+  }
+
+  .doc-schedule-title {
+    font-weight: 700 !important;
+    margin-bottom: 0.15rem !important;
+  }
+
+  .doc-schedule-list {
+    padding-left: 1.5rem !important;
+  }
+
+  .doc-schedule-list li {
+    margin-bottom: 0.12rem !important;
+  }
+
+  /* Sections & Content */
+  .doc-section {
+    margin-bottom: 0.75rem !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .doc-section-heading {
+    font-size: 10pt !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.3rem !important;
+  }
+
+  .doc-items-list {
+    padding-left: 1.5rem !important;
+    font-size: 9.5pt !important;
+  }
+
+  .doc-items-list > li {
+    margin-bottom: 0.35rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .doc-content-block {
+    background: transparent !important;
+    border: none !important;
     border-radius: 0 !important;
+    padding: 0 !important;
+    margin-top: 0.1rem !important;
+    font-weight: 500 !important;
+    color: #000000 !important;
+    line-height: 1.5 !important;
   }
 
+  .doc-subnote {
+    font-size: 8.5pt !important;
+    margin-top: 0.2rem !important;
+    padding-left: 1.5rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .doc-issue-status-tag {
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+
+  .doc-issue-status-tag.status-tag-incomplete {
+    color: #dc2626 !important;
+    font-weight: 700 !important;
+  }
+
+  .doc-issue-status-tag.status-tag-complete {
+    color: #059669 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Signatures Row */
+  .doc-signature-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-top: 1.8rem !important;
+    margin-bottom: 1rem !important;
+    padding: 0 1.5rem !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .doc-sign-box {
+    text-align: center !important;
+    min-width: 180px !important;
+    position: relative !important;
+  }
+
+  .doc-sign-role {
+    font-weight: 700 !important;
+    font-size: 9.5pt !important;
+    margin-bottom: 3.2rem !important;
+  }
+
+  .doc-sign-name {
+    font-weight: 600 !important;
+    font-size: 9.2pt !important;
+  }
+
+  .official-seal-stamp {
+    position: absolute !important;
+    top: 10px !important;
+    left: 50% !important;
+    transform: translateX(-50%) rotate(-7deg) !important;
+    width: 85px !important;
+    height: 85px !important;
+    border: 2.5px dashed #dc2626 !important;
+    color: #dc2626 !important;
+    background: transparent !important;
+  }
+
+  .official-seal-stamp span {
+    font-size: 0.55rem !important;
+  }
+
+  /* Document Footer */
   .doc-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    border-top: 1px solid #000000 !important;
+    margin-top: 1.2rem !important;
+    padding-top: 0.45rem !important;
+    text-align: center !important;
+    font-size: 7.2pt !important;
+    line-height: 1.4 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .doc-footer-khmer {
+    font-weight: 500 !important;
+  }
+
+  .doc-footer-latin {
+    font-size: 6.5pt !important;
+    margin-top: 0.1rem !important;
+  }
+
+  /* =========================================================================
+     BRANCH REPORT HISTORY PRINT MODE (body.printing-history)
+     ========================================================================= */
+  body.printing-history #document-tab {
+    display: none !important;
+  }
+
+  body.printing-history #history-tab {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  body.printing-history .shadcn-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  body.printing-history .card-header,
+  body.printing-history .history-action-buttons,
+  body.printing-history .table-filter-grid,
+  body.printing-history .history-quick-filter-chips,
+  body.printing-history .reports-pagination,
+  body.printing-history .table-actions-group,
+  body.printing-history th:last-child,
+  body.printing-history td:last-child,
+  body.printing-history .table-photos-cell .table-photo-thumb-btn {
+    display: none !important;
+  }
+
+  /* Corporate Letterhead for History Report Print */
+  body.printing-history .history-print-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.85rem !important;
+    margin-bottom: 1rem !important;
+    border-bottom: 2px solid #000000 !important;
+  }
+
+  body.printing-history .history-print-brand {
+    display: flex !important;
+    align-items: center;
+    gap: 0.85rem !important;
+  }
+
+  body.printing-history .history-print-logo {
+    width: 48px !important;
+    height: 48px !important;
+    object-fit: contain !important;
+  }
+
+  body.printing-history .history-print-company {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 11pt !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    color: #000000 !important;
+  }
+
+  body.printing-history .history-print-title {
+    font-family: 'Khmer OS Muol Light', 'Moul', var(--font-khmer), serif !important;
+    font-size: 13pt !important;
+    color: #000000 !important;
+    margin: 0.15rem 0 0 0 !important;
+  }
+
+  body.printing-history .history-print-meta {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    font-size: 8.5pt !important;
+    text-align: right !important;
+  }
+
+  body.printing-history .history-meta-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+  }
+
+  body.printing-history .history-meta-chip .meta-label {
+    color: #444444 !important;
+  }
+
+  body.printing-history .history-meta-chip .meta-val {
+    font-weight: 700 !important;
+    color: #000000 !important;
+  }
+
+  /* Printable Table Grid Layout */
+  body.printing-history .reports-table-wrapper {
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.printing-history .reports-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 8.5pt !important;
+  }
+
+  body.printing-history .reports-table thead {
+    display: table-header-group !important;
+  }
+
+  body.printing-history .reports-table tr {
+    page-break-inside: avoid !important;
+  }
+
+  body.printing-history .reports-table th,
+  body.printing-history .reports-table td {
+    border: 1px solid #333333 !important;
+    padding: 5px 6px !important;
+    color: #000000 !important;
+    background: transparent !important;
+    vertical-align: middle !important;
+  }
+
+  body.printing-history .reports-table th {
+    font-weight: 700 !important;
+    background-color: #f3f4f6 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.printing-history .table-branch-pill {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    font-weight: 700 !important;
+  }
+
+  body.printing-history .table-reporter-avatar {
+    display: none !important;
+  }
+
+  body.printing-history .badge-present,
+  body.printing-history .badge-absent,
+  body.printing-history .table-status-pill {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-weight: 600 !important;
+    color: #000000 !important;
+  }
+
+  body.printing-history .table-challenge-badge {
+    border: 1px dashed #666666 !important;
+    background: transparent !important;
+    color: #000000 !important;
   }
 }

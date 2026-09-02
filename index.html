@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BS Express - របាយការណ៍ការងារប្រចាំថ្ងៃ</title>
   <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="css/style.css?v=5.0">
-  <link rel="stylesheet" href="css/print.css?v=5.0" media="print">
+  <link rel="stylesheet" href="css/style.css?v=17.1">
+  <link rel="stylesheet" href="css/print.css?v=17.1" media="print">
   <!-- Google Fonts, Favicon & Chrome Manifest -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Siemreap&family=Battambang:wght@400;700&family=Kantumruy+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Moul&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="assets/bs-express-logo.png">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b5ed7">
@@ -25,9 +27,23 @@
         <button type="button" class="lang-btn active" data-lang="km">ខ្មែរ</button>
         <button type="button" class="lang-btn" data-lang="en">EN</button>
       </div>
-      <button type="button" class="theme-btn btn-theme-toggle-all" title="Light / Dark Mode">
-        <span class="theme-light-text">Light</span>
-        <span class="theme-dark-text">Dark</span>
+      <button type="button" class="theme-btn btn-theme-toggle-all" title="ប្តូរពន្លឺ (Light / Dark Mode)">
+        <svg class="theme-sun-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="theme-moon-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <span class="theme-light-text">ភ្លឺ</span>
+        <span class="theme-dark-text">ងងឹត</span>
       </button>
     </div>
 
@@ -38,22 +54,18 @@
         <div class="auth-logo-badge">
           <img src="assets/bs-express-logo.png" alt="BS Express" class="auth-clean-logo">
         </div>
-        <div class="auth-kingdom-clean">
-          <span class="kingdom-motto-clean">ព្រះរាជាណាចក្រកម្ពុជា ជាតិ សាសនា ព្រះមហាក្សត្រ</span>
-          <div class="clean-divider-ornament"></div>
-        </div>
 
-        <h1 class="auth-clean-title" data-i18n="appTitle">ក្រុមហ៊ុន ប៊ីអេស អ៊ិចប្រេស</h1>
+        <h1 class="auth-clean-title" data-i18n="appTitle">ក្រុមហ៊ុនប៊ីអេស អិចប្រេស</h1>
         <p class="auth-clean-sub" data-i18n="authCleanSub">ប្រព័ន្ធគ្រប់គ្រង និងរបាយការណ៍ការងារប្រចាំថ្ងៃតាមសាខា</p>
       </div>
 
       <!-- Segmented Pill Switcher -->
       <div class="auth-pill-switcher">
         <button type="button" class="auth-tab-btn active" data-auth-tab="login" id="btn-tab-screen-login" onclick="window.bsApp && window.bsApp.switchAuthTab('login')" data-i18n="tabLogin">
-          ចូលប្រើប្រព័ន្ធ (Sign In)
+          ចូលប្រើប្រព័ន្ធ
         </button>
         <button type="button" class="auth-tab-btn" data-auth-tab="register" id="btn-tab-screen-register" onclick="window.bsApp && window.bsApp.switchAuthTab('register')" data-i18n="tabRegister">
-          ចុះឈ្មោះគណនីថ្មី (Sign Up)
+          ចុះឈ្មោះគណនីថ្មី
         </button>
       </div>
 
@@ -62,7 +74,7 @@
         <form id="screen-form-login" onsubmit="return false;">
           <div class="form-item">
             <label class="form-label" for="screen-login-username">
-              <span data-i18n="labelUsername">ឈ្មោះគណនី (Username)</span>
+              <span data-i18n="labelUsername">ឈ្មោះគណនី</span>
               <span class="badge-required">*</span>
             </label>
             <div class="input-with-icon">
@@ -70,13 +82,13 @@
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
-              <input type="text" id="screen-login-username" class="form-input" data-i18n-placeholder="placeholderUsername" placeholder="បញ្ចូលឈ្មោះគណនី (Username)" required autocomplete="username">
+              <input type="text" id="screen-login-username" class="form-input" data-i18n-placeholder="placeholderUsername" placeholder="បញ្ចូលឈ្មោះគណនី" required autocomplete="username">
             </div>
           </div>
 
           <div class="form-item">
             <label class="form-label" for="screen-login-password">
-              <span data-i18n="labelPassword">លេខកូដសម្ងាត់ (Password)</span>
+              <span data-i18n="labelPassword">លេខកូដសម្ងាត់</span>
               <span class="badge-required">*</span>
             </label>
             <div class="input-with-icon">
@@ -84,7 +96,7 @@
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
-              <input type="password" id="screen-login-password" class="form-input" data-i18n-placeholder="placeholderPassword" placeholder="បញ្ចូលលេខសម្ងាត់" required autocomplete="current-password">
+              <input type="password" id="screen-login-password" class="form-input" data-i18n-placeholder="placeholderPassword" placeholder="បញ្ចូលលេខសម្ងាត់របស់អ្នក" required autocomplete="current-password">
               <button type="button" class="btn-toggle-pwd" data-target="screen-login-password" title="Show / Hide Password">
                 👁️
               </button>
@@ -99,7 +111,7 @@
           </div>
 
           <button type="submit" class="btn btn-primary btn-lg auth-submit-btn" id="btn-screen-submit-login">
-            <span data-i18n="btnLoginSubmit">ចូលប្រើប្រព័ន្ធ (Sign In)</span>
+            <span data-i18n="btnLoginSubmit">ចូលប្រើប្រព័ន្ធ</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="ml-1-5">
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
@@ -108,14 +120,8 @@
 
         <p class="auth-switch-prompt">
           <span data-i18n="authNoAccount">មិនទាន់មានគណនី?</span>
-          <button type="button" class="btn-text-link" data-i18n="tabRegister" onclick="window.bsApp && window.bsApp.switchAuthTab('register')">ចុះឈ្មោះគណនីថ្មី (Sign Up)</button>
+          <button type="button" class="btn-text-link" data-i18n="tabRegister" onclick="window.bsApp && window.bsApp.switchAuthTab('register')">ចុះឈ្មោះគណនីថ្មី</button>
         </p>
-
-        <div class="auth-guest-row mt-4">
-          <button type="button" class="btn-guest-link" id="btn-continue-guest" data-i18n="authGuestContinue">
-            ➔ បន្តជាភ្ញៀវសាកល្បង (Continue to Report Portal)
-          </button>
-        </div>
       </div>
 
       <!-- REGISTER VIEW -->
@@ -124,7 +130,7 @@
           <div class="form-grid two-col">
             <div class="form-item">
               <label class="form-label" for="screen-reg-fullname">
-                <span data-i18n="labelFullName">ឈ្មោះពេញ (Full Name)</span>
+                <span data-i18n="labelFullName">ឈ្មោះពេញ</span>
                 <span class="badge-required">*</span>
               </label>
               <input type="text" id="screen-reg-fullname" class="form-input" data-i18n-placeholder="placeholderFullName" placeholder="បញ្ចូលឈ្មោះពេញរបស់អ្នក" required>
@@ -132,7 +138,7 @@
 
             <div class="form-item">
               <label class="form-label" for="screen-reg-username">
-                <span data-i18n="labelUsername">ឈ្មោះគណនី (Username)</span>
+                <span data-i18n="labelUsername">ឈ្មោះគណនី</span>
                 <span class="badge-required">*</span>
               </label>
               <input type="text" id="screen-reg-username" class="form-input" data-i18n-placeholder="placeholderUsername" placeholder="បញ្ចូលឈ្មោះគណនី" required autocomplete="username">
@@ -142,22 +148,21 @@
           <div class="form-grid two-col">
             <div class="form-item">
               <label class="form-label" for="screen-reg-role">
-                <span data-i18n="labelUserRole">តួនាទី (Role)</span>
+                <span data-i18n="labelUserRole">តួនាទី</span>
                 <span class="badge-required">*</span>
               </label>
               <select id="screen-reg-role" class="form-input" required>
-                <option value="ប្រធានសាខា">ប្រធានសាខា (Branch Manager)</option>
-                <option value="អនុប្រធានសាខា">អនុប្រធានសាខា (Deputy Branch Manager)</option>
-                <option value="បុគ្គលិកប្រតិបត្តិការ" selected>បុគ្គលិកប្រតិបត្តិការ (Operations Staff)</option>
-                <option value="ផ្នែកសេវាអតិថិជន">ផ្នែកសេវាអតិថិជន (Customer Service)</option>
-                <option value="នាយកដ្ឋានប្រតិបត្តិការ (Admin)">នាយកដ្ឋានប្រតិបត្តិការ (Admin / HQ)</option>
-                <option value="អ្នកគ្រប់គ្រងប្រព័ន្ធ (System Administrator)">អ្នកគ្រប់គ្រងប្រព័ន្ធ (System Administrator)</option>
+                <option value="ប្រធានសាខា">ប្រធានសាខា</option>
+                <option value="អនុប្រធានសាខា">អនុប្រធានសាខា</option>
+                <option value="បុគ្គលិកប្រតិបត្តិការ" selected>បុគ្គលិកប្រតិបត្តិការ</option>
+                <option value="ផ្នែកសេវាអតិថិជន">ផ្នែកសេវាអតិថិជន</option>
+                <option value="នាយកដ្ឋានប្រតិបត្តិការ (Admin)">នាយកដ្ឋានប្រតិបត្តិការ (Admin)</option>
               </select>
             </div>
 
             <div class="form-item">
               <label class="form-label" for="screen-reg-branch">
-                <span data-i18n="labelUserBranch">សាខាដែលបម្រើការ (Branch)</span>
+                <span data-i18n="labelUserBranch">សាខាដែលបម្រើការ</span>
                 <span class="badge-required">*</span>
               </label>
               <select id="screen-reg-branch" class="form-input" required>
@@ -168,8 +173,7 @@
 
           <div class="form-item">
             <label class="form-label" for="screen-reg-phone">
-              <span data-i18n="labelPhone">លេខទូរស័ព្ទ (Phone Number)</span>
-              <span class="form-hint">(ស្រេចចិត្ត)</span>
+              <span data-i18n="labelPhone">លេខទូរស័ព្ទ</span>
             </label>
             <input type="tel" id="screen-reg-phone" class="form-input" data-i18n-placeholder="placeholderPhone" placeholder="ឧ. 012 345 678">
           </div>
@@ -177,11 +181,11 @@
           <div class="form-grid two-col">
             <div class="form-item">
               <label class="form-label" for="screen-reg-password">
-                <span data-i18n="labelPassword">លេខកូដសម្ងាត់ (Password)</span>
+                <span data-i18n="labelPassword">លេខកូដសម្ងាត់</span>
                 <span class="badge-required">*</span>
               </label>
               <div class="input-with-icon">
-                <input type="password" id="screen-reg-password" class="form-input" data-i18n-placeholder="placeholderPassword" placeholder="បញ្ចូលលេខសម្ងាត់" required autocomplete="new-password">
+                <input type="password" id="screen-reg-password" class="form-input" data-i18n-placeholder="placeholderPassword" placeholder="បញ្ចូលលេខសម្ងាត់របស់អ្នក" required autocomplete="new-password">
                 <button type="button" class="btn-toggle-pwd" data-target="screen-reg-password" title="Show / Hide Password">👁️</button>
               </div>
             </div>
@@ -199,7 +203,7 @@
           </div>
 
           <button type="submit" class="btn btn-primary btn-lg auth-submit-btn" id="btn-screen-submit-register">
-            <span data-i18n="btnRegisterSubmit">ចុះឈ្មោះគណនីថ្មី (Register &amp; Sign In)</span>
+            <span data-i18n="btnRegisterSubmit">ចុះឈ្មោះគណនីថ្មី</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="ml-1-5">
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
@@ -208,13 +212,8 @@
 
         <p class="auth-switch-prompt">
           <span data-i18n="authHaveAccount">មានគណនីរួចហើយ?</span>
-          <button type="button" class="btn-text-link" data-i18n="tabLogin" onclick="window.bsApp && window.bsApp.switchAuthTab('login')">ចូលប្រើប្រព័ន្ធ (Sign In)</button>
+          <button type="button" class="btn-text-link" data-i18n="tabLogin" onclick="window.bsApp && window.bsApp.switchAuthTab('login')">ចូលប្រើប្រព័ន្ធ</button>
         </p>
-      </div>
-
-      <!-- Clean Card Footer -->
-      <div class="auth-card-footer-clean">
-        <span>© 2026 BS Express Logistics &amp; Delivery • Cambodia</span>
       </div>
     </div>
   </div>
@@ -231,47 +230,86 @@
       <div class="navbar-container">
 
         <!-- Brand Logo & Identity -->
-        <a href="#" class="brand-section">
-          <img src="assets/bs-express-logo.png" alt="BS Express Logo" class="brand-logo">
+        <a href="#" class="brand-section" title="BS Express Daily Work Report">
+          <div class="brand-logo-wrap">
+            <img src="assets/bs-express-logo.png" alt="BS Express Logo" class="brand-logo">
+          </div>
           <div class="brand-title-wrap">
-            <h1 data-i18n="appTitle">ក្រុមហ៊ុន ប៊ីអេស អ៊ិចប្រេស</h1>
+            <h1 class="brand-title" data-i18n="appTitle">ក្រុមហ៊ុនប៊ីអេស អិចប្រេស</h1>
             <div class="brand-badge">
               <span class="badge-dot"></span>
-              <span data-i18n="appSubtitle">Daily Branch Report</span>
+              <span class="brand-badge-text" data-i18n="appSubtitle">Daily Branch Report System</span>
             </div>
           </div>
         </a>
 
         <!-- Radix/shadcn Segmented Tabs Trigger List -->
-        <div class="shadcn-tabs-list">
-          <button type="button" class="shadcn-tab-trigger active nav-tab-btn" data-tab="form-tab" id="tab-btn-form" data-i18n="tabForm">
-            បំពេញរបាយការណ៍
+        <nav class="shadcn-tabs-list" aria-label="Main Navigation">
+          <button type="button" class="shadcn-tab-trigger active nav-tab-btn" data-tab="form-tab" id="tab-btn-form">
+            <svg class="tab-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            <span class="tab-label" data-i18n="tabForm">បំពេញរបាយការណ៍</span>
           </button>
-          <button type="button" class="shadcn-tab-trigger nav-tab-btn" data-tab="document-tab" id="tab-btn-document" data-i18n="tabDocument">
-            ទម្រង់ផ្លូវការ A4
+
+          <button type="button" class="shadcn-tab-trigger nav-tab-btn" data-tab="document-tab" id="tab-btn-document">
+            <svg class="tab-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span class="tab-label" data-i18n="tabDocument">ទម្រង់ផ្លូវការ A4</span>
           </button>
-          <button type="button" class="shadcn-tab-trigger nav-tab-btn" data-tab="history-tab" id="tab-btn-history" data-i18n="tabHistory">
-            តារាងតាមដាន &amp; ប្រវត្តិ
+
+          <button type="button" class="shadcn-tab-trigger nav-tab-btn" data-tab="history-tab" id="tab-btn-history">
+            <svg class="tab-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"></path>
+              <path d="M18 17V9"></path>
+              <path d="M13 17V5"></path>
+              <path d="M8 17v-3"></path>
+            </svg>
+            <span class="tab-label" data-i18n="tabHistory">តារាងតាមដាន &amp; ប្រវត្តិ</span>
           </button>
-        </div>
+        </nav>
 
         <!-- Right Utility Actions -->
         <div class="navbar-actions">
-          <div class="clock-badge" id="live-time-display">--:--:--</div>
+          <!-- Real-Time Clock Badge -->
+          <div class="clock-badge" id="live-time-display" title="Current Local Time">
+            <span class="clock-dot"></span>
+            <span class="clock-time">--:--:--</span>
+          </div>
 
-          <!-- Language Selector -->
-          <div class="lang-toggle" id="lang-switcher">
+          <!-- Language Selector Switcher -->
+          <div class="lang-toggle" id="lang-switcher" title="Switch Language (ប្តូរភាសា)">
             <button type="button" class="lang-btn active" data-lang="km">ខ្មែរ</button>
             <button type="button" class="lang-btn" data-lang="en">EN</button>
           </div>
 
-          <!-- Theme Toggle -->
+          <!-- Theme Toggle Switcher -->
           <button type="button" class="theme-btn btn-theme-toggle-all" id="btn-theme-toggle" title="Light / Dark Mode">
+            <svg class="theme-sun-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="theme-moon-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
             <span class="theme-light-text">Light</span>
             <span class="theme-dark-text">Dark</span>
           </button>
 
-          <!-- User Authentication & Profile Badge -->
+          <!-- User Authentication & Profile Badge Container -->
           <div class="auth-nav-container" id="auth-nav-container">
             <!-- Populated via JS -->
           </div>
@@ -313,7 +351,7 @@
           <button type="button" class="stepperize-step-item active" data-step="1">
             <span class="stepperize-circle">1</span>
             <span class="stepperize-content">
-              <span class="stepperize-label">Step 01</span>
+              <span class="stepperize-label">01</span>
               <span class="stepperize-title" data-i18n="cardBranchInfoTitle">ព័ត៌មានទូទៅ</span>
               <span class="stepperize-desc" data-i18n="step1Desc">សាខា &amp; កាលបរិច្ឆេទ</span>
             </span>
@@ -325,9 +363,9 @@
           <button type="button" class="stepperize-step-item" data-step="2">
             <span class="stepperize-circle">2</span>
             <span class="stepperize-content">
-              <span class="stepperize-label">Step 02</span>
+              <span class="stepperize-label">02</span>
               <span class="stepperize-title" data-i18n="step2Title">ពេលបើកសាខា</span>
-              <span class="stepperize-desc" data-i18n="step2Desc">Opening (6:00 AM)</span>
+              <span class="stepperize-desc" data-i18n="step2Desc">ម៉ោង 6:00 ព្រឹក</span>
             </span>
           </button>
 
@@ -337,9 +375,9 @@
           <button type="button" class="stepperize-step-item" data-step="3">
             <span class="stepperize-circle">3</span>
             <span class="stepperize-content">
-              <span class="stepperize-label">Step 03</span>
+              <span class="stepperize-label">03</span>
               <span class="stepperize-title" data-i18n="step3Title">ប្រតិបត្តិការ</span>
-              <span class="stepperize-desc" data-i18n="step3Desc">Daily Operations</span>
+              <span class="stepperize-desc" data-i18n="step3Desc">ប្រតិបត្តិការប្រចាំថ្ងៃ</span>
             </span>
           </button>
 
@@ -349,9 +387,9 @@
           <button type="button" class="stepperize-step-item" data-step="4">
             <span class="stepperize-circle">4</span>
             <span class="stepperize-content">
-              <span class="stepperize-label">Step 04</span>
+              <span class="stepperize-label">04</span>
               <span class="stepperize-title" data-i18n="step4Title">ពេលបិទសាខា</span>
-              <span class="stepperize-desc" data-i18n="step4Desc">Closing (11:00 PM)</span>
+              <span class="stepperize-desc" data-i18n="step4Desc">ម៉ោង 11:00 យប់</span>
             </span>
           </button>
 
@@ -361,9 +399,9 @@
           <button type="button" class="stepperize-step-item" data-step="5">
             <span class="stepperize-circle">5</span>
             <span class="stepperize-content">
-              <span class="stepperize-label">Step 05</span>
+              <span class="stepperize-label">05</span>
               <span class="stepperize-title" data-i18n="step5Title">ផ្ទៀងផ្ទាត់ &amp; រក្សាទុក</span>
-              <span class="stepperize-desc" data-i18n="step5Desc">Review &amp; Submit</span>
+              <span class="stepperize-desc" data-i18n="step5Desc">ពិនិត្យ &amp; រក្សាទុក</span>
             </span>
           </button>
 
@@ -386,11 +424,30 @@
                 <div class="card-header">
                   <div class="card-title">
                     <span data-i18n="cardBranchInfoTitle">ព័ត៌មានទូទៅនៃសាខា</span>
-                    <span class="stepperize-badge-current">Step 1 of 5</span>
+                    <span class="stepperize-badge-current" data-i18n="step1Badge">ជំហាន 1 នៃ 5</span>
                   </div>
                   <p class="card-description" data-i18n="cardBranchInfoSub">កំណត់សាខា កាលបរិច្ឆេទ និងអ្នកទទួលខុសត្រូវរាយការណ៍</p>
                 </div>
                 <div class="card-content">
+
+                  <!-- Step 1 Auto-Tracked User Account Banner -->
+                  <div id="step1-user-tracker" class="step-user-tracker-banner">
+                    <div class="tracker-main">
+                      <div class="tracker-avatar" id="tracker-avatar">U</div>
+                      <div class="tracker-details">
+                        <div class="tracker-header-row">
+                          <span class="tracker-title-label" data-i18n="trackerTitle">គណនីរាយការណ៍ស្វ័យប្រវត្តិ</span>
+                        </div>
+                        <div class="tracker-name-row">
+                          <strong id="tracker-user-name" class="tracker-user-name">...</strong>
+                          <span class="tracker-sep">•</span>
+                          <span id="tracker-user-role" class="tracker-role-badge">...</span>
+                          <span class="tracker-sep">•</span>
+                          <span id="tracker-user-branch" class="tracker-branch-badge">...</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   <div class="form-grid two-col">
                     <div class="form-item">
@@ -406,7 +463,7 @@
                       <label class="form-label" for="form-date">
                         <span data-i18n="labelDate">ថ្ងៃទីឆ្នាំ</span> <span class="badge-required">*</span>
                       </label>
-                      <input type="date" id="form-date" class="form-input" value="2026-08-14" required>
+                      <input type="date" id="form-date" class="form-input" required>
                     </div>
                   </div>
 
@@ -415,19 +472,14 @@
                       <label class="form-label" for="form-name">
                         <span data-i18n="labelReporterName">ឈ្មោះអ្នករាយការណ៍</span> <span class="badge-required">*</span>
                       </label>
-                      <input type="text" id="form-name" class="form-input" data-i18n-placeholder="placeholderName" placeholder="ឧ. ប៊ុនតា ភឿន" value="ប៊ុនតា ភឿន" required>
+                      <input type="text" id="form-name" class="form-input" data-i18n-placeholder="placeholderName" placeholder="ឧ. ប៊ុនតា ភឿន" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required>
                     </div>
 
                     <div class="form-item">
                       <label class="form-label" for="form-position">
                         <span data-i18n="labelPosition">តួនាទី</span>
                       </label>
-                      <input type="text" id="form-position" class="form-input" data-i18n-placeholder="placeholderPosition" placeholder="ឧ. ប្រធានសាខា" value="ប្រធានសាខា">
-                      <div class="quick-tags-wrap">
-                        <span class="quick-tag-chip quick-tag" data-target="form-position" data-i18n="tagBranchManager">ប្រធានសាខា</span>
-                        <span class="quick-tag-chip quick-tag" data-target="form-position" data-i18n="tagDeputyManager">អនុប្រធានសាខា</span>
-                        <span class="quick-tag-chip quick-tag" data-target="form-position" data-i18n="tagOpsSupervisor">មេការប្រតិបត្តិការ</span>
-                      </div>
+                      <input type="text" id="form-position" class="form-input" data-i18n-placeholder="placeholderPosition" placeholder="ឧ. ប្រធានសាខា" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                     </div>
                   </div>
 
@@ -450,8 +502,8 @@
               <div class="step-pane" id="step-pane-2">
                 <div class="card-header">
                   <div class="card-title">
-                    <span data-i18n="cardOpeningTitle">១. របាយការណ៍ពេលបើកដំណើរការ (Opening Shift)</span>
-                    <span class="stepperize-badge-current">Step 2 of 5</span>
+                    <span data-i18n="cardOpeningTitle">១. របាយការណ៍ពេលបើកដំណើរការ</span>
+                    <span class="stepperize-badge-current" data-i18n="step2Badge">ជំហាន 2 នៃ 5</span>
                   </div>
                   <p class="card-description" data-i18n="cardOpeningSub">រាយការណ៍នៅពេលព្រឹកពេលបើកទ្វារសាខា (ម៉ោង 6:00 AM)</p>
                 </div>
@@ -459,21 +511,33 @@
 
                   <div class="form-grid three-col">
                     <div class="form-item">
-                      <label class="form-label" for="form-opening-time" data-i18n="labelOpeningTime">ម៉ោងបើកសាខា</label>
-                      <input type="text" id="form-opening-time" class="form-input" value="6:00Am" placeholder="ឧ. 6:00Am">
+                      <label class="form-label" for="form-opening-time">
+                        <span data-i18n="labelOpeningTime">ម៉ោងបើកសាខា</span> <span class="badge-required">*</span>
+                      </label>
+                      <div class="input-with-action">
+                        <input type="text" id="form-opening-time" class="form-input form-time-input" placeholder="ឧ. 6:00Am" readonly required autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" title="ចុចដើម្បីជ្រើសរើសម៉ោង (24h/60m)" onclick="window.bsApp &amp;&amp; window.bsApp.openTimePicker('form-opening-time')">
+                        <button type="button" class="btn-input-action" id="btn-open-tp-opening" title="ជ្រើសរើសម៉ោងបើក (24h &amp; 60m)" onclick="window.bsApp &amp;&amp; window.bsApp.openTimePicker('form-opening-time')">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
 
                     <div class="form-item">
                       <label class="form-label" for="form-present-count" data-i18n="labelPresentCount">វត្តមានបុគ្គលិក (នាក់)</label>
-                      <input type="number" id="form-present-count" class="form-input" value="14" min="0" placeholder="14">
+                      <div class="input-with-suffix">
+                        <input type="number" id="form-present-count" class="form-input" min="0" step="1" placeholder="0" autocomplete="off" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <span class="input-suffix-text" data-i18n="unitPerson">នាក់</span>
+                      </div>
                     </div>
 
                     <div class="form-item">
-                      <label class="form-label" for="form-absent-count" data-i18n="labelAbsentCount">អវត្តមាន / Day Off</label>
-                      <input type="text" id="form-absent-count" class="form-input" value="Day Off 1នាក់" placeholder="ឧ. Day Off 1នាក់">
-                      <div class="quick-tags-wrap">
-                        <span class="quick-tag-chip quick-tag" data-target="form-absent-count" data-i18n="tagFullAttendance">គ្រប់ចំនួន</span>
-                        <span class="quick-tag-chip quick-tag" data-target="form-absent-count" data-i18n="tagDayOff1">Day Off 1នាក់</span>
+                      <label class="form-label" for="form-absent-count" data-i18n="labelAbsentCount">អវត្តមាន</label>
+                      <div class="input-with-suffix">
+                        <input type="number" id="form-absent-count" class="form-input" min="0" step="1" placeholder="0" autocomplete="off" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <span class="input-suffix-text" data-i18n="unitPerson">នាក់</span>
                       </div>
                     </div>
                   </div>
@@ -483,11 +547,7 @@
                       <span data-i18n="labelCleanliness">អនាម័យសាខា</span>
                       <span class="form-hint" data-i18n="labelCleanlinessHint">ស្ថានភាពអនាម័យ និងភាពរៀបរយ</span>
                     </label>
-                    <textarea id="form-cleanliness" class="form-input" rows="2" data-i18n-placeholder="placeholderCleanliness" placeholder="ឧ. ស្ថានភាពអនាម័យ និងភាពរៀបរយក្នុង-ក្រៅសាខា">ស្ថានភាពអនាម័យ និងភាពរៀបរយក្នុង-ក្រៅសាខា</textarea>
-                    <div class="quick-tags-wrap">
-                      <span class="quick-tag-chip quick-tag" data-target="form-cleanliness" data-i18n="tagCleanlinessDefault">ស្ថានភាពអនាម័យ និងភាពរៀបរយក្នុង-ក្រៅសាខា</span>
-                      <span class="quick-tag-chip quick-tag" data-target="form-cleanliness" data-i18n="tagCleanlinessReady">បានបោសជូតសម្អាតស្អាតល្អ និងរៀបចំកន្លែងទទួលភ្ញៀវរួចរាល់</span>
-                    </div>
+                    <textarea id="form-cleanliness" class="form-input" rows="2" data-i18n-placeholder="placeholderCleanliness" placeholder="ឧ. ស្ថានភាពអនាម័យ និងភាពរៀបរយក្នុង-ក្រៅសាខា" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
                   </div>
 
                   <!-- Photo Upload with Timestamp Watermark -->
@@ -515,29 +575,31 @@
               <div class="step-pane" id="step-pane-3">
                 <div class="card-header">
                   <div class="card-title">
-                    <span data-i18n="cardOpsTitle">២. របាយការណ៍ប្រតិបត្តិការប្រចាំថ្ងៃ (Daily Operation)</span>
-                    <span class="stepperize-badge-current">Step 3 of 5</span>
+                    <span data-i18n="cardOpsTitle">២. របាយការណ៍ប្រតិបត្តិការប្រចាំថ្ងៃ</span>
+                    <span class="stepperize-badge-current" data-i18n="step3Badge">ជំហាន 3 នៃ 5</span>
                   </div>
                   <p class="card-description" data-i18n="cardOpsSub">លំហូរបញ្ញើ និងបញ្ហាប្រឈមក្នុងថ្ងៃ</p>
                 </div>
                 <div class="card-content">
 
+                  <!-- 1. Work Status (Unlimited / Multi-Item) -->
                   <div class="form-item">
-                    <label class="form-label" for="form-work-status" data-i18n="labelWorkStatus">ស្ថានភាពការងារ</label>
-                    <textarea id="form-work-status" class="form-input" rows="3" data-i18n-placeholder="placeholderWorkStatus" placeholder="ឧ. បញ្ញើរអីវ៉ាន់ សម្រាប់ភ្ញៀវVIPនិងកំពុងស្វែងរកភ្ញៀវបន្ថែម">បញ្ញើរអីវ៉ាន់ សម្រាប់ភ្ញៀវVIPនិងកំពុងស្វែងរកភ្ញៀវបន្ថែម</textarea>
-                    <div class="quick-tags-wrap">
-                      <span class="quick-tag-chip quick-tag" data-target="form-work-status" data-i18n="tagWorkVip">បញ្ញើរអីវ៉ាន់ សម្រាប់ភ្ញៀវVIPនិងកំពុងស្វែងរកភ្ញៀវបន្ថែម</span>
-                      <span class="quick-tag-chip quick-tag" data-target="form-work-status" data-i18n="tagWorkSmooth">ការទទួល និងបញ្ជូនទំនិញដំណើរការរលូនធម្មតា</span>
+                    <div class="multi-item-header">
+                      <label class="form-label mb-0" data-i18n="labelWorkStatus">ស្ថានភាពការងារ</label>
+                      <button type="button" class="btn btn-outline btn-xs btn-add-item" id="btn-add-work-status" data-i18n="btnAddWorkStatus">+ បន្ថែមស្ថានភាពការងារ</button>
                     </div>
+                    <div id="work-status-list" class="multi-item-list"></div>
+                    <input type="hidden" id="form-work-status" value="">
                   </div>
 
+                  <!-- 2. Operational Challenges (Unlimited / Multi-Item) -->
                   <div class="form-item">
-                    <label class="form-label" for="form-challenges" data-i18n="labelChallenges">បញ្ហាប្រឈមប្រតិបត្តិការ</label>
-                    <textarea id="form-challenges" class="form-input" rows="3" data-i18n-placeholder="placeholderChallenges" placeholder="ឧ. អីវ៉ាន់ដឹកអត់ដល់ កង់បីអស់ថ្ម អីវ៉ាន់ខ្លះសល់ទុកដឹកស្អែកសម្រួលជាមួយភ្ញៀវដឹកជូនថ្ងៃស្អែក">អីវ៉ាន់ដឹកអត់ដល់ កង់បីអស់ថ្ម អីវ៉ាន់ខ្លះសល់ទុកដឹកស្អែកសម្រួលជាមួយភ្ញៀវដឹកជូនថ្ងៃស្អែក</textarea>
-                    <div class="quick-tags-wrap">
-                      <span class="quick-tag-chip quick-tag" data-target="form-challenges" data-i18n="tagChallengesDefault">អីវ៉ាន់ដឹកអត់ដល់ កង់បីអស់ថ្ម អីវ៉ាន់ខ្លះសល់ទុកដឹកស្អែកសម្រួលជាមួយភ្ញៀវដឹកជូនថ្ងៃស្អែក</span>
-                      <span class="quick-tag-chip quick-tag" data-target="form-challenges" data-i18n="tagChallengesNone">គ្មានបញ្ហាប្រឈមទេ ប្រតិបត្តិការដំណើរការធម្មតា</span>
+                    <div class="multi-item-header">
+                      <label class="form-label mb-0" data-i18n="labelChallenges">បញ្ហាប្រឈមប្រតិបត្តិការ</label>
+                      <button type="button" class="btn btn-outline btn-xs btn-add-item" id="btn-add-challenges" data-i18n="btnAddChallenges">+ បន្ថែមបញ្ហាប្រឈម</button>
                     </div>
+                    <div id="challenges-list" class="multi-item-list"></div>
+                    <input type="hidden" id="form-challenges" value="">
                   </div>
 
                 </div>
@@ -551,35 +613,56 @@
               <div class="step-pane" id="step-pane-4">
                 <div class="card-header">
                   <div class="card-title">
-                    <span data-i18n="cardClosingTitle">៣. របាយការណ៍ពេលបិទដំណើរការ (Closing Shift)</span>
-                    <span class="stepperize-badge-current">Step 4 of 5</span>
+                    <span data-i18n="cardClosingTitle">៣. របាយការណ៍ពេលបិទដំណើរការ</span>
+                    <span class="stepperize-badge-current" data-i18n="step4Badge">ជំហាន 4 នៃ 5</span>
                   </div>
                   <p class="card-description" data-i18n="cardClosingSub">សង្ខេបលទ្ធផលការងារចុងបញ្ចប់ថ្ងៃ (ម៉ោង 11:00 PM)</p>
                 </div>
                 <div class="card-content">
 
+                  <!-- 1. Accomplished Tasks (Unlimited / Multi-Item) -->
                   <div class="form-item">
-                    <label class="form-label" for="form-accomplished" data-i18n="labelAccomplished">ការងារដែលបានសម្រេច</label>
-                    <textarea id="form-accomplished" class="form-input" rows="2" data-i18n-placeholder="placeholderAccomplished" placeholder="ឧ. ដោះស្រាយអីវ៉ាន់ដែលដឹកអត់ដល់និងសម្រួលដឹកអីវ៉ាន់ដែលជាប់ខូច">ដោះស្រាយអីវ៉ាន់ដែលដឹកអត់ដល់និងសម្រួលដឹកអីវ៉ាន់ដែលជាប់ខូច</textarea>
-                    <div class="quick-tags-wrap">
-                      <span class="quick-tag-chip quick-tag" data-target="form-accomplished" data-i18n="tagAccomplishedDefault">ដោះស្រាយអីវ៉ាន់ដែលដឹកអត់ដល់និងសម្រួលដឹកអីវ៉ាន់ដែលជាប់ខូច</span>
-                      <span class="quick-tag-chip quick-tag" data-target="form-accomplished" data-i18n="tagAccomplished100">ដឹកជញ្ជូន និងចែកចាយទំនិញដល់អតិថិជនបាន 100%</span>
+                    <div class="multi-item-header">
+                      <label class="form-label mb-0" data-i18n="labelAccomplished">ការងារដែលបានសម្រេច</label>
+                      <button type="button" class="btn btn-outline btn-xs btn-add-item" id="btn-add-accomplished" data-i18n="btnAddAccomplished">+ បន្ថែមការងារសម្រេច</button>
                     </div>
+                    <div id="accomplished-list" class="multi-item-list"></div>
+                    <input type="hidden" id="form-accomplished" value="">
+                  </div>
+
+                  <!-- 2. Unresolved Issues (Unlimited / Multi-Item with Status & Note) -->
+                  <div class="form-item">
+                    <div class="multi-item-header">
+                      <label class="form-label mb-0" data-i18n="labelUnresolved">បញ្ហាមិនទាន់ដោះស្រាយ</label>
+                      <button type="button" class="btn btn-outline btn-xs btn-add-item" id="btn-add-issue" data-i18n="btnAddIssue">+ បន្ថែមបញ្ហា</button>
+                    </div>
+                    <div id="issue-list" class="multi-item-list"></div>
+                    <input type="hidden" id="form-unresolved" value="">
+                  </div>
+
+                  <!-- 3. Package Security (Unlimited / Multi-Item) -->
+                  <div class="form-item">
+                    <div class="multi-item-header">
+                      <label class="form-label mb-0" data-i18n="labelSecurity">សុវត្ថិភាពការបញ្ញើ</label>
+                      <button type="button" class="btn btn-outline btn-xs btn-add-item" id="btn-add-security" data-i18n="btnAddSecurity">+ បន្ថែមចំណុចសុវត្ថិភាព</button>
+                    </div>
+                    <div id="security-list" class="multi-item-list"></div>
+                    <input type="hidden" id="form-security" value="">
                   </div>
 
                   <div class="form-item">
-                    <label class="form-label" for="form-unresolved" data-i18n="labelUnresolved">បញ្ហាមិនទាន់ដោះស្រាយ</label>
-                    <textarea id="form-unresolved" class="form-input" rows="2" data-i18n-placeholder="placeholderUnresolved" placeholder="ឧ. អីវ៉ាន់ដឹកអត់ដល់ទុកដឹកស្អែក">អីវ៉ាន់ដឹកអត់ដល់ទុកដឹកស្អែក</textarea>
-                  </div>
-
-                  <div class="form-item">
-                    <label class="form-label" for="form-security" data-i18n="labelSecurity">សុវត្ថិភាពការញ៉ាប់បញ្ញើ</label>
-                    <textarea id="form-security" class="form-input" rows="2" data-i18n-placeholder="placeholderSecurity" placeholder="ឧ. អីវ៉ាន់ដែលនៅសល់ទុកដាក់នៅកន្លែងមានផាសុខភាពនិងមិនសើម">អីវ៉ាន់ដែលនៅសល់ទុកដាក់នៅកន្លែងមានផាសុខភាពនិងមិនសើម</textarea>
-                  </div>
-
-                  <div class="form-item">
-                    <label class="form-label" for="form-closing-time" data-i18n="labelClosingTime">ម៉ោងបិទសាខា</label>
-                    <input type="text" id="form-closing-time" class="form-input" value="11:00Pm" placeholder="ឧ. 11:00Pm">
+                    <label class="form-label" for="form-closing-time">
+                      <span data-i18n="labelClosingTime">ម៉ោងបិទសាខា</span> <span class="badge-required">*</span>
+                    </label>
+                    <div class="input-with-action">
+                      <input type="text" id="form-closing-time" class="form-input form-time-input" placeholder="ឧ. 11:00Pm" readonly required autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" title="ចុចដើម្បីជ្រើសរើសម៉ោង (24h/60m)" onclick="window.bsApp &amp;&amp; window.bsApp.openTimePicker('form-closing-time')">
+                      <button type="button" class="btn-input-action" id="btn-open-tp-closing" title="ជ្រើសរើសម៉ោងបិទ (24h &amp; 60m)" onclick="window.bsApp &amp;&amp; window.bsApp.openTimePicker('form-closing-time')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   <!-- Photo Upload with Timestamp Watermark -->
@@ -607,29 +690,29 @@
               <div class="step-pane" id="step-pane-5">
                 <div class="card-header">
                   <div class="card-title">
-                    <span>ផ្ទៀងផ្ទាត់ &amp; រក្សាទុករបាយការណ៍</span>
-                    <span class="stepperize-badge-current">Step 5 of 5</span>
+                    <span data-i18n="step5Heading">ផ្ទៀងផ្ទាត់ &amp; រក្សាទុករបាយការណ៍</span>
+                    <span class="stepperize-badge-current" data-i18n="step5Badge">ជំហាន 5 នៃ 5</span>
                   </div>
-                  <p class="card-description">ពិនិត្យទិន្នន័យចុងក្រោយ រក្សាទុក និងទាញយកទម្រង់ផ្លូវការ</p>
+                  <p class="card-description" data-i18n="step5Sub">ពិនិត្យទិន្នន័យចុងក្រោយ រក្សាទុក និងទាញយកទម្រង់ផ្លូវការ</p>
                 </div>
                 <div class="card-content">
 
                   <div class="step5-summary-box">
-                    <div class="step5-summary-title" data-i18n="summaryTitle">Summary Report:</div>
+                    <div class="step5-summary-title" data-i18n="summaryTitle">សង្ខេបរបាយការណ៍:</div>
                     <div class="step5-summary-content">
-                      <div data-i18n="summaryBranch">• Branch: <strong class="doc-val-branch">ក្រចេះ</strong> | Date: <strong class="doc-val-date">14/08/26</strong></div>
-                      <div data-i18n="summaryReporter">• Reporter: <strong class="doc-val-name">ប៊ុនតា ភឿន</strong> (<span class="doc-val-position">ប្រធានសាខា</span>)</div>
-                      <div data-i18n="summaryAttendance">• Staff Present: <strong class="doc-val-present">14</strong> | Absent: <strong class="doc-val-absent">Day Off 1នាក់</strong></div>
+                      <div><span data-i18n="summaryBranch">• សាខា:</span> <strong class="doc-val-branch">ក្រចេះ</strong> | <span data-i18n="docLabelDate">ថ្ងៃទីឆ្នាំ:</span> <strong class="doc-val-date">14/08/26</strong></div>
+                      <div><span data-i18n="summaryReporter">• អ្នករាយការណ៍:</span> <strong class="doc-val-name">ប៊ុនតា ភឿន</strong> (<span class="doc-val-position">ប្រធានសាខា</span>)</div>
+                      <div><span data-i18n="summaryAttendance">• វត្តមានបុគ្គលិក:</span> <strong class="doc-val-present">14 នាក់</strong> | <span data-i18n="docSec1Absent">អវត្តមាន </span><strong class="doc-val-absent">គ្មាន</strong></div>
                     </div>
                   </div>
 
                   <div class="flex-col-gap-3">
-                    <button type="button" class="btn btn-primary btn-lg w-full" onclick="window.bsApp.saveCurrentReport()">
+                    <button type="button" class="btn btn-primary btn-lg w-full" id="btn-save-report">
                       <span data-i18n="btnSaveReportAction">រក្សាទុករបាយការណ៍</span>
                     </button>
 
                     <div class="flex-gap-2">
-                      <button type="button" class="btn btn-outline flex-1" onclick="window.bsApp.openTelegramModal()">
+                      <button type="button" class="btn btn-outline flex-1" id="btn-copy-telegram" onclick="window.bsApp.openTelegramModal()">
                         Telegram Format
                       </button>
                       <button type="button" class="btn btn-secondary flex-1" onclick="window.bsApp.switchTab('document-tab')">
@@ -655,7 +738,7 @@
           <div class="shadcn-card preview-card">
             <div class="card-header preview-header-pad">
               <div class="card-title preview-title-sm">
-                <span data-i18n="livePreviewTitle">ទិដ្ឋភាពផ្សាយបន្តផ្ទាល់ (Live A4 Preview)</span>
+                <span data-i18n="livePreviewTitle">ទិដ្ឋភាពផ្សាយបន្តផ្ទាល់</span>
                 <button type="button" class="btn btn-ghost btn-sm" onclick="window.bsApp.switchTab('document-tab')" data-i18n="btnExpandFull">
                   ពង្រីកពេញ
                 </button>
@@ -664,13 +747,14 @@
             <div class="preview-card-viewport">
               <!-- A4 Page Embed -->
               <div class="a4-page">
+                <div class="doc-approval-seal-container"></div>
 
                 <!-- Official Header -->
                 <div class="doc-header">
                   <div class="doc-company-brand">
                     <img src="assets/bs-express-logo.png" alt="BS Express" class="doc-company-logo-img">
                     <div class="doc-company-title" data-i18n="appTitle">
-                      ក្រុមហ៊ុន ប៊ីអេស អ៊ិចប្រេស
+                      ក្រុមហ៊ុនប៊ីអេស អិចប្រេស
                     </div>
                   </div>
                   <div class="doc-kingdom-title">
@@ -717,7 +801,7 @@
 
                 <!-- Section 1 -->
                 <div class="doc-section">
-                  <div class="doc-section-heading" data-i18n="docSec1">១. របាយការណ៍ពេលបើកដំណើរការ (Opening Shift)</div>
+                  <div class="doc-section-heading" data-i18n="docSec1">១. របាយការណ៍ពេលបើកដំណើរការ</div>
                   <ul class="doc-items-list">
                     <li>
                       <div class="doc-item-title" data-i18n="docSec1OpeningTime">ម៉ោងបើកសាខា: </div>
@@ -725,20 +809,21 @@
                     </li>
                     <li>
                       <div class="doc-item-title" data-i18n="docSec1Attendance">វត្តមានបុគ្គលិក: </div>
-                      <span data-i18n="docSec1Present">វត្តមាន </span><span class="doc-val-present doc-highlight-inline">14</span>
-                      <span class="ml-6" data-i18n="docSec1Absent">អវត្តមាន </span><span class="doc-val-absent doc-highlight-inline">Day Off 1នាក់</span>
+                      <span data-i18n="docSec1Present">វត្តមាន </span><span class="doc-val-present doc-highlight-inline">14 នាក់</span>
+                      <span class="ml-6" data-i18n="docSec1Absent">អវត្តមាន </span><span class="doc-val-absent doc-highlight-inline">គ្មាន</span>
                     </li>
                     <li>
                       <div class="doc-item-title" data-i18n="docSec1Cleanliness">អនាម័យសាខា: </div>
                       <div class="doc-val-cleanliness doc-content-block">ស្ថានភាពអនាម័យ និងភាពរៀបរយក្នុង-ក្រៅសាខា</div>
                       <div class="doc-subnote" data-i18n="docPhotoNoteOpening"><strong>បញ្ជាក់៖</strong> ត្រូវផ្ញើររូបថត (ដែលមានភ្ជាប់ម៉ោង និងថ្ងៃខែឆ្នាំឱ្យបានច្បាស់លាស់)</div>
+                      <div class="doc-photo-gallery doc-opening-photos-container no-print"></div>
                     </li>
                   </ul>
                 </div>
 
                 <!-- Section 2 -->
                 <div class="doc-section">
-                  <div class="doc-section-heading" data-i18n="docSec2">២. របាយការណ៍ប្រតិបត្តិការប្រចាំថ្ងៃ (Daily Operation)</div>
+                  <div class="doc-section-heading" data-i18n="docSec2">២. របាយការណ៍ប្រតិបត្តិការប្រចាំថ្ងៃ</div>
                   <ul class="doc-items-list">
                     <li>
                       <div class="doc-item-title" data-i18n="docSec2WorkStatus">ស្ថានភាពការងារ ៖</div>
@@ -753,7 +838,7 @@
 
                 <!-- Section 3 -->
                 <div class="doc-section">
-                  <div class="doc-section-heading" data-i18n="docSec3">៣. របាយការណ៍ពេលបិទដំណើរការ (Closing Shift)</div>
+                  <div class="doc-section-heading" data-i18n="docSec3">៣. របាយការណ៍ពេលបិទដំណើរការ</div>
                   <ul class="doc-items-list">
                     <li>
                       <div class="doc-item-title" data-i18n="docSec3Accomplished">ការងារដែលបានសម្រេច៖ </div>
@@ -764,13 +849,14 @@
                       <div class="doc-val-unresolved doc-content-block">អីវ៉ាន់ដឹកអត់ដល់ទុកដឹកស្អែក</div>
                     </li>
                     <li>
-                      <div class="doc-item-title" data-i18n="docSec3Security">សុវត្ថិភាពការញ៉ាប់បញ្ញើ៖ </div>
+                      <div class="doc-item-title" data-i18n="docSec3Security">សុវត្ថិភាពការបញ្ញើ៖ </div>
                       <div class="doc-val-security doc-content-block">អីវ៉ាន់ដែលនៅសល់ទុកដាក់នៅកន្លែងមានផាសុខភាពនិងមិនសើម</div>
                     </li>
                     <li>
                       <div class="doc-item-title" data-i18n="docSec3ClosingTime">ម៉ោងបិទសាខា៖ </div>
                       <span class="doc-val-closing-time doc-highlight-inline">11:00Pm</span>
                       <div class="doc-subnote" data-i18n="docPhotoNoteClosing"><strong>បញ្ជាក់៖</strong> ត្រូវផ្ញើររូបថត(ដែលមានភ្ជាប់ម៉ោង និងថ្ងៃខែឆ្នាំឱ្យបានច្បាស់លាស់)</div>
+                      <div class="doc-photo-gallery doc-closing-photos-container no-print"></div>
                     </li>
                   </ul>
                 </div>
@@ -806,8 +892,8 @@
           <p class="doc-bar-sub" data-i18n="docTopBarSub">ទម្រង់ស្តង់ដារសម្រាប់បោះពុម្ព (Print) ឬរក្សាទុកជា PDF</p>
         </div>
         <div class="flex-gap-2">
-          <button type="button" class="btn btn-outline btn-sm" id="btn-toggle-stamp" onclick="window.bsApp.toggleStamp()">
-            <span data-i18n="btnToggleStamp">ត្រាក្រុមហ៊ុន (Stamp)</span>
+          <button type="button" class="btn btn-outline btn-sm" id="btn-approve-current-doc" style="display:none;" onclick="window.bsApp.approveCurrentReportDoc()">
+            <span id="approve-doc-btn-text">✓ អនុម័តរបាយការណ៍</span>
           </button>
           <button type="button" class="btn btn-secondary btn-sm" onclick="window.bsApp.switchTab('form-tab')">
             <span data-i18n="btnEditData">កែសម្រួលទិន្នន័យ</span>
@@ -824,13 +910,14 @@
       <!-- Centered A4 Page Container -->
       <div class="a4-document-wrapper">
         <div class="a4-page" id="printable-a4-page">
+          <div class="doc-approval-seal-container"></div>
 
           <!-- Official Header Section -->
           <div class="doc-header">
             <div class="doc-company-brand">
               <img src="assets/bs-express-logo.png" alt="BS Express" class="doc-company-logo-img">
               <div class="doc-company-title" data-i18n="appTitle">
-                ក្រុមហ៊ុន ប៊ីអេស អ៊ិចប្រេស
+                ក្រុមហ៊ុនប៊ីអេស អិចប្រេស
               </div>
             </div>
             <div class="doc-kingdom-title">
@@ -877,7 +964,7 @@
 
           <!-- Section 1 -->
           <div class="doc-section">
-            <div class="doc-section-heading" data-i18n="docSec1">១. របាយការណ៍ពេលបើកដំណើរការ (Opening Shift)</div>
+            <div class="doc-section-heading" data-i18n="docSec1">១. របាយការណ៍ពេលបើកដំណើរការ</div>
             <ul class="doc-items-list">
               <li>
                 <div class="doc-item-title" data-i18n="docSec1OpeningTime">ម៉ោងបើកសាខា: </div>
@@ -885,21 +972,21 @@
               </li>
               <li>
                 <div class="doc-item-title" data-i18n="docSec1Attendance">វត្តមានបុគ្គលិក: </div>
-                <span data-i18n="docSec1Present">វត្តមាន </span><span class="doc-val-present doc-highlight-inline">14</span>
-                <span class="ml-8" data-i18n="docSec1Absent">អវត្តមាន </span><span class="doc-val-absent doc-highlight-inline">Day Off 1នាក់</span>
+                <span data-i18n="docSec1Present">វត្តមាន </span><span class="doc-val-present doc-highlight-inline">14 នាក់</span>
+                <span class="ml-8" data-i18n="docSec1Absent">អវត្តមាន </span><span class="doc-val-absent doc-highlight-inline">គ្មាន</span>
               </li>
               <li>
                 <div class="doc-item-title" data-i18n="docSec1Cleanliness">អនាម័យសាខា: </div>
                 <div class="doc-val-cleanliness doc-content-block">ស្ថានភាពអនាម័យ និងភាពរៀបរយក្នុង-ក្រៅសាខា</div>
                 <div class="doc-subnote" data-i18n="docPhotoNoteOpening"><strong>បញ្ជាក់៖</strong> ត្រូវផ្ញើររូបថត (ដែលមានភ្ជាប់ម៉ោង និងថ្ងៃខែឆ្នាំឱ្យបានច្បាស់លាស់)</div>
-                <div id="doc-opening-photos" class="doc-photo-gallery no-print"></div>
+                <div id="doc-opening-photos" class="doc-photo-gallery doc-opening-photos-container no-print"></div>
               </li>
             </ul>
           </div>
 
           <!-- Section 2 -->
           <div class="doc-section">
-            <div class="doc-section-heading" data-i18n="docSec2">២. របាយការណ៍ប្រតិបត្តិការប្រចាំថ្ងៃ (Daily Operation)</div>
+            <div class="doc-section-heading" data-i18n="docSec2">២. របាយការណ៍ប្រតិបត្តិការប្រចាំថ្ងៃ</div>
             <ul class="doc-items-list">
               <li>
                 <div class="doc-item-title" data-i18n="docSec2WorkStatus">ស្ថានភាពការងារ ៖</div>
@@ -914,7 +1001,7 @@
 
           <!-- Section 3 -->
           <div class="doc-section">
-            <div class="doc-section-heading" data-i18n="docSec3">៣. របាយការណ៍ពេលបិទដំណើរការ (Closing Shift)</div>
+            <div class="doc-section-heading" data-i18n="docSec3">៣. របាយការណ៍ពេលបិទដំណើរការ</div>
             <ul class="doc-items-list">
               <li>
                 <div class="doc-item-title" data-i18n="docSec3Accomplished">ការងារដែលបានសម្រេច៖ </div>
@@ -925,19 +1012,19 @@
                 <div class="doc-val-unresolved doc-content-block">អីវ៉ាន់ដឹកអត់ដល់ទុកដឹកស្អែក</div>
               </li>
               <li>
-                <div class="doc-item-title" data-i18n="docSec3Security">សុវត្ថិភាពការញ៉ាប់បញ្ញើ៖ </div>
+                <div class="doc-item-title" data-i18n="docSec3Security">សុវត្ថិភាពការបញ្ញើ៖ </div>
                 <div class="doc-val-security doc-content-block">អីវ៉ាន់ដែលនៅសល់ទុកដាក់នៅកន្លែងមានផាសុខភាពនិងមិនសើម</div>
               </li>
               <li>
                 <div class="doc-item-title" data-i18n="docSec3ClosingTime">ម៉ោងបិទសាខា៖ </div>
                 <span class="doc-val-closing-time doc-highlight-inline">11:00Pm</span>
                 <div class="doc-subnote" data-i18n="docPhotoNoteClosing"><strong>បញ្ជាក់៖</strong> ត្រូវផ្ញើររូបថត(ដែលមានភ្ជាប់ម៉ោង និងថ្ងៃខែឆ្នាំឱ្យបានច្បាស់លាស់)</div>
-                <div id="doc-closing-photos" class="doc-photo-gallery no-print"></div>
+                <div id="doc-closing-photos" class="doc-photo-gallery doc-closing-photos-container no-print"></div>
               </li>
             </ul>
           </div>
 
-          <!-- Official Signatures Block with Authentic Seal Stamp -->
+          <!-- Official Signatures Block -->
           <div class="doc-signature-row">
             <div class="doc-sign-box">
               <div class="doc-sign-role" data-i18n="docSignRoleReporter">ប្រធានសាខា / អ្នករាយការណ៍</div>
@@ -945,11 +1032,6 @@
             </div>
             <div class="doc-sign-box">
               <div class="doc-sign-role" data-i18n="docSignRoleOps">នាយកដ្ឋានប្រតិបត្តិការ</div>
-              <div class="official-seal-stamp">
-                <div>BS EXPRESS</div>
-                <span>★ <span data-i18n="docStampText">ត្រាផ្លូវការ</span> ★</span>
-                <span>សាខា <strong class="doc-val-branch">ក្រចេះ</strong></span>
-              </div>
               <div class="doc-sign-name" data-i18n="docSignNamePlaceholder">ហត្ថលេខា និងត្រា</div>
             </div>
           </div>
@@ -974,26 +1056,76 @@
          ========================================================================= -->
     <section class="tab-panel" id="history-tab">
 
-      <!-- Top KPI Stats Cards with Official BS Express Brand Colors -->
-      <div class="stats-grid">
-        <div class="stat-box stat-box-blue">
-          <div class="stat-label" data-i18n="statTotalReports">របាយការណ៍សរុប</div>
-          <div class="stat-number" id="stat-total-reports">3</div>
+      <!-- Branch Issues & Challenges Analytics Graph Card -->
+      <div class="shadcn-card branch-analytics-card" id="card-branch-issues-graph">
+        <div class="card-header card-header-flex-between">
+          <div class="flex-align-center gap-2">
+            <div class="graph-icon-badge">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title" data-i18n="graphCardTitle">ក្រាហ្វិកខ្សែបន្ទាត់ស្ថិតិបញ្ហាប្រឈមតាមសាខា</h2>
+              <p class="card-description" data-i18n="graphCardSub">ទិន្នន័យវិភាគបញ្ហាដែលបានដោះស្រាយ និងមិនទាន់ដោះស្រាយតាមសាខានីមួយៗ</p>
+            </div>
+          </div>
+          <div class="flex-gap-2">
+            <button type="button" class="btn btn-outline btn-sm" id="btn-reload-all-branches" onclick="window.bsApp &amp;&amp; window.bsApp.reloadAllBranchData()" title="Reload All 27 Branches Data">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+              <span data-i18n="btnReloadAllBranches">ទិន្នន័យ ២៧ សាខា</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="btn-toggle-graph" title="Toggle Graph Visibility">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="graph-toggle-icon">
+                <polyline points="18 15 12 9 6 15"></polyline>
+              </svg>
+              <span id="text-toggle-graph">បិទ/បើកក្រាហ្វ</span>
+            </button>
+          </div>
         </div>
 
-        <div class="stat-box stat-box-cyan">
-          <div class="stat-label" data-i18n="statBranchesCount">សាខាដែលបានរាយការណ៍</div>
-          <div class="stat-number" id="stat-branches-count">3</div>
-        </div>
+        <div class="card-content" id="branch-graph-content">
+          <!-- Summary Metrics Strip -->
+          <div class="analytics-metrics-strip" id="graph-summary-strip">
+            <div class="analytic-mini-card total-issues-card">
+              <div class="analytic-mini-label" data-i18n="graphTotalIssues">បញ្ហាសរុបទាំងអស់</div>
+              <div class="analytic-mini-val" id="graph-val-total">0</div>
+            </div>
+            <div class="analytic-mini-card pending-issues-card">
+              <div class="analytic-mini-label" data-i18n="graphPendingIssues">មិនទាន់រួចរាល់</div>
+              <div class="analytic-mini-val" id="graph-val-pending">0</div>
+            </div>
+            <div class="analytic-mini-card resolved-issues-card">
+              <div class="analytic-mini-label" data-i18n="graphResolvedIssues">បានដោះស្រាយរួច</div>
+              <div class="analytic-mini-val" id="graph-val-resolved">0</div>
+            </div>
+            <div class="analytic-mini-card rate-issues-card">
+              <div class="analytic-mini-label" data-i18n="graphResolutionRate">អត្រាដោះស្រាយរួច</div>
+              <div class="analytic-mini-val" id="graph-val-rate">100%</div>
+            </div>
+          </div>
 
-        <div class="stat-box stat-box-red">
-          <div class="stat-label" data-i18n="statStaffPresent">បុគ្គលិកមានវត្តមានសរុប</div>
-          <div class="stat-number" id="stat-staff-present">52</div>
-        </div>
+          <!-- Line Chart Legend & Actions -->
+          <div class="graph-progress-wrap">
+            <div class="graph-progress-labels">
+              <span class="graph-hint-text" data-i18n="graphClickFilterHint">💡 ចុចលើចំនុចសាខាលើក្រាហ្វិកបន្ទាត់ ដើម្បីច្រោះរបាយការណ៍សាខានោះភ្លាមៗ</span>
+              <span class="graph-legend">
+                <span class="legend-item"><span class="legend-dot dot-total"></span> <span data-i18n="graphTotalIssues">បញ្ហាសរុប</span></span>
+                <span class="legend-item"><span class="legend-dot dot-resolved"></span> <span data-i18n="graphResolvedIssues">បានដោះស្រាយរួច</span></span>
+                <span class="legend-item"><span class="legend-dot dot-pending"></span> <span data-i18n="graphPendingIssues">មិនទាន់រួចរាល់</span></span>
+              </span>
+            </div>
+          </div>
 
-        <div class="stat-box stat-box-navy">
-          <div class="stat-label" data-i18n="statChallengesCount">បញ្ហាប្រឈមកំពុងតាមដាន</div>
-          <div class="stat-number" id="stat-challenges-count">2</div>
+          <!-- SVG Line Chart Viewport -->
+          <div class="line-chart-viewport" id="branch-line-chart-viewport">
+            <!-- Dynamically generated SVG Line Chart -->
+          </div>
+
+          <!-- Floating Interactive Point Tooltip -->
+          <div id="line-chart-tooltip" class="line-chart-tooltip-box" style="display: none;"></div>
         </div>
       </div>
 
@@ -1004,22 +1136,81 @@
             <h2 class="card-title" data-i18n="tableCardTitle">បញ្ជីប្រវត្តិរបាយការណ៍ការងារតាមសាខា</h2>
             <p class="card-description" data-i18n="tableCardSub">ស្វែងរក ពិនិត្យមើលទម្រង់ A4 កែប្រែ ឬទាញយកទិន្នន័យ</p>
           </div>
-          <div class="flex-gap-2">
-            <button type="button" class="btn btn-secondary btn-sm" id="btn-export-csv" data-i18n="btnExportCsv">Export CSV</button>
-            <button type="button" class="btn btn-secondary btn-sm" id="btn-export-json" data-i18n="btnBackupJson">Backup JSON</button>
+          <div class="flex-gap-2 history-action-buttons">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-print-history" data-i18n="btnPrintHistory">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+              </svg>
+              <span>បោះពុម្ព / Save as PDF</span>
+            </button>
           </div>
         </div>
 
         <div class="card-content">
-          <!-- Filters -->
+          <!-- Official Print-Only Header for History Table Report -->
+          <div class="history-print-header" id="history-print-header">
+            <div class="history-print-brand">
+              <img src="assets/bs-express-logo.png" alt="BS Express" class="history-print-logo">
+              <div class="history-print-titles">
+                <div class="history-print-company">BS EXPRESS</div>
+                <h1 class="history-print-title" data-i18n="tableCardTitle">បញ្ជីប្រវត្តិរបាយការណ៍ការងារតាមសាខា</h1>
+              </div>
+            </div>
+            <div class="history-print-meta" id="history-print-meta">
+              <!-- Dynamically populated during print -->
+            </div>
+          </div>
+          <!-- Filters Toolbar -->
           <div class="table-filter-grid">
-            <input type="text" id="search-reports" class="form-input" data-i18n-placeholder="searchPlaceholder" placeholder="ស្វែងរកតាមឈ្មោះសាខា, បុគ្គលិក...">
+            <div class="table-search-box">
+              <svg class="search-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="search-reports" class="form-input search-input-styled" data-i18n-placeholder="searchPlaceholder" placeholder="ស្វែងរកតាមឈ្មោះសាខា, បុគ្គលិក, ស្ថានភាព..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </div>
 
             <select id="filter-branch" class="form-input">
               <option value="" data-i18n="filterAllBranches">-- គ្រប់សាខាទាំងអស់ --</option>
             </select>
 
+            <select id="filter-approval-status" class="form-input">
+              <option value="" data-i18n="filterAllApprovalStatus">-- ស្ថានភាពអនុម័តទាំងអស់ --</option>
+              <option value="pending" data-i18n="filterStatusPending">⏳ រង់ចាំពិនិត្យ</option>
+              <option value="approved" data-i18n="filterStatusApproved">✓ បានអនុម័ត</option>
+            </select>
+
             <input type="date" id="filter-date" class="form-input">
+          </div>
+
+          <!-- Quick Filter Chips with Live Count Badges -->
+          <div class="history-quick-filter-chips">
+            <button type="button" class="history-filter-chip active" data-history-filter="all">
+              <span data-i18n="filterAllReports">ទាំងអស់</span>
+              <span class="chip-count-pill" id="chip-count-all">0</span>
+            </button>
+            <button type="button" class="history-filter-chip chip-unresolved" data-history-filter="unresolved">
+              <span data-i18n="filterUnresolved">🔴 បញ្ហាមិនទាន់ដោះស្រាយ</span>
+              <span class="chip-count-pill pill-unresolved" id="chip-count-unresolved">0</span>
+            </button>
+            <button type="button" class="history-filter-chip chip-challenges" data-history-filter="challenges">
+              <span data-i18n="filterWithChallenges">⚠️ បញ្ហាប្រឈមប្រតិបត្តិការ</span>
+              <span class="chip-count-pill pill-challenges" id="chip-count-challenges">0</span>
+            </button>
+            <button type="button" class="history-filter-chip chip-pending" data-history-filter="pending">
+              <span data-i18n="filterStatusPending">⏳ រង់ចាំពិនិត្យ</span>
+              <span class="chip-count-pill pill-pending" id="chip-count-pending">0</span>
+            </button>
+            <button type="button" class="history-filter-chip chip-approved" data-history-filter="approved">
+              <span data-i18n="filterStatusApproved">✓ បានអនុម័ត</span>
+              <span class="chip-count-pill pill-approved" id="chip-count-approved">0</span>
+            </button>
+            <button type="button" class="history-filter-chip" data-history-filter="today">
+              <span data-i18n="filterTodayReports">ថ្ងៃនេះ</span>
+              <span class="chip-count-pill" id="chip-count-today">0</span>
+            </button>
           </div>
 
           <!-- Table Container -->
@@ -1032,6 +1223,7 @@
                   <th data-i18n="thReporter">អ្នករាយការណ៍ / តួនាទី</th>
                   <th data-i18n="thAttendance">វត្តមានបុគ្គលិក</th>
                   <th data-i18n="thWorkStatus">ស្ថានភាពការងារ</th>
+                  <th data-i18n="thPhotos">រូបថត</th>
                   <th data-i18n="thStatus">ស្ថានភាព</th>
                   <th class="text-right" data-i18n="thActions">សកម្មភាព</th>
                 </tr>
@@ -1060,7 +1252,7 @@
           <img src="assets/bs-express-logo.png" alt="BS Express" class="auth-modal-logo">
           <div>
             <h3 data-i18n="authModalTitle">ចូលប្រើប្រព័ន្ធ / ចុះឈ្មោះគណនី</h3>
-            <p class="auth-modal-sub" data-i18n="authModalSub">ប្រព័ន្ធគ្រប់គ្រង និងរបាយការណ៍ក្រុមហ៊ុន ប៊ីអេស អ៊ិចប្រេស</p>
+            <p class="auth-modal-sub" data-i18n="authModalSub">ប្រព័ន្ធគ្រប់គ្រង និងរបាយការណ៍ក្រុមហ៊ុនប៊ីអេស អិចប្រេស</p>
           </div>
         </div>
         <button type="button" class="modal-close-btn" id="btn-close-auth-modal">&times;</button>
@@ -1070,10 +1262,10 @@
       <div class="auth-tabs-wrap">
         <div class="auth-tabs-list">
           <button type="button" class="auth-tab-btn active" data-auth-tab="login" id="tab-auth-login" onclick="window.bsApp && window.bsApp.switchAuthTab('login')" data-i18n="tabLogin">
-            ចូលប្រើប្រព័ន្ធ (Sign In)
+            ចូលប្រើប្រព័ន្ធ
           </button>
           <button type="button" class="auth-tab-btn" data-auth-tab="register" id="tab-auth-register" onclick="window.bsApp && window.bsApp.switchAuthTab('register')" data-i18n="tabRegister">
-            ចុះឈ្មោះគណនីថ្មី (Sign Up)
+            ចុះឈ្មោះគណនីថ្មី
           </button>
         </div>
       </div>
@@ -1085,7 +1277,7 @@
           <form id="form-login" onsubmit="return false;">
             <div class="form-item">
               <label class="form-label" for="login-username">
-                <span data-i18n="labelUsername">ឈ្មោះគណនី (Username)</span>
+                <span data-i18n="labelUsername">ឈ្មោះគណនី</span>
                 <span class="badge-required">*</span>
               </label>
               <div class="input-with-icon">
@@ -1093,13 +1285,13 @@
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                   <circle cx="12" cy="7" r="4"></circle>
                 </svg>
-                <input type="text" id="login-username" class="form-input" data-i18n-placeholder="placeholderUsername" placeholder="ឧ. kratie_mgr ឬ admin" required autocomplete="username">
+                <input type="text" id="login-username" class="form-input" data-i18n-placeholder="placeholderUsername" placeholder="បញ្ចូលឈ្មោះគណនី" required autocomplete="username">
               </div>
             </div>
 
             <div class="form-item">
               <label class="form-label" for="login-password">
-                <span data-i18n="labelPassword">លេខកូដសម្ងាត់ (Password)</span>
+                <span data-i18n="labelPassword">លេខកូដសម្ងាត់</span>
                 <span class="badge-required">*</span>
               </label>
               <div class="input-with-icon">
@@ -1122,12 +1314,12 @@
             </div>
 
             <button type="submit" class="btn btn-primary btn-lg auth-submit-btn" id="btn-submit-login">
-              <span data-i18n="btnLoginSubmit">ចូលប្រព័ន្ធ (Sign In)</span>
+              <span data-i18n="btnLoginSubmit">ចូលប្រើប្រព័ន្ធ</span>
             </button>
           </form>
 
           <p class="auth-switch-prompt">
-            មិនទាន់មានគណនី? <button type="button" class="btn-text-link" onclick="window.bsApp && window.bsApp.switchAuthTab('register')">ចុះឈ្មោះគណនីថ្មី (Sign Up)</button>
+            <span data-i18n="authNoAccount">មិនទាន់មានគណនី?</span> <button type="button" class="btn-text-link" data-i18n="tabRegister" onclick="window.bsApp && window.bsApp.switchAuthTab('register')">ចុះឈ្មោះគណនីថ្មី</button>
           </p>
         </div>
 
@@ -1138,7 +1330,7 @@
             <div class="form-grid two-col">
               <div class="form-item">
                 <label class="form-label" for="reg-fullname">
-                  <span data-i18n="labelFullName">ឈ្មោះពេញ (Full Name)</span>
+                  <span data-i18n="labelFullName">ឈ្មោះពេញ</span>
                   <span class="badge-required">*</span>
                 </label>
                 <input type="text" id="reg-fullname" class="form-input" data-i18n-placeholder="placeholderFullName" placeholder="បញ្ចូលឈ្មោះពេញរបស់អ្នក" required>
@@ -1146,7 +1338,7 @@
 
               <div class="form-item">
                 <label class="form-label" for="reg-username">
-                  <span data-i18n="labelUsername">ឈ្មោះគណនី (Username)</span>
+                  <span data-i18n="labelUsername">ឈ្មោះគណនី</span>
                   <span class="badge-required">*</span>
                 </label>
                 <input type="text" id="reg-username" class="form-input" data-i18n-placeholder="placeholderUsername" placeholder="បញ្ចូលឈ្មោះគណនី" required autocomplete="username">
@@ -1156,22 +1348,21 @@
             <div class="form-grid two-col">
               <div class="form-item">
                 <label class="form-label" for="reg-role">
-                  <span data-i18n="labelUserRole">តួនាទី (Role)</span>
+                  <span data-i18n="labelUserRole">តួនាទី</span>
                   <span class="badge-required">*</span>
                 </label>
                 <select id="reg-role" class="form-input" required>
-                  <option value="ប្រធានសាខា">ប្រធានសាខា (Branch Manager)</option>
-                  <option value="អនុប្រធានសាខា">អនុប្រធានសាខា (Deputy Branch Manager)</option>
-                  <option value="បុគ្គលិកប្រតិបត្តិការ" selected>បុគ្គលិកប្រតិបត្តិការ (Operations Staff)</option>
-                  <option value="ផ្នែកសេវាអតិថិជន">ផ្នែកសេវាអតិថិជន (Customer Service)</option>
-                  <option value="នាយកដ្ឋានប្រតិបត្តិការ (Admin)">នាយកដ្ឋានប្រតិបត្តិការ (Admin / HQ)</option>
-                  <option value="អ្នកគ្រប់គ្រងប្រព័ន្ធ (System Administrator)">អ្នកគ្រប់គ្រងប្រព័ន្ធ (System Administrator)</option>
+                  <option value="ប្រធានសាខា">ប្រធានសាខា</option>
+                  <option value="អនុប្រធានសាខា">អនុប្រធានសាខា</option>
+                  <option value="បុគ្គលិកប្រតិបត្តិការ" selected>បុគ្គលិកប្រតិបត្តិការ</option>
+                  <option value="ផ្នែកសេវាអតិថិជន">ផ្នែកសេវាអតិថិជន</option>
+                  <option value="នាយកដ្ឋានប្រតិបត្តិការ (Admin)">នាយកដ្ឋានប្រតិបត្តិការ (Admin)</option>
                 </select>
               </div>
 
               <div class="form-item">
                 <label class="form-label" for="reg-branch">
-                  <span data-i18n="labelUserBranch">សាខាដែលបម្រើការ (Branch)</span>
+                  <span data-i18n="labelUserBranch">សាខាដែលបម្រើការ</span>
                   <span class="badge-required">*</span>
                 </label>
                 <select id="reg-branch" class="form-input" required>
@@ -1182,8 +1373,7 @@
 
             <div class="form-item">
               <label class="form-label" for="reg-phone">
-                <span data-i18n="labelPhone">លេខទូរស័ព្ទ (Phone Number)</span>
-                <span class="form-hint">(ស្រេចចិត្ត)</span>
+                <span data-i18n="labelPhone">លេខទូរស័ព្ទ</span>
               </label>
               <input type="tel" id="reg-phone" class="form-input" data-i18n-placeholder="placeholderPhone" placeholder="ឧ. 012 345 678">
             </div>
@@ -1191,11 +1381,11 @@
             <div class="form-grid two-col">
               <div class="form-item">
                 <label class="form-label" for="reg-password">
-                  <span data-i18n="labelPassword">លេខកូដសម្ងាត់ (Password)</span>
+                  <span data-i18n="labelPassword">លេខកូដសម្ងាត់</span>
                   <span class="badge-required">*</span>
                 </label>
                 <div class="input-with-icon">
-                  <input type="password" id="reg-password" class="form-input" data-i18n-placeholder="placeholderPassword" placeholder="បញ្ចូលលេខសម្ងាត់" required autocomplete="new-password">
+                  <input type="password" id="reg-password" class="form-input" data-i18n-placeholder="placeholderPassword" placeholder="បញ្ចូលលេខសម្ងាត់របស់អ្នក" required autocomplete="new-password">
                   <button type="button" class="btn-toggle-pwd" data-target="reg-password" title="Show / Hide Password">👁️</button>
                 </div>
               </div>
@@ -1213,12 +1403,12 @@
             </div>
 
             <button type="submit" class="btn btn-primary btn-lg auth-submit-btn" id="btn-submit-register">
-              <span data-i18n="btnRegisterSubmit">ចុះឈ្មោះគណនីថ្មី (Register &amp; Sign In)</span>
+              <span data-i18n="btnRegisterSubmit">ចុះឈ្មោះគណនីថ្មី</span>
             </button>
           </form>
 
           <p class="auth-switch-prompt">
-            មានគណនីរួចហើយ? <button type="button" class="btn-text-link" onclick="window.bsApp && window.bsApp.switchAuthTab('login')">ចូលប្រើប្រព័ន្ធ (Sign In)</button>
+            <span data-i18n="authHaveAccount">មានគណនីរួចហើយ?</span> <button type="button" class="btn-text-link" data-i18n="tabLogin" onclick="window.bsApp && window.bsApp.switchAuthTab('login')">ចូលប្រើប្រព័ន្ធ</button>
           </p>
         </div>
 
@@ -1227,7 +1417,7 @@
   </div>
 
   <!-- =========================================================================
-       SYSTEM ADMINISTRATOR: USER CREDENTIALS &amp; PASSWORDS INSPECTOR MODAL
+       SYSTEM ADMINISTRATOR: USER CREDENTIALS & PASSWORDS INSPECTOR MODAL
        ========================================================================= -->
   <div class="modal-overlay" id="users-management-modal">
     <div class="modal-card users-modal-card">
@@ -1236,11 +1426,11 @@
         <div class="users-modal-title-wrap">
           <div class="admin-shield-icon">🛡️</div>
           <div>
-            <h3 class="users-modal-title">បញ្ជីគណនី និងលេខសម្ងាត់អ្នកប្រើប្រាស់ (User Credentials Inspector)</h3>
+            <h3 class="users-modal-title">បញ្ជីគណនី និងលេខសម្ងាត់អ្នកប្រើប្រាស់</h3>
             <p class="users-modal-sub">ផ្ទាំងត្រួតពិនិត្យសម្រាប់ System Administrator ពិនិត្យ Username, Password និង Role</p>
           </div>
         </div>
-        <button type="button" class="modal-close-btn" id="btn-close-users-modal">&times;</button>
+        <button type="button" class="modal-close-btn" id="btn-close-users-modal" title="Close">&times;</button>
       </div>
 
       <div class="modal-body users-modal-body">
@@ -1253,21 +1443,42 @@
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
             <input type="text" id="search-users-input" class="form-input form-input-sm" placeholder="ស្វែងរកតាម ឈ្មោះ, Username ឬ តួនាទី...">
+            <button type="button" class="search-clear-btn" id="btn-clear-search-users" style="display: none;">&times;</button>
           </div>
 
           <div class="users-toolbar-actions">
             <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-all-passwords">
-              <span id="label-toggle-all-pwd">👁️ បង្ហាញ Password ទាំងអស់</span>
+              <span id="label-toggle-all-pwd">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: -2px;">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <span>បង្ហាញ Password ទាំងអស់</span>
+              </span>
             </button>
             <button type="button" class="btn btn-primary btn-sm" id="btn-show-add-user-form">
-              + បន្ថែមគណនីថ្មី
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: -1px;">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>បន្ថែមគណនីថ្មី</span>
             </button>
           </div>
         </div>
 
         <!-- Inline Quick Add User Form (Collapsible) -->
-        <div class="admin-quick-add-panel" id="admin-quick-add-panel">
-          <h4 class="quick-add-title">➕ បង្កើតគណនីអ្នកប្រើប្រាស់ថ្មី</h4>
+        <div class="admin-quick-add-panel" id="admin-quick-add-panel" style="display: none;">
+          <div class="quick-add-header">
+            <h4 class="quick-add-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: -2px;">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+              <span>បង្កើតគណនីអ្នកប្រើប្រាស់ថ្មី</span>
+            </h4>
+          </div>
           <form id="form-admin-add-user" onsubmit="return false;">
             <div class="form-grid four-col">
               <div class="form-item">
@@ -1276,33 +1487,33 @@
               </div>
               <div class="form-item">
                 <label class="form-label">Username *</label>
-                <input type="text" id="admin-add-username" class="form-input form-input-sm" placeholder="ឧ. kratie_mgr" required>
+                <input type="text" id="admin-add-username" class="form-input form-input-sm" placeholder="ឧ. bunta_sr" required>
               </div>
               <div class="form-item">
                 <label class="form-label">លេខសម្ងាត់ *</label>
                 <input type="text" id="admin-add-password" class="form-input form-input-sm" placeholder="ឧ. 123" required>
               </div>
               <div class="form-item">
-                <label class="form-label">តួនាទី (Role) *</label>
+                <label class="form-label">តួនាទី *</label>
                 <select id="admin-add-role" class="form-input form-input-sm">
                   <option value="ប្រធានសាខា">ប្រធានសាខា</option>
                   <option value="អនុប្រធានសាខា">អនុប្រធានសាខា</option>
                   <option value="បុគ្គលិកប្រតិបត្តិការ" selected>បុគ្គលិកប្រតិបត្តិការ</option>
                   <option value="ផ្នែកសេវាអតិថិជន">ផ្នែកសេវាអតិថិជន</option>
                   <option value="នាយកដ្ឋានប្រតិបត្តិការ (Admin)">នាយកដ្ឋានប្រតិបត្តិការ (Admin)</option>
-                  <option value="អ្នកគ្រប់គ្រងប្រព័ន្ធ (System Administrator)">អ្នកគ្រប់គ្រងប្រព័ន្ធ (System Administrator)</option>
+                  <option value="គណៈគ្រប់គ្រងជាន់ខ្ពស់ (Top Management)">គណៈគ្រប់គ្រងជាន់ខ្ពស់</option>
                 </select>
               </div>
             </div>
             <div class="form-grid two-col mt-2">
               <div class="form-item">
-                <label class="form-label">សាខាដែលបម្រើការ (Branch) *</label>
+                <label class="form-label">សាខាដែលបម្រើការ *</label>
                 <select id="admin-add-branch" class="form-input form-input-sm">
                   <!-- Populated via JS -->
                 </select>
               </div>
               <div class="form-item">
-                <label class="form-label">លេខទូរស័ព្ទ (Phone)</label>
+                <label class="form-label">លេខទូរស័ព្ទ</label>
                 <input type="tel" id="admin-add-phone" class="form-input form-input-sm" placeholder="ឧ. 012 345 678">
               </div>
             </div>
@@ -1318,13 +1529,13 @@
           <table class="users-directory-table">
             <thead>
               <tr>
-                <th>ឈ្មោះ &amp; Avatar</th>
-                <th>Username</th>
-                <th>Password (លេខសម្ងាត់)</th>
-                <th>តួនាទី (Role)</th>
-                <th>សាខា (Branch)</th>
-                <th>លេខទូរស័ព្ទ</th>
-                <th class="text-right">សកម្មភាព</th>
+                <th style="min-width: 190px;">ឈ្មោះ &amp; AVATAR</th>
+                <th style="min-width: 140px;">USERNAME</th>
+                <th style="min-width: 170px;">PASSWORD</th>
+                <th style="min-width: 160px;">តួនាទី</th>
+                <th style="min-width: 140px;">សាខា</th>
+                <th style="min-width: 130px;">លេខទូរស័ព្ទ</th>
+                <th style="min-width: 120px;" class="text-right">សកម្មភាព</th>
               </tr>
             </thead>
             <tbody id="users-table-body">
@@ -1336,8 +1547,8 @@
       </div>
 
       <div class="modal-footer users-modal-footer">
-        <span class="users-count-summary" id="users-count-summary">សរុប 5 គណនី</span>
-        <button type="button" class="btn btn-secondary btn-sm modal-close-trigger" data-i18n="btnCloseModal">បិទផ្ទាំង</button>
+        <span class="users-count-summary" id="users-count-summary">សរុប 0 គណនី</span>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-close-users-modal-footer">បិទផ្ទាំង</button>
       </div>
 
     </div>
@@ -1361,7 +1572,169 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm modal-close-trigger" data-i18n="btnCloseModal">បិទ</button>
         <button type="button" class="btn btn-primary btn-sm" id="btn-modal-copy-tg" data-i18n="btnCopyTelegramText">
-          ចម្លងអត្ថបទ (Copy Text)
+          ចម្លងអត្ថបទ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       24-HOUR & 60-MINUTE TIME PICKER MODAL
+       ========================================================================= -->
+  <div class="modal-overlay" id="time-picker-modal">
+    <div class="modal-card time-picker-card">
+      <div class="modal-header">
+        <div class="time-picker-header-title">
+          <div class="time-picker-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h3 id="time-picker-title" data-i18n="timePickerTitle">ជ្រើសរើសម៉ោង (24h &amp; 60m)</h3>
+            <p class="time-picker-subtitle" id="time-picker-subtitle" data-i18n="timePickerSub">ចុចជ្រើសរើសម៉ោង (00-23) និងនាទី (00-59)</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn">&times;</button>
+      </div>
+      
+      <div class="modal-body time-picker-body">
+        <!-- Interactive Digital Clock Header -->
+        <div class="time-picker-display-banner">
+          <div class="time-display-interactive">
+            <button type="button" class="time-display-seg active" id="tp-seg-hour" title="ចុចដើម្បីរើសម៉ោង">
+              <span class="seg-label" data-i18n="timeColHourShort">ម៉ោង</span>
+              <span class="seg-val" id="tp-disp-hour">06</span>
+            </button>
+            <span class="time-separator-blink">:</span>
+            <button type="button" class="time-display-seg active" id="tp-seg-minute" title="ចុចដើម្បីរើសនាទី">
+              <span class="seg-label" data-i18n="timeColMinuteShort">នាទី</span>
+              <span class="seg-val" id="tp-disp-minute">00</span>
+            </button>
+          </div>
+          <div class="time-banner-meta">
+            <button type="button" class="tp-ampm-toggle" id="tp-ampm-btn" title="ប្តូរ AM/PM">AM</button>
+            <div class="tp-24h-pill" id="tp-disp-24h">24H: 06:00</div>
+          </div>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="time-quick-presets-wrap">
+          <span class="tp-preset-label">ម៉ោងរហ័ស:</span>
+          <div class="time-quick-presets" id="tp-quick-presets-container">
+            <button type="button" class="tp-preset-chip" data-tp-hour="6" data-tp-min="0" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(6, 0)">06:00 AM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="6" data-tp-min="30" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(6, 30)">06:30 AM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="7" data-tp-min="0" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(7, 0)">07:00 AM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="7" data-tp-min="30" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(7, 30)">07:30 AM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="8" data-tp-min="0" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(8, 0)">08:00 AM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="23" data-tp-min="0" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(23, 0)">11:00 PM</button>
+          </div>
+        </div>
+
+        <!-- Dual Side-by-Side Matrix: Zero Scrollbars! -->
+        <div class="time-picker-matrices-grid">
+          <!-- Hours Grid Matrix (24 Hours: 00 - 23) -->
+          <div class="tp-matrix-card">
+            <div class="tp-matrix-header">
+              <span class="tp-matrix-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span data-i18n="timeColHour">ម៉ោង</span>
+              </span>
+              <span class="tp-matrix-hint">00 ដល់ 23</span>
+            </div>
+            
+            <div class="tp-hours-grid" id="tp-hours-grid">
+              <!-- Dynamically populated 24 buttons (00-23 in clean 6x4 matrix) -->
+            </div>
+          </div>
+
+          <!-- Minutes Grid Matrix (00 - 59) -->
+          <div class="tp-matrix-card">
+            <div class="tp-matrix-header">
+              <span class="tp-matrix-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="6" x2="12" y2="12"></line>
+                </svg>
+                <span data-i18n="timeColMinute">នាទី</span>
+              </span>
+              <!-- Stepper Controls -->
+              <div class="tp-minute-stepper">
+                <button type="button" class="tp-step-btn" id="btn-tp-min-minus" title="ដក ១ នាទី (-1m)">-1</button>
+                <span class="tp-step-val" id="tp-step-disp-min">:00</span>
+                <button type="button" class="tp-step-btn" id="btn-tp-min-plus" title="ថែម ១ នាទី (+1m)">+1</button>
+              </div>
+            </div>
+
+            <!-- 5-min intervals grid -->
+            <div class="tp-minutes-grid" id="tp-minutes-grid">
+              <!-- Dynamically populated 12 quick buttons: :00, :05, :10, :15, :20, :25, :30, :35, :40, :45, :50, :55 -->
+            </div>
+
+            <!-- Fine-tuning Slider Strip -->
+            <div class="tp-minute-fine-strip">
+              <span class="tp-fine-label">រំកិលនាទី:</span>
+              <input type="range" min="0" max="59" step="1" id="tp-minute-slider" class="tp-range-slider" value="0">
+              <span class="tp-fine-val" id="tp-slider-val">:00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer time-picker-footer">
+        <button type="button" class="btn btn-outline btn-sm" id="btn-tp-now" onclick="window.bsApp &amp;&amp; window.bsApp.setTimePickerToNow()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span data-i18n="btnTpNow">ម៉ោងបច្ចុប្បន្ន</span>
+        </button>
+        <div class="flex-gap-2">
+          <button type="button" class="btn btn-secondary btn-sm modal-close-trigger" data-i18n="btnCancel">បោះបង់</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-tp-confirm" onclick="window.bsApp &amp;&amp; window.bsApp.confirmTimePickerSelection()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span id="btn-tp-confirm-text" data-i18n="btnConfirmTime">យល់ព្រមជ្រើសរើស</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       TIME SELECTION COMPLETE MESSAGE BOX MODAL (ALERT OK)
+       ========================================================================= -->
+  <div class="modal-overlay" id="time-complete-modal">
+    <div class="modal-card time-complete-card">
+      <div class="modal-body time-complete-body">
+        <div class="time-complete-icon-wrap">
+          <div class="time-complete-pulse"></div>
+          <div class="time-complete-icon-badge">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+        
+        <h3 class="time-complete-title" id="time-complete-title" data-i18n="timeCompleteTitle">បានជ្រើសរើសម៉ោងជោគជ័យ!</h3>
+        <p class="time-complete-sub" id="time-complete-sub" data-i18n="timeCompleteSub">ទិន្នន័យម៉ោងត្រូវបានបញ្ចូលក្នុងរបាយការណ៍រួចរាល់</p>
+        
+        <div class="time-complete-badge-box">
+          <div class="time-complete-label" id="time-complete-label">ម៉ោងបើកសាខា</div>
+          <div class="time-complete-value" id="time-complete-value">06:00 AM</div>
+          <div class="time-complete-24h" id="time-complete-24h">24H: 06:00</div>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-lg time-complete-ok-btn" id="btn-time-complete-ok" onclick="window.bsApp &amp;&amp; window.bsApp.closeTimeCompleteModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span data-i18n="btnOk">យល់ព្រម</span>
         </button>
       </div>
     </div>
@@ -1371,11 +1744,11 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Application Logic Scripts (Chrome local file &amp; server compatible) -->
-  <script src="js/i18n.js?v=5.0"></script>
-  <script src="js/storage.js?v=5.0"></script>
-  <script src="js/watermark.js?v=5.0"></script>
-  <script src="js/export-util.js?v=5.0"></script>
-  <script src="js/app.js?v=5.0"></script>
+  <script src="js/i18n.js?v=17.1"></script>
+  <script src="js/storage.js?v=17.1"></script>
+  <script src="js/watermark.js?v=17.1"></script>
+  <script src="js/export-util.js?v=17.1"></script>
+  <script src="js/app.js?v=17.1"></script>
 
 </body>
 </html>

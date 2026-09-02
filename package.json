@@ -4,6 +4,11 @@
   "type": "module",
   "description": "BS Express Daily Work Report Web Application",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.127.1"
   }
 }
