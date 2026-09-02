@@ -2953,6 +2953,8 @@
     const approvalFilter = document.getElementById('filter-approval-status')?.value || '';
     const dateFilter = document.getElementById('filter-date')?.value || '';
 
+    let reports = this.getAccessibleReports();
+
     // 1. Quick Filters
     if (this.historyQuickFilter === 'today') {
       const todayISO = new Date().toISOString().split('T')[0];
