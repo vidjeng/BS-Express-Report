@@ -2953,16 +2953,18 @@
     const approvalFilter = document.getElementById('filter-approval-status')?.value || '';
     const dateFilter = document.getElementById('filter-date')?.value || '';
 
-    let reports = this.getAccessibleReports();
-
     // 1. Quick Filters
     if (this.historyQuickFilter === 'today') {
       const todayISO = new Date().toISOString().split('T')[0];
       reports = reports.filter(r => r.date === todayISO || (r.createdAt && r.createdAt.startsWith(todayISO)));
-    } else if (this.historyQuickFilter === 'unresolved') {
-      reports = reports.filter(r => (r.unresolvedIssues && r.unresolvedIssues.trim() && r.unresolvedIssues.trim() !== 'គ្មាន' && r.unresolvedIssues.trim() !== 'None' && r.unresolvedIssues.trim() !== 'បានដោះស្រាយរួចរាល់ទាំងអស់') || (r.issueList && r.issueList.length > 0));
-    } else if (this.historyQuickFilter === 'challenges') {
-      reports = reports.filter(r => (r.operationChallenges && r.operationChallenges.trim() && r.operationChallenges.trim() !== 'គ្មាន' && r.operationChallenges.trim() !== 'None') || (r.challengesList && r.challengesList.length > 0));
+    } else if (this.historyQuickFilter === 'unresolved' || this.historyQuickFilter === 'challenges') {
+      reports = reports.filter(r => {
+        const hasUnresolvedIssues = r.unresolvedIssues && r.unresolvedIssues.trim() && !['គ្មាន', 'None', 'បានដោះស្រាយរួចរាល់ទាំងអស់', 'គ្មានបញ្ហា', 'ដោះស្រាយរួច'].includes(r.unresolvedIssues.trim());
+        const hasIncompleteIssues = Array.isArray(r.issues) && r.issues.some(i => i && i.issue && i.status !== 'complete');
+        const hasIssueList = Array.isArray(r.issueList) && r.issueList.length > 0 && r.issueList.some(i => (typeof i === 'string' ? i.trim() : i.issue?.trim()) && i.status !== 'complete');
+        const hasChallenges = r.operationChallenges && r.operationChallenges.trim() && !['គ្មាន', 'None', 'គ្មានបញ្ហា', 'មិនមាន'].includes(r.operationChallenges.trim());
+        return hasUnresolvedIssues || hasIncompleteIssues || hasIssueList || hasChallenges;
+      });
     } else if (this.historyQuickFilter === 'approved') {
       reports = reports.filter(r => r.approvalStatus === 'approved');
     } else if (this.historyQuickFilter === 'pending') {
@@ -3259,9 +3261,14 @@
     const totalStaff = reports.reduce((sum, r) => sum + (parseInt(r.presentCount) || 0), 0);
     if (staffPresentEl) staffPresentEl.textContent = totalStaff;
 
-    const unresolvedCount = reports.filter(r => (r.unresolvedIssues && r.unresolvedIssues.trim() && r.unresolvedIssues.trim() !== 'គ្មាន' && r.unresolvedIssues.trim() !== 'None' && r.unresolvedIssues.trim() !== 'បានដោះស្រាយរួចរាល់ទាំងអស់') || (r.issueList && r.issueList.length > 0)).length;
-    const challengesCount = reports.filter(r => (r.operationChallenges && r.operationChallenges.trim() !== 'គ្មាន' && r.operationChallenges.trim() !== 'None') || (r.challengesList && r.challengesList.length > 0)).length;
-    if (challengesEl) challengesEl.textContent = challengesCount;
+    const unresolvedCount = reports.filter(r => {
+      const hasUnresolvedIssues = r.unresolvedIssues && r.unresolvedIssues.trim() && !['គ្មាន', 'None', 'បានដោះស្រាយរួចរាល់ទាំងអស់', 'គ្មានបញ្ហា', 'ដោះស្រាយរួច'].includes(r.unresolvedIssues.trim());
+      const hasIncompleteIssues = Array.isArray(r.issues) && r.issues.some(i => i && i.issue && i.status !== 'complete');
+      const hasIssueList = Array.isArray(r.issueList) && r.issueList.length > 0 && r.issueList.some(i => (typeof i === 'string' ? i.trim() : i.issue?.trim()) && i.status !== 'complete');
+      const hasChallenges = r.operationChallenges && r.operationChallenges.trim() && !['គ្មាន', 'None', 'គ្មានបញ្ហា', 'មិនមាន'].includes(r.operationChallenges.trim());
+      return hasUnresolvedIssues || hasIncompleteIssues || hasIssueList || hasChallenges;
+    }).length;
+    if (challengesEl) challengesEl.textContent = unresolvedCount;
 
     // Dynamic Filter Chip Counts
     const todayISO = new Date().toISOString().split('T')[0];
@@ -3271,14 +3278,12 @@
 
     const chipAll = document.getElementById('chip-count-all');
     const chipUnresolved = document.getElementById('chip-count-unresolved');
-    const chipChallenges = document.getElementById('chip-count-challenges');
     const chipPending = document.getElementById('chip-count-pending');
     const chipApproved = document.getElementById('chip-count-approved');
     const chipToday = document.getElementById('chip-count-today');
 
     if (chipAll) chipAll.textContent = reports.length;
     if (chipUnresolved) chipUnresolved.textContent = unresolvedCount;
-    if (chipChallenges) chipChallenges.textContent = challengesCount;
     if (chipPending) chipPending.textContent = pendingCount;
     if (chipApproved) chipApproved.textContent = approvedCount;
     if (chipToday) chipToday.textContent = todayCount;
