@@ -124,11 +124,14 @@
             <li><span class="check-icon check-emerald">✓</span> ភ្ជាប់ជាមួយឧបករណ៍ស្កេនវត្តមាន Hikvision</li>
           </ul>
           <div class="portal-card-action">
-            <button type="button" class="btn btn-emerald portal-open-btn">
+            <button type="button" class="btn btn-emerald portal-open-btn" onclick="event.stopPropagation(); window.bsApp && window.bsApp.switchSystem('fix-asset')">
               <span data-i18n="btnOpenFixAsset">ចូលប្រើប្រព័ន្ធ Fixed Asset</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="9 18 15 12 9 6"></polyline>
               </svg>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="event.stopPropagation(); window.bsApp && window.bsApp.openFixAssetNewTab()" title="Open Fixed Asset in full browser tab" style="margin-top: 8px; width: 100%; border-color: rgba(16, 185, 129, 0.4); color: #10b981;">
+              ↗️ <span>បើកផ្ទាំងពេញ (Open Full App)</span>
             </button>
           </div>
         </div>
@@ -1507,8 +1510,14 @@
           </div>
           <div class="offline-actions-row">
             <button type="button" class="btn btn-primary" onclick="window.bsApp && window.bsApp.reloadFixAssetFrame()">🔄 ផ្ទុកឡើងវិញ (Reload)</button>
+            <button type="button" class="btn btn-outline" onclick="window.bsApp && window.bsApp.openFixAssetNewTab()">↗️ បើកផ្ទាំងថ្មី (Open New Tab)</button>
             <button type="button" class="btn btn-outline" onclick="window.bsApp && window.bsApp.openFixAssetSettings()">⚙️ ប្តូរ Server URL</button>
             <button type="button" class="btn btn-text-link" onclick="window.bsApp && window.bsApp.switchSystem('daily-report')">← ត្រឡប់ទៅប្រព័ន្ធរបាយការណ៍</button>
+          </div>
+          <div style="margin-top: 14px; padding: 10px; background: rgba(59, 130, 246, 0.08); border-radius: 8px; font-size: 0.85rem; color: #94a3b8; text-align: left;">
+            🔑 <strong>គណនី Login Fixed Asset:</strong><br>
+            • <strong>Username:</strong> <code style="color: #60a5fa;">vid</code> ឬ <code style="color: #60a5fa;">admin</code> ឬ <code style="color: #60a5fa;">superadmin</code><br>
+            • <strong>Password:</strong> <code style="color: #34d399;">123</code> ឬ <code style="color: #34d399;">12345678</code>
           </div>
         </div>
       </div>
