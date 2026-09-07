@@ -3,6 +3,25 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
+import {
+  initDatabase,
+  getDbStatus,
+  getAllReports,
+  saveReport,
+  deleteReport,
+  deleteIssue,
+  getDeletedRecords,
+  addDeletedTombstone,
+  getAllUsers,
+  saveUser,
+  deleteUser,
+  getBranchDraft,
+  saveBranchDraft,
+  getFixAssetStats,
+  getFixAssetBranches,
+  getFixAssetEmployees,
+  getFixAssetItems
+} from './db/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,12 +50,206 @@ const MIME_TYPES = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon'
+  '.ico': 'image/x-icon',
+  '.webp': 'image/webp'
 };
 
-const server = http.createServer((req, res) => {
-  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
-  filePath = filePath.split('?')[0];
+function parseJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk;
+      // Allow up to 50MB for reports containing watermarked photo data
+      if (body.length > 50 * 1024 * 1024) {
+        reject(new Error('Payload Too Large'));
+      }
+    });
+    req.on('end', () => {
+      if (!body) return resolve({});
+      try {
+        resolve(JSON.parse(body));
+      } catch (err) {
+        reject(new Error('Invalid JSON format: ' + err.message));
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Cache-Control': 'no-store, no-cache, must-revalidate'
+  });
+  res.end(JSON.stringify(data));
+}
+
+const server = http.createServer(async (req, res) => {
+  // CORS Preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400'
+    });
+    res.end();
+    return;
+  }
+
+  const urlObj = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+  const pathname = urlObj.pathname;
+
+  // ===========================================================================
+  // REST API ENDPOINTS FOR MYSQL PERSISTENCE
+  // ===========================================================================
+  if (pathname.startsWith('/api/')) {
+    try {
+      // 1. Database Health & Status
+      if ((pathname === '/api/db/status' || pathname === '/api/health') && req.method === 'GET') {
+        const status = getDbStatus();
+        return sendJson(res, 200, { success: true, ...status });
+      }
+
+      // 2. Reports API
+      if (pathname === '/api/reports') {
+        if (req.method === 'GET') {
+          const reports = await getAllReports();
+          return sendJson(res, 200, { success: true, count: reports.length, reports });
+        }
+
+        if (req.method === 'POST') {
+          const reportData = await parseJsonBody(req);
+          if (!reportData || !reportData.branch || !reportData.reporterName) {
+            return sendJson(res, 400, { success: false, error: 'Missing required report fields (branch, reporterName)' });
+          }
+          const result = await saveReport(reportData);
+          return sendJson(res, 200, { success: true, report: reportData, result });
+        }
+      }
+
+      if (pathname.startsWith('/api/reports/')) {
+        const reportId = decodeURIComponent(pathname.replace('/api/reports/', ''));
+        if (req.method === 'DELETE') {
+          const deleted = await deleteReport(reportId);
+          return sendJson(res, 200, { success: true, deleted, id: reportId });
+        }
+      }
+
+      // 3. Issues Delete API
+      if (pathname.startsWith('/api/issues/')) {
+        const issueId = decodeURIComponent(pathname.replace('/api/issues/', ''));
+        if (req.method === 'DELETE') {
+          const reportId = urlObj.searchParams.get('reportId') || '';
+          await deleteIssue(reportId, issueId);
+          return sendJson(res, 200, { success: true, id: issueId, reportId });
+        }
+      }
+
+      // 4. Deleted Records / Tombstones API
+      if (pathname === '/api/deleted-records') {
+        if (req.method === 'GET') {
+          const records = await getDeletedRecords();
+          return sendJson(res, 200, { success: true, ...records });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const recordId = body?.recordId || body?.id || body?.record_id;
+          if (body && body.type && recordId) {
+            await addDeletedTombstone(body.type, recordId);
+          }
+          return sendJson(res, 200, { success: true });
+        }
+      }
+
+      // 5. Users API
+      if (pathname === '/api/users') {
+        if (req.method === 'GET') {
+          const users = await getAllUsers();
+          return sendJson(res, 200, { success: true, count: users.length, users });
+        }
+
+        if (req.method === 'POST') {
+          const userData = await parseJsonBody(req);
+          if (!userData || !userData.username || !userData.password) {
+            return sendJson(res, 400, { success: false, error: 'Missing username or password' });
+          }
+          const saved = await saveUser(userData);
+          return sendJson(res, 200, { success: true, user: saved });
+        }
+      }
+
+      if (pathname.startsWith('/api/users/')) {
+        const userId = decodeURIComponent(pathname.replace('/api/users/', ''));
+        if (req.method === 'DELETE') {
+          const deleted = await deleteUser(userId);
+          return sendJson(res, 200, { success: true, deleted, id: userId });
+        }
+      }
+
+      // 4. Branch Drafts API
+      if (pathname.startsWith('/api/drafts/')) {
+        const branchName = decodeURIComponent(pathname.replace('/api/drafts/', ''));
+        if (req.method === 'GET') {
+          const draft = await getBranchDraft(branchName);
+          return sendJson(res, 200, { success: true, branch: branchName, draft });
+        }
+        if (req.method === 'POST') {
+          const draftData = await parseJsonBody(req);
+          await saveBranchDraft(branchName, draftData);
+          return sendJson(res, 200, { success: true, branch: branchName });
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // 7. FIX ASSET SYSTEM API
+      // -----------------------------------------------------------------------
+      if (pathname === '/api/fixasset/summary' || pathname === '/api/fixasset/stats') {
+        const stats = await getFixAssetStats();
+        return sendJson(res, 200, { success: true, stats });
+      }
+
+      if (pathname === '/api/fixasset/branches') {
+        const branches = await getFixAssetBranches();
+        return sendJson(res, 200, { success: true, count: branches.length, branches });
+      }
+
+      if (pathname === '/api/fixasset/employees') {
+        const limit = Math.min(parseInt(parsedUrl.searchParams.get('limit') || '100', 10), 1000);
+        const employees = await getFixAssetEmployees(limit);
+        return sendJson(res, 200, { success: true, count: employees.length, employees });
+      }
+
+      if (pathname === '/api/fixasset/items') {
+        const q = (parsedUrl.searchParams.get('q') || '').trim();
+        const limit = Math.min(parseInt(parsedUrl.searchParams.get('limit') || '50', 10), 200);
+        const offset = Math.max(parseInt(parsedUrl.searchParams.get('offset') || '0', 10), 0);
+        const result = await getFixAssetItems(q, limit, offset);
+        return sendJson(res, 200, { success: true, total: result.total, limit, offset, items: result.items });
+      }
+
+      return sendJson(res, 404, { success: false, error: `Endpoint ${pathname} not found` });
+    } catch (apiErr) {
+      console.error('API Error on ' + req.method + ' ' + pathname + ':', apiErr);
+      return sendJson(res, 500, { success: false, error: apiErr.message });
+    }
+  }
+
+  // ===========================================================================
+  // STATIC FILE SERVING
+  // ===========================================================================
+  const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+  const filePath = path.join(__dirname, relativePath);
+
+  // Security check: ensure path is within __dirname
+  if (!filePath.startsWith(__dirname)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('403 Forbidden');
+    return;
+  }
 
   const ext = path.extname(filePath).toLowerCase();
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
@@ -51,25 +264,36 @@ const server = http.createServer((req, res) => {
         res.end(`Server Error: ${err.code}`);
       }
     } else {
-      res.writeHead(200, { 'Content-Type': contentType });
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store, no-cache, must-revalidate'
+      });
       res.end(content);
     }
   });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', async () => {
   console.log(`\n==================================================`);
   console.log(`🚀 BS Express Report Server is running!`);
   console.log(`--------------------------------------------------`);
-  console.log(`📍 On this machine:           http://localhost:${PORT}`);
+  console.log(`📍 Localhost:                 http://localhost:${PORT}`);
   
   const localIPs = getLocalIPs();
   if (localIPs.length > 0) {
     localIPs.forEach(ip => {
-      console.log(`🌐 On Local Network (LAN/Wi-Fi): http://${ip}:${PORT}`);
+      console.log(`🌐 Local Network (LAN/Wi-Fi): http://${ip}:${PORT}`);
     });
+  }
+
+  // Initialize MySQL Connection & Schema
+  console.log(`🔌 Initializing MySQL Database connection...`);
+  const dbOk = await initDatabase();
+  if (dbOk) {
+    console.log(`🗄️  MySQL Database 'bs_express_report' is READY!`);
   } else {
-    console.log(`🌐 On Local Network (LAN/Wi-Fi): http://<Your-IP-Address>:${PORT}`);
+    console.log(`⚠️  Running in LocalStorage fallback mode until MySQL connects.`);
   }
   console.log(`==================================================\n`);
 });

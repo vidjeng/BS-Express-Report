@@ -10,3 +10,9 @@ start.ps1
 Open-In-Chrome.bat
 package-lock.json
 wrangler.jsonc
+cloudflared.exe
+data
+db
+.env
+.env.example
+server.js

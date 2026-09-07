@@ -5,6 +5,9 @@
 
 const STORAGE_KEY = 'bs_express_daily_reports';
 const SETTINGS_KEY = 'bs_express_settings';
+const DELETED_REPORTS_KEY = 'bs_express_deleted_report_ids';
+const DELETED_ISSUES_KEY = 'bs_express_deleted_issue_ids';
+const SEEDED_KEY = 'bs_express_reports_seeded_v3';
 
 // Lightweight SVG sample photos with official watermark styling
 const SAMPLE_IMG_OPEN_1 = "data:image/svg+xml;charset=utf-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e3a8a"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><rect width="640" height="420" fill="url(#g1)"/><rect x="20" y="20" width="600" height="380" rx="12" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="3"/><circle cx="320" cy="180" r="50" fill="rgba(255,255,255,0.15)"/><path d="M320 145v70M285 180h70" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/><text x="320" y="270" fill="#ffffff" font-size="22" font-family="sans-serif" font-weight="bold" text-anchor="middle">BS EXPRESS - OPENING SHIFT</text><text x="320" y="300" fill="rgba(255,255,255,0.8)" font-size="14" font-family="sans-serif" text-anchor="middle">Branch Inspection • 6:00 AM</text><rect x="30" y="345" width="220" height="45" rx="6" fill="rgba(0,0,0,0.6)"/><text x="40" y="365" fill="#facc15" font-size="11" font-family="monospace">📍 KRATIE BRANCH</text><text x="40" y="380" fill="#ffffff" font-size="10" font-family="monospace">🕒 2026-08-14 06:00:15</text></svg>');
@@ -155,37 +158,175 @@ const BRANCH_LIST_EN = [
   'Poi Pet'
 ];
 
+const USER_ROLES = [
+  { id: 'sys_admin', nameKm: 'អ្នកគ្រប់គ្រងប្រព័ន្ធ', nameEn: 'System Administrator', badgeColor: 'purple' },
+  { id: 'top_management', nameKm: 'គណៈគ្រប់គ្រងជាន់ខ្ពស់', nameEn: 'Top Management', badgeColor: 'indigo' },
+  { id: 'ops_department', nameKm: 'នាយកដ្ឋានប្រតិបត្តិការ', nameEn: 'Operations Department (Admin)', badgeColor: 'red' },
+  { id: 'branch_manager', nameKm: 'ប្រធានសាខា', nameEn: 'Branch Manager', badgeColor: 'blue' },
+  { id: 'deputy_manager', nameKm: 'អនុប្រធានសាខា', nameEn: 'Deputy Branch Manager', badgeColor: 'cyan' },
+  { id: 'operations_staff', nameKm: 'បុគ្គលិកប្រតិបត្តិការ', nameEn: 'Operations Staff', badgeColor: 'amber' },
+  { id: 'customer_service', nameKm: 'ផ្នែកសេវាអតិថិជន', nameEn: 'Customer Service', badgeColor: 'emerald' }
+];
+
+const INITIAL_USERS = [
+  {
+    id: 'user_vid',
+    username: 'vid',
+    password: '123',
+    fullName: 'Vid (System Admin)',
+    role: 'អ្នកគ្រប់គ្រងប្រព័ន្ធ (Admin)',
+    roleId: 'sys_admin',
+    branch: 'ការិយាល័យកណ្ដាល',
+    phone: '010 888 999',
+    createdAt: '2026-08-01T08:00:00.000Z'
+  },
+  {
+    id: 'user_admin',
+    username: 'admin',
+    password: '123',
+    fullName: 'System Administrator',
+    role: 'System Administrator (គ្រប់គ្រងប្រព័ន្ធ)',
+    roleId: 'sys_admin',
+    branch: 'ការិយាល័យកណ្ដាល',
+    phone: '010 888 999',
+    createdAt: '2026-08-01T08:00:00.000Z'
+  },
+  {
+    id: 'user_rithjengdavid',
+    username: 'rithjengdavid',
+    password: '123',
+    fullName: 'Rith Jeng David',
+    role: 'អ្នកគ្រប់គ្រងប្រព័ន្ធ (System Administrator)',
+    roleId: 'sys_admin',
+    branch: 'ការិយាល័យកណ្ដាល',
+    phone: '010 888 999',
+    createdAt: '2026-08-01T08:00:00.000Z'
+  },
+  {
+    id: 'user_sysadmin',
+    username: 'sysadmin',
+    password: '123',
+    fullName: 'System Administrator',
+    role: 'System Administrator (គ្រប់គ្រងប្រព័ន្ធ)',
+    roleId: 'sys_admin',
+    branch: 'ការិយាល័យកណ្ដាល',
+    phone: '010 888 999',
+    createdAt: '2026-08-01T08:00:00.000Z'
+  },
+  {
+    id: 'user_vif',
+    username: 'vif',
+    password: '123',
+    fullName: 'vif',
+    role: 'គណៈគ្រប់គ្រងជាន់ខ្ពស់ (Top Management)',
+    roleId: 'top_management',
+    branch: 'ការិយាល័យកណ្តាល',
+    phone: '123',
+    createdAt: '2026-08-01T08:00:00.000Z'
+  }
+];
+
 const Storage = {
+  getDeletedReportIds() {
+    try {
+      const raw = localStorage.getItem(DELETED_REPORTS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr.map(id => String(id).trim()) : []);
+    } catch (e) {
+      return new Set();
+    }
+  },
+
+  addDeletedReportId(id, sync = true) {
+    if (!id) return;
+    try {
+      const strId = String(id).trim();
+      const set = this.getDeletedReportIds();
+      set.add(strId);
+      localStorage.setItem(DELETED_REPORTS_KEY, JSON.stringify([...set]));
+      if (sync && typeof this.syncDeletedTombstoneToDatabase === 'function') {
+        this.syncDeletedTombstoneToDatabase('report', strId);
+      }
+    } catch (e) {
+      console.warn('Error saving deleted report tombstone:', e);
+    }
+  },
+
+  getDeletedIssueIds() {
+    try {
+      const raw = localStorage.getItem(DELETED_ISSUES_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr.map(id => String(id).trim()) : []);
+    } catch (e) {
+      return new Set();
+    }
+  },
+
+  addDeletedIssueId(id, sync = true) {
+    if (!id) return;
+    try {
+      const strId = String(id).trim();
+      const set = this.getDeletedIssueIds();
+      set.add(strId);
+      localStorage.setItem(DELETED_ISSUES_KEY, JSON.stringify([...set]));
+      if (sync && typeof this.syncDeletedTombstoneToDatabase === 'function') {
+        this.syncDeletedTombstoneToDatabase('issue', strId);
+      }
+    } catch (e) {
+      console.warn('Error saving deleted issue tombstone:', e);
+    }
+  },
+
+  clearDeletedTombstones() {
+    try {
+      localStorage.removeItem(DELETED_REPORTS_KEY);
+      localStorage.removeItem(DELETED_ISSUES_KEY);
+    } catch (e) {}
+  },
+
   getReports() {
     try {
+      const deletedReportIds = this.getDeletedReportIds();
+      const deletedIssueIds = this.getDeletedIssueIds();
+      const isSeeded = localStorage.getItem(SEEDED_KEY) === 'true';
       const data = localStorage.getItem(STORAGE_KEY);
+
       if (!data) {
-        const initialReports = this.getInitialSampleReports();
-        this.saveReports(initialReports);
-        return initialReports;
+        // In web environment with Cloudflare D1 backend, never auto-seed dummy reports.
+        // The authoritative reports will be fetched immediately from the database.
+        localStorage.setItem(SEEDED_KEY, 'true');
+        return [];
       }
+
       const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length === 0) {
-        const initialReports = this.getInitialSampleReports();
-        this.saveReports(initialReports);
-        return initialReports;
-      }
       if (Array.isArray(parsed)) {
-        // Filter out broken items
-        let filtered = parsed.filter(r => r && r.id);
-        
-        // Auto-merge all 27 branches so every user always sees all 27 branches on the Line Chart
-        const initialReports = this.getInitialSampleReports();
-        const existingBranches = new Set(filtered.map(r => String(r.branch || '').trim()));
-        
-        initialReports.forEach(initR => {
-          const b = String(initR.branch || '').trim();
-          if (!existingBranches.has(b)) {
-            filtered.push(initR);
-            existingBranches.add(b);
+        if (parsed.length === 0) {
+          localStorage.setItem(SEEDED_KEY, 'true');
+          return [];
+        }
+
+        if (!isSeeded) {
+          localStorage.setItem(SEEDED_KEY, 'true');
+        }
+
+        // Filter out broken items, legacy fake seed reports, and any reports marked as deleted
+        let filtered = parsed.filter(r => r && r.id && !String(r.id).startsWith('report_init_') && !deletedReportIds.has(String(r.id)));
+
+        // Clean issues and unresolvedIssues of surviving reports against deletedIssueIds
+        filtered.forEach(r => {
+          if (Array.isArray(r.issues)) {
+            r.issues = r.issues.filter((iss, idx) => {
+              const iId = String(iss.id || '').trim();
+              const synId = `iss_${r.id}_${idx}`;
+              const iText = String(iss.issue || '').trim();
+              return !deletedIssueIds.has(iId) && !deletedIssueIds.has(synId) && !deletedIssueIds.has(iText);
+            });
+          }
+          if (deletedIssueIds.has(`iss_unresolved_${r.id}`) || (r.unresolvedIssues && deletedIssueIds.has(String(r.unresolvedIssues).trim()))) {
+            r.unresolvedIssues = '';
           }
         });
-
+        
         // Deduplicate identical duplicate reports (e.g. created by double-click or rapid double-save)
         const seenIds = new Set();
         const seenSignatures = new Set();
@@ -854,16 +995,61 @@ const Storage = {
   saveReports(reports) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+      localStorage.setItem(SEEDED_KEY, 'true');
       return true;
     } catch (e) {
-      console.error('Error saving reports to localStorage:', e);
-      return false;
+      console.warn('LocalStorage quota limit reached in saveReports. Preserving latest photos and report texts...', e);
+      try {
+        // Tier 1: Keep full photos for the 3 most recent reports locally (Cloudflare D1 keeps all photos on cloud)
+        const optimized = (reports || []).map((r, idx) => {
+          if (idx < 3) return r;
+          return {
+            ...r,
+            openingPhotos: (r.openingPhotos && r.openingPhotos.length > 0) ? [r.openingPhotos[0]] : [],
+            closingPhotos: (r.closingPhotos && r.closingPhotos.length > 0) ? [r.closingPhotos[0]] : []
+          };
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(optimized));
+        localStorage.setItem(SEEDED_KEY, 'true');
+        return true;
+      } catch (e2) {
+        try {
+          // Tier 2: Retain full report for most recent report, text-only for older reports
+          const textOnly = (reports || []).map((r, idx) => {
+            if (idx === 0) return r;
+            return { ...r, openingPhotos: [], closingPhotos: [], additionalPhotos: [] };
+          });
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(textOnly));
+          localStorage.setItem(SEEDED_KEY, 'true');
+          return true;
+        } catch (e3) {
+          console.error('Critical quota error in saveReports:', e3);
+          return false;
+        }
+      }
     }
   },
 
   saveReport(report) {
     if (!report) return null;
     report.id = report.id || ('report_' + Date.now());
+
+    // If this report is tombstoned, do not resurrect it
+    const deletedReportIds = this.getDeletedReportIds();
+    if (deletedReportIds.has(String(report.id))) {
+      return null;
+    }
+
+    // Filter out any tombstoned issues attached to this report
+    if (Array.isArray(report.issues)) {
+      const deletedIssueIds = this.getDeletedIssueIds();
+      report.issues = report.issues.filter((iss, idx) => {
+        const iId = String(iss.id || '').trim();
+        const synId = `iss_${report.id}_${idx}`;
+        const iText = String(iss.issue || '').trim();
+        return !deletedIssueIds.has(iId) && !deletedIssueIds.has(synId) && !deletedIssueIds.has(iText);
+      });
+    }
 
     const reports = this.getReports();
     
@@ -892,6 +1078,7 @@ const Storage = {
     }
 
     this.saveReports(reports);
+    this.syncReportToDatabase(report);
     return report;
   },
 
@@ -901,10 +1088,338 @@ const Storage = {
   },
 
   deleteReport(id) {
-    let reports = this.getReports();
-    reports = reports.filter(r => r.id !== id);
+    if (!id) return this.getReports();
+    const strId = String(id).trim();
+    this.addDeletedReportId(strId);
+
+    // Also tombstone all issues attached to this report
+    let rawReports = [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      rawReports = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      rawReports = [];
+    }
+
+    const rep = rawReports.find(r => r && String(r.id) === strId);
+    if (rep) {
+      this.addDeletedIssueId(`iss_unresolved_${strId}`);
+      if (Array.isArray(rep.issues)) {
+        rep.issues.forEach((iss, idx) => {
+          if (iss.id) this.addDeletedIssueId(String(iss.id));
+          this.addDeletedIssueId(`iss_${strId}_${idx}`);
+          if (iss.issue) this.addDeletedIssueId(String(iss.issue).trim());
+        });
+      }
+      if (rep.unresolvedIssues && String(rep.unresolvedIssues).trim()) {
+        this.addDeletedIssueId(String(rep.unresolvedIssues).trim());
+      }
+    }
+
+    let reports = rawReports.filter(r => r && String(r.id) !== strId);
     this.saveReports(reports);
+    this.syncDeleteReportToDatabase(strId);
+
+    // Also clean up any standalone issues referencing this report
+    try {
+      let issues = this.getIssues();
+      const initLen = issues.length;
+      issues = issues.filter(i => String(i.reportId) !== strId);
+      if (issues.length !== initLen) {
+        this.saveIssues(issues);
+      }
+    } catch (e) {}
+
     return reports;
+  },
+
+  // =========================================================================
+  // MYSQL DATABASE SYNC & API INTEGRATION
+  // =========================================================================
+  isDbOnline: false,
+
+  getApiBaseUrl() {
+    try {
+      const customUrl = localStorage.getItem('bs_express_api_url');
+      if (customUrl && typeof customUrl === 'string' && customUrl.trim()) {
+        const trimmed = customUrl.trim().replace(/\/+$/, '');
+        // Automatically prune stale tunnel or localhost URLs when on Pages or file protocol
+        if (trimmed.includes('trycloudflare.com') || trimmed.includes('localhost') || trimmed.includes('127.0.0.1')) {
+          if (typeof window !== 'undefined' && (window.location.hostname.endsWith('pages.dev') || window.location.protocol === 'file:')) {
+            localStorage.removeItem('bs_express_api_url');
+            return window.location.protocol === 'file:' ? 'https://bs-express-report.pages.dev' : '';
+          }
+        }
+        return trimmed;
+      }
+    } catch (e) {}
+    // If opened directly from file system (file://), connect to production Pages backend
+    if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
+      return 'https://bs-express-report.pages.dev';
+    }
+    // Native Same-Origin for Cloudflare Pages (with D1 Functions) and local server
+    return '';
+  },
+
+  setApiBaseUrl(url) {
+    try {
+      if (!url) {
+        localStorage.removeItem('bs_express_api_url');
+      } else {
+        localStorage.setItem('bs_express_api_url', String(url).trim().replace(/\/+$/, ''));
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  setDbOnline(online) {
+    this.isDbOnline = Boolean(online);
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('bs-db-status', { 
+        detail: { online: this.isDbOnline } 
+      }));
+    }
+  },
+
+  async checkDbHealth() {
+    try {
+      const baseUrl = this.getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/db/status`);
+      if (res.ok) {
+        const data = await res.json();
+        this.setDbOnline(data.connected);
+        return data;
+      }
+    } catch (err) {
+      this.setDbOnline(false);
+    }
+    return { connected: false };
+  },
+
+  async syncReportToDatabase(report) {
+    try {
+      const baseUrl = this.getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(report)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        this.setDbOnline(true);
+        return data;
+      }
+    } catch (err) {
+      this.setDbOnline(false);
+    }
+    return null;
+  },
+
+  async syncDeleteReportToDatabase(id) {
+    try {
+      const baseUrl = this.getApiBaseUrl();
+      await fetch(`${baseUrl}/api/reports/${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+    } catch (err) {}
+  },
+
+  async syncDeleteIssueToDatabase(reportId, issueId) {
+    try {
+      const baseUrl = this.getApiBaseUrl();
+      const url = `${baseUrl}/api/issues/${encodeURIComponent(issueId)}` + (reportId ? `?reportId=${encodeURIComponent(reportId)}` : '');
+      await fetch(url, { method: 'DELETE' });
+    } catch (err) {}
+  },
+
+  async syncDeletedTombstoneToDatabase(type, recordId) {
+    try {
+      const baseUrl = this.getApiBaseUrl();
+      await fetch(`${baseUrl}/api/deleted-records`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, recordId })
+      });
+    } catch (err) {}
+  },
+
+  async syncUsersFromDatabase() {
+    try {
+      const baseUrl = this.getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/users`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.users) && data.users.length > 0) {
+          this.setDbOnline(true);
+          const userMap = new Map();
+          // Server database is the authority for registered users
+          data.users.forEach(u => {
+            if (u && u.username) {
+              userMap.set(u.username.toLowerCase(), u);
+            }
+          });
+          // Guarantee core admin accounts exist
+          INITIAL_USERS.forEach(initU => {
+            const key = initU.username.toLowerCase();
+            if (!userMap.has(key)) {
+              userMap.set(key, initU);
+            }
+          });
+          const merged = Array.from(userMap.values());
+          this.saveUsers(merged);
+          return merged;
+        }
+      }
+    } catch (err) {}
+    return null;
+  },
+
+  async syncUserToDatabase(user) {
+    if (!user || !user.username) return null;
+    try {
+      const baseUrl = this.getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        this.setDbOnline(true);
+        return data;
+      }
+    } catch (err) {}
+    return null;
+  },
+
+  async syncDeleteUserToDatabase(id) {
+    if (!id) return;
+    try {
+      const baseUrl = this.getApiBaseUrl();
+      await fetch(`${baseUrl}/api/users/${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+    } catch (err) {}
+  },
+
+  async syncReportsFromDatabase() {
+    try {
+      const baseUrl = this.getApiBaseUrl();
+      // 1. Fetch tombstones from database first to ensure local tombstones are up-to-date
+      try {
+        const tombRes = await fetch(`${baseUrl}/api/deleted-records`);
+        if (tombRes.ok) {
+          const tombData = await tombRes.json();
+          if (tombData && Array.isArray(tombData.reports)) {
+            tombData.reports.forEach(id => this.addDeletedReportId(id, false));
+          }
+          if (tombData && Array.isArray(tombData.issues)) {
+            tombData.issues.forEach(id => this.addDeletedIssueId(id, false));
+          }
+        }
+      } catch (tombErr) {}
+
+      // 2. Fetch reports from database
+      const res = await fetch(`${baseUrl}/api/reports`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.reports)) {
+          this.setDbOnline(true);
+          const merged = this.mergeRemoteReports(data.reports);
+          return merged || data.reports;
+        }
+      }
+    } catch (err) {
+      this.setDbOnline(false);
+    }
+    return null;
+  },
+
+  mergeRemoteReports(remoteReports) {
+    if (!Array.isArray(remoteReports)) return this.getReports();
+    const deletedReportIds = this.getDeletedReportIds();
+    const deletedIssueIds = this.getDeletedIssueIds();
+    const localReports = this.getReports();
+    const map = new Map();
+    const remoteIdSet = new Set();
+
+    const cleanReportIssues = (rep) => {
+      if (!rep) return rep;
+      if (Array.isArray(rep.issues)) {
+        rep.issues = rep.issues.filter((iss, idx) => {
+          const iId = String(iss.id || '').trim();
+          const synId = `iss_${rep.id}_${idx}`;
+          const iText = String(iss.issue || '').trim();
+          return !deletedIssueIds.has(iId) && !deletedIssueIds.has(synId) && !deletedIssueIds.has(iText);
+        });
+      }
+      if (deletedIssueIds.has(`iss_unresolved_${rep.id}`) || (rep.unresolvedIssues && deletedIssueIds.has(String(rep.unresolvedIssues).trim()))) {
+        rep.unresolvedIssues = '';
+      }
+      return rep;
+    };
+
+    // 1. Remote reports from Cloudflare D1 are authoritative
+    remoteReports.forEach(r => {
+      if (r && r.id) {
+        const idStr = String(r.id);
+        remoteIdSet.add(idStr);
+        if (!deletedReportIds.has(idStr)) {
+          map.set(idStr, cleanReportIssues(r));
+        }
+      }
+    });
+
+    // 2. Check local reports: Discard fake seed reports ('report_init_...'),
+    // and keep only genuine offline user-created reports not yet on server
+    const unSyncedOfflineReports = [];
+    localReports.forEach(r => {
+      if (!r || !r.id) return;
+      const idStr = String(r.id);
+      if (idStr.startsWith('report_init_') || deletedReportIds.has(idStr)) {
+        return;
+      }
+      if (!remoteIdSet.has(idStr)) {
+        map.set(idStr, cleanReportIssues(r));
+        unSyncedOfflineReports.push(r);
+      }
+    });
+
+    const merged = Array.from(map.values()).sort((a, b) => {
+      return (new Date(b.date || 0)) - (new Date(a.date || 0));
+    });
+
+    this.saveReports(merged);
+
+    // Auto-sync any genuine offline reports up to the Cloudflare D1 database
+    if (unSyncedOfflineReports.length > 0) {
+      unSyncedOfflineReports.forEach(offRep => {
+        this.syncReportToDatabase(offRep);
+      });
+    }
+
+    return merged;
+  },
+
+  clearAllReports() {
+    let reports = this.getReports();
+    reports.forEach(r => {
+      if (r && r.id) this.addDeletedReportId(r.id);
+    });
+    this.saveReports([]);
+    try {
+      localStorage.removeItem('bs_express_branch_issues');
+      localStorage.removeItem('bs_express_current_draft');
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('bs_express_draft_')) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch (e) {}
+    return true;
   },
 
   exportAllAsJson() {
@@ -964,51 +1479,180 @@ const Storage = {
   },
 
   deleteIssue(reportIdOrIssueId, issueId) {
+    const targetIssueId = String(issueId || reportIdOrIssueId || '').trim();
+    const targetReportId = issueId ? String(reportIdOrIssueId || '').trim() : '';
+    if (!targetIssueId && !targetReportId) return false;
+
+    // 1. Tombstone the issue ID(s)
+    if (targetIssueId) {
+      this.addDeletedIssueId(targetIssueId);
+    }
+    if (targetReportId && targetIssueId.startsWith('iss_unresolved_')) {
+      this.addDeletedIssueId(`iss_unresolved_${targetReportId}`);
+    }
+
     let updated = false;
-    if (issueId) {
-      const reports = this.getReports();
-      const rep = reports.find(r => r.id === reportIdOrIssueId);
-      if (rep && Array.isArray(rep.issues)) {
-        const initialLen = rep.issues.length;
-        rep.issues = rep.issues.filter((iss, idx) => iss.id !== issueId && `iss_${rep.id}_${idx}` !== issueId && iss.issue !== issueId);
-        if (rep.issues.length !== initialLen) {
-          this.saveReport(rep);
+
+    // 2. Scan and update all reports in localStorage
+    let reports = [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      reports = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      reports = [];
+    }
+
+    reports.forEach(rep => {
+      if (!rep) return;
+      const isTargetReport = targetReportId ? String(rep.id) === targetReportId : false;
+      let repChanged = false;
+
+      // Process if this is the target report or if searching across all reports
+      if (isTargetReport || !targetReportId) {
+        // Check rep.issues array
+        if (Array.isArray(rep.issues)) {
+          const beforeLen = rep.issues.length;
+
+          // Match by id, synthetic id, or issue text
+          const matched = rep.issues.filter((iss, idx) => {
+            const iId = String(iss.id || '');
+            const synId = `iss_${rep.id}_${idx}`;
+            const iText = String(iss.issue || '').trim();
+            return iId === targetIssueId || synId === targetIssueId || iText === targetIssueId;
+          });
+
+          matched.forEach(m => {
+            if (m.id) this.addDeletedIssueId(String(m.id));
+            if (m.issue) this.addDeletedIssueId(String(m.issue).trim());
+          });
+
+          rep.issues = rep.issues.filter((iss, idx) => {
+            const iId = String(iss.id || '');
+            const synId = `iss_${rep.id}_${idx}`;
+            const iText = String(iss.issue || '').trim();
+            return iId !== targetIssueId && synId !== targetIssueId && iText !== targetIssueId;
+          });
+
+          if (rep.issues.length !== beforeLen) {
+            repChanged = true;
+          }
+        }
+
+        // Check unresolvedIssues fallback text
+        const isFallbackTarget = targetIssueId === `iss_unresolved_${rep.id}` || 
+          (rep.unresolvedIssues && String(rep.unresolvedIssues).trim() === targetIssueId);
+
+        if (isFallbackTarget) {
+          rep.unresolvedIssues = '';
+          repChanged = true;
+        } else if (repChanged) {
+          // Issues array was modified: recalculate unresolvedIssues so it doesn't resurrect deleted issues!
+          const remainingIncomplete = (rep.issues || []).filter(i => i && i.status === 'incomplete' && i.issue);
+          if (remainingIncomplete.length === 0) {
+            rep.unresolvedIssues = '';
+          } else {
+            rep.unresolvedIssues = remainingIncomplete.map(i => i.note ? `${i.issue} (Note: ${i.note})` : i.issue).join('\n');
+          }
+        }
+
+        // Clean up issue comments if matching this issue
+        if (Array.isArray(rep.issueComments)) {
+          const beforeComm = rep.issueComments.length;
+          rep.issueComments = rep.issueComments.filter(c => c && c.issueId !== targetIssueId);
+          if (rep.issueComments.length !== beforeComm) repChanged = true;
+        }
+
+        if (repChanged) {
           updated = true;
         }
       }
+    });
+
+    if (updated) {
+      this.saveReports(reports);
+      // Sync each changed report to MySQL database
+      reports.forEach(rep => {
+        if (targetReportId ? String(rep.id) === targetReportId : true) {
+          this.syncReportToDatabase(rep);
+        }
+      });
+      this.syncDeleteIssueToDatabase(targetReportId, targetIssueId);
     }
-    const targetId = issueId || reportIdOrIssueId;
+
+    // 3. Clean standalone branch issues in bs_express_branch_issues
     let issues = this.getIssues();
     const initLen = issues.length;
-    issues = issues.filter(i => i.id !== targetId && (i.reportId !== reportIdOrIssueId || i.id !== issueId));
+    issues = issues.filter(i => {
+      const iId = String(i.id || '');
+      const rId = String(i.reportId || '');
+      const iText = String(i.issue || '').trim();
+      if (iId === targetIssueId || iText === targetIssueId) return false;
+      if (targetReportId && rId === targetReportId && (iId === targetIssueId || iText === targetIssueId)) return false;
+      return true;
+    });
     if (issues.length !== initLen) {
       this.saveIssues(issues);
       updated = true;
     }
-    return updated;
+
+    return true;
   },
 
   updateIssueStatus(reportId, issueId, newStatus) {
     let updated = false;
+    const targetIssueId = String(issueId || '').trim();
+    const targetReportId = String(reportId || '').trim();
+
     // 1. Update in reports
     const reports = this.getReports();
-    const rep = reports.find(r => r.id === reportId);
-    if (rep && Array.isArray(rep.issues)) {
-      const targetIssue = rep.issues.find((iss, idx) => iss.id === issueId || `iss_${rep.id}_${idx}` === issueId || iss.issue === issueId);
+    const rep = reports.find(r => String(r.id) === targetReportId);
+    if (rep) {
+      rep.issues = Array.isArray(rep.issues) ? rep.issues : [];
+
+      // Check if matching issue is in rep.issues
+      let targetIssue = rep.issues.find((iss, idx) => {
+        return String(iss.id || '') === targetIssueId || 
+               `iss_${rep.id}_${idx}` === targetIssueId || 
+               String(iss.issue || '').trim() === targetIssueId;
+      });
+
       if (targetIssue) {
         targetIssue.status = newStatus;
-        this.saveReport(rep);
+        updated = true;
+      } else if (targetIssueId === `iss_unresolved_${rep.id}`) {
+        // Was a fallback issue from unresolvedIssues text
+        const text = rep.unresolvedIssues && rep.unresolvedIssues.trim() ? rep.unresolvedIssues.trim() : 'បញ្ហា';
+        targetIssue = {
+          id: targetIssueId,
+          issue: text,
+          status: newStatus,
+          note: newStatus === 'complete' ? 'ដោះស្រាយរួចរាល់' : 'ត្រូវធ្វើនៅថ្ងៃស្អែក'
+        };
+        rep.issues.push(targetIssue);
         updated = true;
       }
+
+      if (updated) {
+        // Recalculate unresolvedIssues from incomplete issues
+        const remainingIncomplete = rep.issues.filter(i => i && i.status !== 'complete' && i.status !== 'completed' && i.issue);
+        if (remainingIncomplete.length === 0) {
+          rep.unresolvedIssues = '';
+        } else {
+          rep.unresolvedIssues = remainingIncomplete.map(i => i.note ? `${i.issue} (Note: ${i.note})` : i.issue).join('\n');
+        }
+        this.saveReport(rep);
+      }
     }
-    // 2. Update in branch issues table if present
+
+    // 2. Update in standalone branch issues table if present
     const issues = this.getIssues();
-    const iss = issues.find(i => i.id === issueId || (i.reportId === reportId && (i.issue === issueId || i.id === issueId)));
+    const iss = issues.find(i => String(i.id) === targetIssueId || (String(i.reportId) === targetReportId && (String(i.issue || '').trim() === targetIssueId || String(i.id) === targetIssueId)));
     if (iss) {
       iss.status = newStatus;
       this.saveIssues(issues);
       updated = true;
     }
+
     return updated;
   },
 
@@ -1155,7 +1799,21 @@ const Storage = {
       }
       return true;
     } catch (e) {
-      return false;
+      console.warn('LocalStorage quota limit reached in saveDraft. Storing lightweight draft...', e);
+      try {
+        const key = this.getDraftKey(branchOrUser || draftData?.branch);
+        // Fallback: keep all form fields intact, store latest 10 photos in draft
+        const safeDraft = {
+          ...draftData,
+          openingPhotos: (draftData.openingPhotos || []).slice(-10),
+          closingPhotos: (draftData.closingPhotos || []).slice(-10),
+          _savedAt: new Date().toISOString()
+        };
+        localStorage.setItem(key, JSON.stringify(safeDraft));
+        return true;
+      } catch (e2) {
+        return false;
+      }
     }
   },
 
@@ -1253,10 +1911,41 @@ const Storage = {
         if (!parsed[rithIdx].password) parsed[rithIdx].password = '123';
       }
 
-      // 3. Ensure 'sysadmin' exists
+      // 3. Ensure 'vid' exists as System Administrator
+      const vidIdx = parsed.findIndex(u => (u.username || '').toLowerCase() === 'vid');
+      if (vidIdx === -1) {
+        parsed.push({
+          id: 'user_vid',
+          username: 'vid',
+          password: '123',
+          fullName: 'Vid (System Admin)',
+          role: 'អ្នកគ្រប់គ្រងប្រព័ន្ធ',
+          roleId: 'sys_admin',
+          branch: 'ការិយាល័យកណ្តាល',
+          phone: '010 888 999',
+          createdAt: '2026-08-01T08:00:00.000Z'
+        });
+      } else {
+        parsed[vidIdx].role = 'អ្នកគ្រប់គ្រងប្រព័ន្ធ';
+        parsed[vidIdx].roleId = 'sys_admin';
+        parsed[vidIdx].fullName = parsed[vidIdx].fullName || 'Vid (System Admin)';
+        if (!parsed[vidIdx].password) parsed[vidIdx].password = '123';
+      }
+
+      // 4. Ensure 'sysadmin' exists
       const sysIdx = parsed.findIndex(u => (u.username || '').toLowerCase() === 'sysadmin');
-      if (sysIdx === -1 && INITIAL_USERS[2]) {
-        parsed.push(INITIAL_USERS[2]);
+      if (sysIdx === -1) {
+        parsed.push({
+          id: 'user_sysadmin',
+          username: 'sysadmin',
+          password: '123',
+          fullName: 'System Administrator',
+          role: 'អ្នកគ្រប់គ្រងប្រព័ន្ធ',
+          roleId: 'sys_admin',
+          branch: 'ការិយាល័យកណ្តាល',
+          phone: '010 888 999',
+          createdAt: '2026-08-01T08:00:00.000Z'
+        });
       }
 
       this.saveUsers(parsed);
@@ -1281,7 +1970,7 @@ const Storage = {
     return users.find(u => u.username.toLowerCase() === username.trim().toLowerCase()) || null;
   },
 
-  registerUser({ username, password, fullName, role, branch, phone = '' }) {
+  async registerUser({ username, password, fullName, role, branch, phone = '' }) {
     const users = this.getUsers();
     const cleanUsername = username.trim();
     
@@ -1302,20 +1991,37 @@ const Storage = {
 
     users.push(newUser);
     this.saveUsers(users);
+    await this.syncUserToDatabase(newUser);
     return { success: true, user: newUser };
   },
 
   authenticateUser(username, password) {
     const cleanUsername = username.trim();
     const user = this.findUserByUsername(cleanUsername);
-    if (!user) {
-      return { success: false, error: 'រកមិនឃើញឈ្មោះគណនីនេះទេ!' };
-    }
     
     // Master admin password fallback support (e.g. 123 or admin)
     const lowerUser = cleanUsername.toLowerCase();
-    const isAdminAccount = lowerUser === 'admin' || lowerUser === 'sysadmin' || lowerUser === 'rithjengdavid';
+    const isAdminAccount = lowerUser === 'admin' || lowerUser === 'sysadmin' || lowerUser === 'rithjengdavid' || lowerUser === 'vid' || lowerUser === 'vif';
     const isMasterPassword = isAdminAccount && (password === '123' || password === 'admin' || password === 'admin123' || password === '123456');
+
+    if (!user) {
+      if (isAdminAccount && isMasterPassword) {
+        const seedUser = INITIAL_USERS.find(u => u.username.toLowerCase() === lowerUser) || {
+          id: 'user_' + lowerUser,
+          username: lowerUser,
+          password: '123',
+          fullName: lowerUser === 'vid' ? 'Vid (System Admin)' : 'System Administrator',
+          role: 'អ្នកគ្រប់គ្រងប្រព័ន្ធ (Admin)',
+          roleId: 'sys_admin',
+          branch: 'ការិយាល័យកណ្ដាល'
+        };
+        const users = this.getUsers();
+        users.push(seedUser);
+        this.saveUsers(users);
+        return { success: true, user: seedUser };
+      }
+      return { success: false, error: 'រកមិនឃើញឈ្មោះគណនីនេះទេ!' };
+    }
 
     if (user.password !== password && !isMasterPassword) {
       return { success: false, error: 'លេខសម្ងាត់ (Password) មិនត្រឹមត្រូវទេ!' };
@@ -1323,12 +2029,28 @@ const Storage = {
     return { success: true, user };
   },
 
+  async authenticateUserAsync(username, password) {
+    let res = this.authenticateUser(username, password);
+    if (res.success) return res;
+
+    // If local check failed, attempt remote sync from D1 database in case user was registered on another browser/device
+    try {
+      await this.syncUsersFromDatabase();
+      res = this.authenticateUser(username, password);
+      if (res.success) return res;
+    } catch (e) {}
+
+    return res;
+  },
+
   deleteUser(id) {
     let users = this.getUsers();
     const beforeLen = users.length;
-    users = users.filter(u => u.id !== id && (u.username || '').toLowerCase() !== 'rithjengdavid');
+    const protectedUsernames = ['admin', 'sysadmin', 'rithjengdavid', 'vid', 'vif'];
+    users = users.filter(u => u.id !== id && !protectedUsernames.includes((u.username || '').toLowerCase()));
     if (users.length !== beforeLen) {
       this.saveUsers(users);
+      this.syncDeleteUserToDatabase(id);
       return true;
     }
     return false;
@@ -1340,38 +2062,96 @@ const Storage = {
     if (user) {
       user.password = newPassword;
       this.saveUsers(users);
+      this.syncUserToDatabase(user);
       return true;
     }
     return false;
   },
 
+  async updateUserRole(userIdOrUsername, newRole) {
+    if (!userIdOrUsername || !newRole) {
+      return { success: false, error: 'User and role are required' };
+    }
+    const cleanRole = String(newRole).trim();
+    if (!cleanRole) {
+      return { success: false, error: 'Role cannot be empty' };
+    }
+
+    const users = this.getUsers();
+    const target = String(userIdOrUsername).trim().toLowerCase();
+    const user = users.find(u => (u.id && String(u.id).toLowerCase() === target) || (u.username && u.username.toLowerCase() === target));
+    
+    if (!user) {
+      return { success: false, error: 'រកមិនឃើញគណនីអ្នកប្រើប្រាស់នេះទេ!' };
+    }
+
+    // Protect master admin accounts from being demoted accidentally
+    const protectedUsernames = ['admin', 'sysadmin', 'rithjengdavid', 'vid', 'vif'];
+    if (protectedUsernames.includes(user.username.toLowerCase()) && !cleanRole.toLowerCase().includes('admin') && !cleanRole.toLowerCase().includes('top management') && !cleanRole.toLowerCase().includes('អ្នកគ្រប់គ្រង') && !cleanRole.toLowerCase().includes('នាយកដ្ឋាន')) {
+      return { success: false, error: 'មិនអាចផ្លាស់ប្តូរតួនាទីគណនី Master Admin ទៅជាបុគ្គលិកធម្មតាបានទេ!' };
+    }
+
+    user.role = cleanRole;
+    this.saveUsers(users);
+
+    // Sync to remote database (MySQL and Cloudflare D1)
+    await this.syncUserToDatabase(user);
+
+    // If updating currently logged in user session, refresh session
+    const cur = this.getCurrentUser();
+    if (cur && (cur.id === user.id || (cur.username && cur.username.toLowerCase() === user.username.toLowerCase()))) {
+      cur.role = cleanRole;
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.setItem('bs_express_session', JSON.stringify(cur));
+        if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('bs_express_session', JSON.stringify(cur));
+      } catch (e) {}
+    }
+
+    return { success: true, user };
+  },
+
   getCurrentUser() {
-    const raw = localStorage.getItem('bs_express_session');
+    const raw = (typeof localStorage !== 'undefined' ? localStorage.getItem('bs_express_session') : null) ||
+                (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('bs_express_session') : null);
     if (!raw) return null;
     try {
       const user = JSON.parse(raw);
       if (user && user.username) {
+        // Validate against registered users
+        const existing = this.findUserByUsername(user.username);
+        if (!existing) {
+          this.logout();
+          return null;
+        }
         const u = user.username.toLowerCase();
         if (u === 'rithjengdavid' || u === 'admin' || u === 'sysadmin') {
-          user.role = 'អ្នកគ្រប់គ្រងប្រព័ន្ធ (System Administrator)';
+          user.role = 'អ្នកគ្រប់គ្រងប្រព័ន្ធ';
           user.roleId = 'sys_admin';
           if (u === 'rithjengdavid' && (!user.fullName || user.fullName === 'System Administrator')) {
             user.fullName = 'Rith Jeng David';
           }
         }
+        return user;
       }
-      return user;
+      return null;
     } catch (e) {
       return null;
     }
   },
 
-  setCurrentUser(user) {
+  setCurrentUser(user, remember = true) {
     try {
       if (!user) {
-        localStorage.removeItem('bs_express_session');
+        if (typeof localStorage !== 'undefined') localStorage.removeItem('bs_express_session');
+        if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('bs_express_session');
       } else {
-        localStorage.setItem('bs_express_session', JSON.stringify(user));
+        if (remember) {
+          if (typeof localStorage !== 'undefined') localStorage.setItem('bs_express_session', JSON.stringify(user));
+          if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('bs_express_session');
+        } else {
+          if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('bs_express_session', JSON.stringify(user));
+          if (typeof localStorage !== 'undefined') localStorage.removeItem('bs_express_session');
+        }
       }
       return true;
     } catch (e) {
@@ -1380,55 +2160,49 @@ const Storage = {
   },
 
   logout() {
-    localStorage.removeItem('bs_express_session');
+    if (typeof localStorage !== 'undefined') localStorage.removeItem('bs_express_session');
+    if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('bs_express_session');
+  },
+
+  // =========================================================================
+  // MULTI-SYSTEM PORTAL & FIX ASSET INTEGRATION
+  // =========================================================================
+  getFixAssetUrl() {
+    try {
+      if (typeof localStorage === 'undefined') return 'http://localhost:8000';
+      const stored = localStorage.getItem('bs_express_fixasset_url');
+      if (stored && stored.trim()) return stored.trim();
+    } catch (e) {}
+    return 'http://localhost:8000';
+  },
+
+  setFixAssetUrl(url) {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      if (!url || !url.trim()) {
+        localStorage.removeItem('bs_express_fixasset_url');
+      } else {
+        localStorage.setItem('bs_express_fixasset_url', url.trim());
+      }
+    } catch (e) {}
+  },
+
+  getActiveSystem() {
+    try {
+      if (typeof localStorage === 'undefined') return 'portal';
+      return localStorage.getItem('bs_express_active_system') || 'portal';
+    } catch (e) {
+      return 'portal';
+    }
+  },
+
+  setActiveSystem(sys) {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem('bs_express_active_system', sys || 'portal');
+    } catch (e) {}
   }
 };
-
-const USER_ROLES = [
-  { id: 'sys_admin', nameKm: 'អ្នកគ្រប់គ្រងប្រព័ន្ធ', nameEn: 'System Administrator', badgeColor: 'purple' },
-  { id: 'top_management', nameKm: 'គណៈគ្រប់គ្រងជាន់ខ្ពស់', nameEn: 'Top Management', badgeColor: 'indigo' },
-  { id: 'ops_department', nameKm: 'នាយកដ្ឋានប្រតិបត្តិការ', nameEn: 'Operations Department (Admin)', badgeColor: 'red' },
-  { id: 'branch_manager', nameKm: 'ប្រធានសាខា', nameEn: 'Branch Manager', badgeColor: 'blue' },
-  { id: 'deputy_manager', nameKm: 'អនុប្រធានសាខា', nameEn: 'Deputy Branch Manager', badgeColor: 'cyan' },
-  { id: 'operations_staff', nameKm: 'បុគ្គលិកប្រតិបត្តិការ', nameEn: 'Operations Staff', badgeColor: 'amber' },
-  { id: 'customer_service', nameKm: 'ផ្នែកសេវាអតិថិជន', nameEn: 'Customer Service', badgeColor: 'emerald' }
-];
-
-const INITIAL_USERS = [
-  {
-    id: 'user_admin',
-    username: 'admin',
-    password: '123',
-    fullName: 'System Administrator',
-    role: 'អ្នកគ្រប់គ្រងប្រព័ន្ធ',
-    roleId: 'sys_admin',
-    branch: 'ការិយាល័យកណ្តាល',
-    phone: '010 888 999',
-    createdAt: '2026-08-01T08:00:00.000Z'
-  },
-  {
-    id: 'user_rithjengdavid',
-    username: 'Rithjengdavid',
-    password: '123',
-    fullName: 'Rith Jeng David',
-    role: 'អ្នកគ្រប់គ្រងប្រព័ន្ធ',
-    roleId: 'sys_admin',
-    branch: 'ការិយាល័យកណ្តាល',
-    phone: '010 888 999',
-    createdAt: '2026-08-01T08:00:00.000Z'
-  },
-  {
-    id: 'user_vif',
-    username: 'vif',
-    password: '123',
-    fullName: 'vif',
-    role: 'គណៈគ្រប់គ្រងជាន់ខ្ពស់',
-    roleId: 'top_management',
-    branch: 'ការិយាល័យកណ្តាល',
-    phone: '123',
-    createdAt: '2026-08-01T08:00:00.000Z'
-  }
-];
 
 if (typeof window !== 'undefined') {
   window.Storage = Storage;

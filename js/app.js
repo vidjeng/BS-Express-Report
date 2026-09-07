@@ -16,6 +16,7 @@
   constructor() {
     this.currentLang = 'km';
     this.currentUser = null;
+    this.activeSystem = (Storage && typeof Storage.getActiveSystem === 'function') ? Storage.getActiveSystem() : 'portal';
     // Start with an empty report. Sample values are loaded only when the user
     // explicitly clicks “Load Sample Data”.
     this.currentReport = {};
@@ -25,6 +26,7 @@
     this.activeTab = 'form-tab';
     this.currentStep = 1;
     this.completedSteps = new Set();
+    this.historySortBy = 'datetime-desc';
 
     this.init();
   }
@@ -33,6 +35,7 @@
     this.initLang();
     this.initTheme();
     this.initAuth();
+    this.updateIssueFeatureVisibility();
     this.populateBranchDropdowns();
     this.populateRoleDropdowns();
     this.initTimePicker();
@@ -47,6 +50,7 @@
     this.updateStats();
     this.renderIssuesDashboard();
     this.updateIssuesStatsAndBadge();
+    this.restoreBundledReports();
     window.addEventListener('storage', (event) => {
       if (event.key === 'bs_express_daily_reports') {
         this.renderReportsTable();
@@ -71,6 +75,165 @@
       }
     }
     this.disableBrowserAutocomplete();
+    this.initDatabaseSync();
+    this.initSystemRouter();
+  }
+
+  async syncLatestData(silent = true) {
+    try {
+      const health = await Storage.checkDbHealth();
+      this.updateDbIndicator(health.connected);
+
+      if (health.connected) {
+        await Storage.syncUsersFromDatabase();
+        const reports = await Storage.syncReportsFromDatabase();
+        if (reports) {
+          this.renderReportsTable();
+          this.updateStats();
+          this.renderIssuesDashboard();
+          this.updateIssuesStatsAndBadge();
+          this.populateBranchDropdowns();
+          this.populateRoleDropdowns();
+          if (this.currentReport && this.isViewingSavedReport) {
+            const updated = Storage.getReportById(this.currentReport.id);
+            if (updated) {
+              this.currentReport = { ...updated };
+              this.loadCurrentFormData(this.currentReport);
+              this.updateLivePreview();
+            }
+          }
+        }
+      }
+    } catch (err) {}
+  }
+
+  async initDatabaseSync() {
+    this.updateDbIndicator(Storage.isDbOnline);
+
+    window.addEventListener('bs-db-status', (e) => {
+      this.updateDbIndicator(e.detail?.online);
+    });
+
+    const indicator = document.getElementById('db-status-indicator');
+    if (indicator) {
+      indicator.style.cursor = 'pointer';
+      indicator.addEventListener('click', async () => {
+        const currentUrl = Storage.getApiBaseUrl();
+        const health = await Storage.checkDbHealth();
+        const isEn = this.currentLang === 'en';
+             const promptMsg = isEn
+          ? `[Cloud Database & Server Settings]\nStatus: ${health.connected ? `ONLINE (${health.database || 'Connected'})` : 'OFFLINE (LocalStorage)'}\nCurrent Server URL: ${currentUrl || '(Default: Unified HTTPS Same Origin)'}\n\n(Leave blank to use default unified HTTPS hosting)`
+          : `[ការកំណត់ Database & Server]\nស្ថានភាព: ${health.connected ? `ភ្ជាប់ជោគជ័យ (${health.database || 'ONLINE'})` : 'មិនទាន់ភ្ជាប់ (ប្រើ LocalStorage)'}\nServer URL បច្ចុប្បន្ន: ${currentUrl || '(លំនាំដើម: Unified HTTPS Hosting តែមួយ)'}\n\n(ទុកទទេដើម្បីប្រើលំនាំដើម Unified HTTPS)`;
+        
+        const newUrl = prompt(promptMsg, currentUrl);
+        if (newUrl !== null) {
+          Storage.setApiBaseUrl(newUrl.trim());
+          const newHealth = await Storage.checkDbHealth();
+          if (newHealth.connected) {
+            await this.syncLatestData(false);
+            this.showToast(isEn ? `Connected to Database: ${newHealth.database}!` : `បានតភ្ជាប់ទៅកាន់ Database: ${newHealth.database}!`, 'success');
+          } else {
+            this.showToast(isEn ? 'Could not connect to specified Server URL.' : 'មិនអាចតភ្ជាប់ទៅកាន់ Server URL នេះបានទេ!', 'warning');
+          }
+        }
+      });
+    }
+
+    // 1. Run initial synchronization
+    await this.syncLatestData(true);
+
+    // 2. Cross-browser synchronization: Re-sync automatically whenever user switches back to this window or tab
+    window.addEventListener('focus', () => {
+      this.syncLatestData(true);
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.syncLatestData(true);
+      }
+    });
+
+    // 3. Periodic silent sync every 30 seconds to keep all browsers in 100% sync
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        this.syncLatestData(true);
+      }
+    }, 30000);
+  }
+
+  updateDbIndicator(online) {
+    const badge = document.getElementById('db-status-indicator');
+    const label = document.getElementById('db-status-label');
+    if (!badge) return;
+
+    // Only Admin or Top Management can see Database Status
+    if (!this.isCurrentUserAdminOrTopMgmt()) {
+      badge.classList.remove('admin-visible');
+      badge.style.display = 'none';
+      return;
+    }
+
+    badge.classList.add('admin-visible');
+    badge.style.display = 'inline-flex';
+    if (!label) return;
+
+    if (online) {
+      badge.classList.remove('is-offline');
+      badge.classList.add('is-online');
+      label.textContent = this.currentLang === 'en' ? 'Cloud DB Online' : 'Database ដំណើរការ';
+      badge.title = this.currentLang === 'en' ? 'Database Connected (Live Sync)' : 'បានតភ្ជាប់ទៅកាន់ Database (Live Sync)';
+    } else {
+      badge.classList.remove('is-online');
+      badge.classList.add('is-offline');
+      label.textContent = this.currentLang === 'en' ? 'Offline Cache' : 'ទិន្នន័យក្នុងម៉ាស៊ីន';
+      badge.title = this.currentLang === 'en' ? 'Offline / LocalStorage Mode' : 'ដំណើរការលើ LocalStorage';
+    }
+  }
+
+  async restoreBundledReports() {
+    const restoreKey = 'bs_express_bundled_reports_restored_v3';
+    if (localStorage.getItem(restoreKey) === 'true') return;
+
+    try {
+      const response = await fetch('data/reports.json', { cache: 'no-store' });
+      if (!response.ok) return;
+      const bundledReports = await response.json();
+      if (!Array.isArray(bundledReports) || bundledReports.length === 0) return;
+
+      const deletedReportIds = Storage.getDeletedReportIds();
+      const deletedIssueIds = Storage.getDeletedIssueIds();
+      const currentReports = Storage.getReports();
+      const preservedReports = currentReports.filter(report => {
+        const id = String(report?.id || '');
+        return !id.startsWith('report_init_') && !id.startsWith('report_sample_') && !deletedReportIds.has(id);
+      });
+      const reportsById = new Map();
+      [...preservedReports, ...bundledReports].forEach(report => {
+        if (report?.id && !deletedReportIds.has(String(report.id))) {
+          if (Array.isArray(report.issues)) {
+            report.issues = report.issues.filter((iss, idx) => {
+              const iId = String(iss.id || '').trim();
+              const synId = `iss_${report.id}_${idx}`;
+              const iText = String(iss.issue || '').trim();
+              return !deletedIssueIds.has(iId) && !deletedIssueIds.has(synId) && !deletedIssueIds.has(iText);
+            });
+          }
+          if (deletedIssueIds.has(`iss_unresolved_${report.id}`) || (report.unresolvedIssues && deletedIssueIds.has(String(report.unresolvedIssues).trim()))) {
+            report.unresolvedIssues = '';
+          }
+          reportsById.set(report.id, report);
+        }
+      });
+      const result = Storage.saveReports([...reportsById.values()]);
+      if (result) {
+        localStorage.setItem(restoreKey, 'true');
+        this.renderReportsTable();
+        this.updateStats();
+        this.renderIssuesDashboard();
+        this.updateIssuesStatsAndBadge();
+      }
+    } catch (error) {
+      console.warn('Bundled report restore unavailable:', error);
+    }
   }
 
   disableBrowserAutocomplete() {
@@ -79,6 +242,14 @@
       el.setAttribute('autocorrect', 'off');
       el.setAttribute('autocapitalize', 'off');
       el.setAttribute('spellcheck', 'false');
+    });
+  }
+
+  updateIssueFeatureVisibility() {
+    const hideIssueFeature = !this.isCurrentUserAdminOrTopMgmt();
+    document.body.classList.toggle('issues-hidden-for-user', hideIssueFeature);
+    document.querySelectorAll('[data-issue-feature="true"]').forEach(element => {
+      element.hidden = hideIssueFeature;
     });
   }
 
@@ -158,6 +329,7 @@
     this.renderIssuesDashboard();
     this.updateIssuesStatsAndBadge();
     this.renderAuthNav();
+    this.updateDbIndicator(Storage.isDbOnline);
     this.showToast(this.t('toastLangSwitched'), 'success');
   }
 
@@ -817,8 +989,8 @@
               this.renderIssuesDashboard();
               this.updateIssuesStatsAndBadge();
               const successMsg = this.currentLang === 'en' 
-                ? `Successfully imported ${res.added} reports from backup! 🎉`
-                : `បានបញ្ចូល ${res.added} របាយការណ៍ពី Backup JSON រួចរាល់ដោយជោគជ័យ! 🎉`;
+                ? `Successfully imported ${res.added} reports from backup!`
+                : `បានបញ្ចូល ${res.added} របាយការណ៍ពី Backup JSON រួចរាល់ដោយជោគជ័យ!`;
               this.showToast(successMsg, 'success');
             } else {
               this.showToast(this.currentLang === 'en' ? 'Failed to merge reports.' : 'មិនអាចបញ្ចូលរបាយការណ៍បានទេ!', 'error');
@@ -882,9 +1054,15 @@
     document.getElementById('btn-morning-print')?.addEventListener('click', () => this.printMorningDoc());
     document.getElementById('btn-morning-save')?.addEventListener('click', () => this.saveMorningReportForm());
 
-    // Table Search & Filter
+    // Table Search, Filter & Sort
     document.getElementById('search-reports')?.addEventListener('input', () => this.renderReportsTable());
     document.getElementById('filter-branch')?.addEventListener('change', () => this.renderReportsTable());
+    document.getElementById('sort-reports')?.addEventListener('change', (e) => {
+      this.historySortBy = e.target.value;
+      this.renderReportsTable();
+    });
+    document.getElementById('th-sort-date')?.addEventListener('click', () => this.toggleHistorySort('datetime'));
+    document.getElementById('th-sort-branch')?.addEventListener('click', () => this.toggleHistorySort('branch'));
     document.getElementById('filter-approval-status')?.addEventListener('change', (e) => {
       const val = e.target.value;
       if (val === 'approved' || val === 'pending') {
@@ -1056,6 +1234,10 @@
       e.stopPropagation();
       this.openTimePicker('form-opening-time');
     });
+    document.querySelector('#form-opening-time')?.parentElement?.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-input-action')) return;
+      this.openTimePicker('form-opening-time');
+    });
 
     // Trigger on clicking input or button for closing time
     document.getElementById('form-closing-time')?.addEventListener('click', () => {
@@ -1063,6 +1245,10 @@
     });
     document.getElementById('btn-open-tp-closing')?.addEventListener('click', (e) => {
       e.stopPropagation();
+      this.openTimePicker('form-closing-time');
+    });
+    document.querySelector('#form-closing-time')?.parentElement?.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-input-action')) return;
       this.openTimePicker('form-closing-time');
     });
 
@@ -1708,6 +1894,10 @@
 
   switchTab(tabId) {
     if (!tabId) return;
+    if (tabId === 'form-tab' && this.isViewingSavedReport) {
+      this.showToast(this.currentLang === 'en' ? 'Saved reports are view-only. Start a new report to edit.' : 'របាយការណ៍ដែលបានរក្សាទុក អាចមើលបានតែប៉ុណ្ណោះ។ សូមចាប់ផ្តើម Report ថ្មីដើម្បីកែប្រែ។', 'warning');
+      return;
+    }
     this.activeTab = tabId;
     document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
     document.querySelectorAll('.tab-panel, .tab-content').forEach(c => c.classList.toggle('active', c.id === tabId));
@@ -1815,7 +2005,6 @@
       }
       opTime.value = report.openingTime;
       opTime.readOnly = true;
-      opTime.classList.add('is-locked');
     }
     
     const opRep = document.getElementById('form-opening-reporter');
@@ -1829,8 +2018,7 @@
 
     const absCount = document.getElementById('form-absent-count');
     if (absCount) {
-      const rawAbs = report.absentCount !== undefined && report.absentCount !== null ? String(report.absentCount).replace(/\D/g, '') : '';
-      absCount.value = rawAbs;
+      absCount.value = report.absentCount !== undefined && report.absentCount !== null ? String(report.absentCount) : '';
     }
 
     const cleanInput = document.getElementById('form-cleanliness');
@@ -1875,7 +2063,6 @@
     if (clTime) {
       clTime.value = report.closingTime || this.getCurrentFormattedTime();
       clTime.readOnly = true;
-      clTime.classList.add('is-locked');
     }
 
     const clRep = document.getElementById('form-closing-reporter');
@@ -1968,12 +2155,12 @@
 
     // Calculate unresolvedIssues string from incomplete issues
     const unresList = (this.currentReport.issues || [])
-      .filter(item => item.status === 'incomplete' && item.issue)
+      .filter(item => item && item.status === 'incomplete' && item.issue)
       .map(item => item.note ? `${item.issue} (Note: ${item.note})` : item.issue);
     const unresJoined = unresList.join('\n');
     const unresHidden = document.getElementById('form-unresolved');
-    if (unresHidden) unresHidden.value = unresJoined || '';
-    this.currentReport.unresolvedIssues = unresJoined || document.getElementById('form-unresolved')?.value || '';
+    if (unresHidden) unresHidden.value = unresJoined;
+    this.currentReport.unresolvedIssues = unresJoined;
 
     this.currentReport.closingTime = document.getElementById('form-closing-time')?.value || '';
     this.currentReport.closingReporterName = clRepInput || mainReporter;
@@ -2002,14 +2189,16 @@
     container.innerHTML = list.map((val, idx) => `
       <div class="multi-item-row work-status-row">
         <span class="multi-item-num">${idx + 1}</span>
-        <input type="text" class="multi-item-input work-status-input" value="${this.escapeHtmlAttr(val)}" placeholder="${placeholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <textarea class="multi-item-input work-status-input" rows="2" placeholder="${placeholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">${this.escapeHtmlAttr(val)}</textarea>
         <button type="button" class="btn-remove-row btn-remove-work-status" title="Remove" ${list.length <= 1 && !val ? 'style="display:none;"' : ''}>×</button>
       </div>
     `).join('');
 
     container.querySelectorAll('.work-status-row').forEach(row => {
       const input = row.querySelector('.work-status-input');
+      this.autoResizeTextarea(input);
       input?.addEventListener('input', () => {
+        this.autoResizeTextarea(input);
         this.syncFormToReport();
         this.updateLivePreview();
         this.updateStepCompletion();
@@ -2044,14 +2233,16 @@
     container.innerHTML = list.map((val, idx) => `
       <div class="multi-item-row challenges-row">
         <span class="multi-item-num">${idx + 1}</span>
-        <input type="text" class="multi-item-input challenges-input" value="${this.escapeHtmlAttr(val)}" placeholder="${placeholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <textarea class="multi-item-input challenges-input" rows="2" placeholder="${placeholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">${this.escapeHtmlAttr(val)}</textarea>
         <button type="button" class="btn-remove-row btn-remove-challenges" title="Remove" ${list.length <= 1 && !val ? 'style="display:none;"' : ''}>×</button>
       </div>
     `).join('');
 
     container.querySelectorAll('.challenges-row').forEach(row => {
       const input = row.querySelector('.challenges-input');
+      this.autoResizeTextarea(input);
       input?.addEventListener('input', () => {
+        this.autoResizeTextarea(input);
         this.syncFormToReport();
         this.updateLivePreview();
         this.updateStepCompletion();
@@ -2086,14 +2277,16 @@
     container.innerHTML = list.map((val, idx) => `
       <div class="multi-item-row accomplished-row">
         <span class="multi-item-num">${idx + 1}</span>
-        <input type="text" class="multi-item-input accomplished-input" value="${this.escapeHtmlAttr(val)}" placeholder="${placeholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <textarea class="multi-item-input accomplished-input" rows="2" placeholder="${placeholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">${this.escapeHtmlAttr(val)}</textarea>
         <button type="button" class="btn-remove-row btn-remove-accomplished" title="Remove" ${list.length <= 1 && !val ? 'style="display:none;"' : ''}>×</button>
       </div>
     `).join('');
 
     container.querySelectorAll('.accomplished-row').forEach(row => {
       const input = row.querySelector('.accomplished-input');
+      this.autoResizeTextarea(input);
       input?.addEventListener('input', () => {
+        this.autoResizeTextarea(input);
         this.syncFormToReport();
         this.updateLivePreview();
         this.updateStepCompletion();
@@ -2128,14 +2321,16 @@
     container.innerHTML = list.map((val, idx) => `
       <div class="multi-item-row security-row">
         <span class="multi-item-num">${idx + 1}</span>
-        <input type="text" class="multi-item-input security-input" value="${this.escapeHtmlAttr(val)}" placeholder="${placeholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <textarea class="multi-item-input security-input" rows="2" placeholder="${placeholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">${this.escapeHtmlAttr(val)}</textarea>
         <button type="button" class="btn-remove-row btn-remove-security" title="Remove" ${list.length <= 1 && !val ? 'style="display:none;"' : ''}>×</button>
       </div>
     `).join('');
 
     container.querySelectorAll('.security-row').forEach(row => {
       const input = row.querySelector('.security-input');
+      this.autoResizeTextarea(input);
       input?.addEventListener('input', () => {
+        this.autoResizeTextarea(input);
         this.syncFormToReport();
         this.updateLivePreview();
         this.updateStepCompletion();
@@ -2167,6 +2362,12 @@
         removeBtn.style.display = rows.length > 1 ? 'inline-flex' : 'none';
       }
     });
+  }
+
+  autoResizeTextarea(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.max(el.scrollHeight, 52) + 'px';
   }
 
   escapeHtmlAttr(str) {
@@ -2204,7 +2405,7 @@
       return `
         <div class="form-issue-row ${isIncomplete ? 'has-note' : ''}">
           <span class="issue-number">${index + 1}</span>
-          <input type="text" class="form-input form-issue" aria-label="Issue ${index + 1}" value="${this.escapeHtmlAttr(item.issue || '')}" placeholder="${issuePlaceholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <textarea class="form-input form-issue" rows="2" aria-label="Issue ${index + 1}" placeholder="${issuePlaceholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">${this.escapeHtmlAttr(item.issue || '')}</textarea>
           <select class="form-input form-issue-status" aria-label="Issue status">
             <option value="">${statusLabel}</option>
             <option value="complete" ${item.status === 'complete' ? 'selected' : ''}>${completeLabel}</option>
@@ -2220,6 +2421,7 @@
       const note = row.querySelector('.form-issue-note');
       const status = row.querySelector('.form-issue-status');
       const issueInput = row.querySelector('.form-issue');
+      this.autoResizeTextarea(issueInput);
 
       const updateNoteVisibility = () => {
         const incomplete = status.value === 'incomplete';
@@ -2240,6 +2442,7 @@
       });
 
       issueInput?.addEventListener('input', () => {
+        this.autoResizeTextarea(issueInput);
         this.syncFormToReport();
         this.updateLivePreview();
       });
@@ -2303,9 +2506,7 @@
     const presDisplay = presDisplayFormatted => presRaw !== '' ? (isEn ? `${presRaw} staff` : `${presRaw} នាក់`) : '-';
     document.querySelectorAll('.doc-val-present').forEach(el => el.textContent = presDisplay());
 
-    const absRaw = r.absentCount !== undefined && r.absentCount !== null ? String(r.absentCount).replace(/\D/g, '') : '';
-    const absNum = absRaw !== '' ? parseInt(absRaw, 10) : 0;
-    const absDisplay = absNum > 0 ? (isEn ? `${absNum} person` : `${absNum} នាក់`) : (isEn ? '0 person' : 'គ្មាន');
+    const absDisplay = this.formatAbsentDisplay(r.absentCount, isEn);
     document.querySelectorAll('.doc-val-absent').forEach(el => el.textContent = absDisplay);
 
     document.querySelectorAll('.doc-val-cleanliness').forEach(el => el.textContent = r.cleanlinessStatus || '');
@@ -2363,6 +2564,8 @@
     document.querySelectorAll('.doc-val-unresolved').forEach(el => {
       if (unresolvedMarkup) {
         el.innerHTML = `<div class="doc-list-block">${unresolvedMarkup}</div>`;
+      } else if (Array.isArray(r.issues) && r.issues.length > 0) {
+        el.innerHTML = `<span style="color: #16a34a; font-weight: 500;">${isEn ? '✓ All issues resolved' : '✓ បានដោះស្រាយរួចរាល់ទាំងអស់'}</span>`;
       } else {
         el.innerHTML = formatDocList(r.unresolvedIssues, 'issue-bullet');
       }
@@ -2420,18 +2623,31 @@
       const files = Array.from(e.target.files);
       if (!files.length) return;
 
-      this.showToast('កំពុងដំណើរការ Watermark លើរូបភាព...', 'primary');
+      const isEn = this.currentLang === 'en';
+      const totalToProcess = files.length;
+      this.showToast(isEn ? `Processing watermark on ${totalToProcess} photo(s)...` : `កំពុងដំណើរការ Watermark លើ ${totalToProcess} រូបភាព...`, 'primary');
 
-      if (type === 'additional') {
-        this.additionalPhotos = [];
-      }
+      const existingPhotos = type === 'opening' ? this.openingPhotos : type === 'morning' ? (this.morningPhotos || []) : type === 'additional' ? this.additionalPhotos : this.closingPhotos;
+      const combinedCount = existingPhotos.length + totalToProcess;
+      const adaptiveQuality = combinedCount > 15 ? 0.68 : 0.72;
+      const adaptiveMaxDim = combinedCount > 15 ? 840 : 960;
 
-      for (const file of files) {
+      let addedCount = 0;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         try {
+          if (files.length > 3 && (i % 2 === 0 || i === files.length - 1)) {
+            this.showToast(isEn ? `Watermarking photo ${i + 1}/${files.length}...` : `កំពុងដំណើរការ Watermark រូបភាពទី ${i + 1}/${files.length}...`, 'info');
+          }
+          // Yield to browser event loop to prevent UI freezing
+          await new Promise(resolve => setTimeout(resolve, 0));
+
           const watermarkedUrl = await WatermarkUtil.addWatermark(file, {
             branch: (type === 'morning' ? document.getElementById('morning-branch')?.value : document.getElementById('form-branch')?.value) || 'ក្រចេះ',
             date: (type === 'morning' ? document.getElementById('morning-date')?.value : document.getElementById('form-date')?.value) || new Date().toISOString().split('T')[0],
-            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            quality: adaptiveQuality,
+            maxDim: adaptiveMaxDim
           });
 
           if (type === 'opening') {
@@ -2444,15 +2660,25 @@
           } else {
             this.closingPhotos.push(watermarkedUrl);
           }
+          addedCount++;
         } catch (err) {
           console.error('Error watermarking image:', err);
         }
       }
 
       this.renderPhotoPreviews(previewContainerId, type);
+      this.syncFormToReport();
       this.updateLivePreview();
       if (type === 'morning') this.updateMorningLivePreview();
-      this.showToast(`បានបញ្ចូល ${files.length} រូបថតរួចរាល់!`, 'success');
+      this.updateStepCompletion();
+
+      const totalPhotosNow = (type === 'opening' ? this.openingPhotos : type === 'morning' ? (this.morningPhotos || []) : type === 'additional' ? this.additionalPhotos : this.closingPhotos).length;
+      this.showToast(
+        isEn 
+          ? `✓ Added ${addedCount} photo(s)! Total: ${totalPhotosNow} photos (Unlimited)` 
+          : `✓ បានបញ្ចូល ${addedCount} រូបថត! សរុប៖ ${totalPhotosNow} រូប (គ្មានដែនកំណត់)`,
+        'success'
+      );
       input.value = '';
     });
   }
@@ -2464,15 +2690,54 @@
     const photos = type === 'opening' ? this.openingPhotos : type === 'morning' ? (this.morningPhotos || []) : type === 'additional' ? this.additionalPhotos : this.closingPhotos;
     container.innerHTML = '';
 
+    if (photos.length > 0) {
+      const isEn = this.currentLang === 'en';
+      const toolbar = document.createElement('div');
+      toolbar.className = 'photo-preview-toolbar';
+      toolbar.innerHTML = `
+        <span class="photo-preview-counter">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          ${isEn ? `Photos: <strong>${photos.length}</strong> (Unlimited)` : `រូបថត៖ <strong>${photos.length}</strong> សន្លឹក (គ្មានដែនកំណត់)`}
+        </span>
+        <button type="button" class="photo-preview-clear-btn" title="${isEn ? 'Clear all photos' : 'លុបរូបទាំងអស់'}">
+          ✕ ${isEn ? 'Clear All' : 'លុបទាំងអស់'}
+        </button>
+      `;
+
+      toolbar.querySelector('.photo-preview-clear-btn').addEventListener('click', () => {
+        const confirmMsg = isEn 
+          ? `Are you sure you want to clear all ${photos.length} photos?` 
+          : `តើអ្នកពិតជាចង់លុបរូបថតទាំង ${photos.length} សន្លឹកនេះមែនទេ?`;
+        if (!confirm(confirmMsg)) return;
+
+        if (type === 'opening') this.openingPhotos = [];
+        else if (type === 'morning') this.morningPhotos = [];
+        else if (type === 'additional') this.additionalPhotos = [];
+        else this.closingPhotos = [];
+
+        this.renderPhotoPreviews(containerId, type);
+        this.syncFormToReport();
+        this.updateLivePreview();
+        if (type === 'morning') this.updateMorningLivePreview();
+        this.updateStepCompletion();
+      });
+
+      container.appendChild(toolbar);
+    }
+
     photos.forEach((src, idx) => {
       const card = document.createElement('div');
       card.className = 'photo-card';
       card.innerHTML = `
         <img src="${src}" alt="Shift photo ${idx+1}">
-        <div class="photo-watermark-overlay">✓ Watermarked</div>
+        <div class="photo-watermark-overlay">✓ #${idx + 1}</div>
         <button type="button" class="photo-remove-btn" data-index="${idx}" title="លុបរូប">✕</button>
       `;
-      card.querySelector('img').addEventListener('click', () => this.openPhotoViewer(src));
+      card.querySelector('img').addEventListener('click', () => this.openPhotoViewer(photos, idx));
       card.querySelector('.photo-remove-btn').addEventListener('click', () => {
         if (type === 'opening') {
           this.openingPhotos.splice(idx, 1);
@@ -2484,8 +2749,10 @@
           this.closingPhotos.splice(idx, 1);
         }
         this.renderPhotoPreviews(containerId, type);
+        this.syncFormToReport();
         this.updateLivePreview();
         if (type === 'morning') this.updateMorningLivePreview();
+        this.updateStepCompletion();
       });
       container.appendChild(card);
     });
@@ -2498,7 +2765,7 @@
     const printOpenGallery = document.getElementById('print-opening-photos');
     const printCloseGallery = document.getElementById('print-closing-photos');
     const printUpdateGallery = document.getElementById('print-update-photos');
-    const photoMarkup = (photos, label) => (photos || []).map(p => `<div class="doc-photo-item"><img src="${p}" alt="${label}"></div>`).join('');
+    const photoMarkup = (photos, label) => (photos || []).map((p, idx) => `<div class="doc-photo-item" title="${label} #${idx + 1}"><img src="${p}" alt="${label} ${idx + 1}"></div>`).join('');
 
     const openingHtml = photoMarkup(this.openingPhotos, 'Opening Photo');
     openGalleries.forEach(el => {
@@ -2517,9 +2784,13 @@
     if (printCloseGallery) printCloseGallery.innerHTML = closingHtml;
     if (printUpdateGallery) printUpdateGallery.innerHTML = photoMarkup(this.additionalPhotos, 'Update Photo');
 
-    document.querySelectorAll('.doc-photo-gallery img').forEach(img => {
+    document.querySelectorAll('.doc-opening-photos-container img, #doc-opening-photos img').forEach((img, idx) => {
       img.style.cursor = 'zoom-in';
-      img.onclick = () => this.openPhotoViewer(img.src);
+      img.onclick = () => this.openPhotoViewer(this.openingPhotos, idx, { title: this.currentLang === 'en' ? 'Opening Shift Photo' : 'រូបថតពេលបើកសាខា' });
+    });
+    document.querySelectorAll('.doc-closing-photos-container img, #doc-closing-photos img').forEach((img, idx) => {
+      img.style.cursor = 'zoom-in';
+      img.onclick = () => this.openPhotoViewer(this.closingPhotos, idx, { title: this.currentLang === 'en' ? 'Closing Shift Photo' : 'រូបថតពេលបិទសាខា' });
     });
   }
 
@@ -2695,6 +2966,12 @@
     if (saveBtn) saveBtn.disabled = true;
 
     try {
+      if (this.isViewingSavedReport) {
+        this.showToast(this.currentLang === 'en' ? 'Saved reports are view-only. Start a new report to edit.' : 'របាយការណ៍ដែលបានរក្សាទុក អាចមើលបានតែប៉ុណ្ណោះ។ សូមចាប់ផ្តើម Report ថ្មីដើម្បីកែប្រែ។', 'warning');
+        this.isSavingReport = false;
+        if (saveBtn) saveBtn.disabled = false;
+        return;
+      }
       this.syncFormToReport();
 
       // Verify all steps 1 to 4 are completed
@@ -2737,6 +3014,12 @@
         : '';
 
       this.showToast(this.currentLang === 'en' ? `Report for branch "${bDisplay}" saved!${issueNotice}` : `បានរក្សាទុករបាយការណ៍សាខា "${bDisplay}" រួចរាល់!${issueNotice}`, 'success');
+      this.historyQuickFilter = 'all';
+      document.querySelectorAll('.history-filter-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.historyFilter === 'all');
+      });
+      const approvalFilterControl = document.getElementById('filter-approval-status');
+      if (approvalFilterControl) approvalFilterControl.value = '';
       this.renderReportsTable();
       this.updateStats();
       this.renderIssuesDashboard();
@@ -2770,9 +3053,16 @@
 
     const latestReport = sortedReports[0];
     if (!latestReport || !Array.isArray(latestReport.issues)) return [];
+    const deletedIssueIds = Storage.getDeletedIssueIds();
 
     return latestReport.issues
-      .filter(iss => iss && iss.issue && iss.issue.trim() && iss.status !== 'complete')
+      .filter(iss => {
+        if (!iss || !iss.issue || !iss.issue.trim() || iss.status === 'complete') return false;
+        const iId = String(iss.id || '').trim();
+        const iText = String(iss.issue).trim();
+        if (deletedIssueIds.has(iId) || deletedIssueIds.has(iText)) return false;
+        return true;
+      })
       .map(iss => ({
         issue: iss.issue.trim(),
         status: 'incomplete',
@@ -2884,6 +3174,8 @@
   resetForm(silent = false) {
     if (silent || confirm('តើអ្នកប្រាកដជាចង់សម្អាតទម្រង់នេះដើម្បីបំពេញថ្មីមែនទេ?')) {
       this.isEditingSavedReport = false;
+      this.isViewingSavedReport = false;
+      this.setReportFormReadOnly(false);
       const userBranch = this.currentUser ? this.getCanonicalBranch(this.currentUser.branch) : '';
       const autoPendingIssues = this.getPendingIncompleteIssues(userBranch);
       this.currentReport = {
@@ -2942,6 +3234,171 @@
     }
   }
 
+  getReportDateTimeTimestamp(r) {
+    if (!r) return 0;
+
+    let idTs = 0;
+    if (r.id && /^report_(\d{10,14})$/.test(String(r.id))) {
+      idTs = parseInt(String(r.id).replace('report_', ''), 10);
+    }
+
+    let createdTs = 0;
+    if (r.createdAt) {
+      const normalized = String(r.createdAt).replace(' ', 'T');
+      const iso = normalized.includes('Z') || normalized.includes('+') ? normalized : (normalized + 'Z');
+      const t = new Date(iso).getTime();
+      if (!isNaN(t) && t > 0) createdTs = t;
+    }
+
+    let dateStr = r.date ? String(r.date).trim() : '';
+    if (!dateStr && r.createdAt) {
+      dateStr = String(r.createdAt).split('T')[0].split(' ')[0];
+    }
+
+    let year = 0, month = 0, day = 0;
+    if (dateStr) {
+      if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(dateStr)) {
+        const parts = dateStr.split('-').map(n => parseInt(n, 10));
+        year = parts[0]; month = parts[1]; day = parts[2];
+      } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+        const parts = dateStr.split('/').map(n => parseInt(n, 10));
+        day = parts[0]; month = parts[1]; year = parts[2];
+      }
+    }
+
+    let timeStr = (r.closingTime || r.openingTime ? String(r.closingTime || r.openingTime).trim() : '');
+    let hours = 0, minutes = 0, hasTime = false;
+    if (timeStr) {
+      const m = timeStr.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
+      if (m) {
+        hours = parseInt(m[1], 10);
+        minutes = parseInt(m[2], 10);
+        const meridiem = (m[3] || '').toLowerCase();
+        if (meridiem === 'pm' && hours < 12) hours += 12;
+        if (meridiem === 'am' && hours === 12) hours = 0;
+        hasTime = true;
+      }
+    }
+
+    if (!hasTime && createdTs) {
+      const cd = new Date(createdTs);
+      hours = cd.getUTCHours();
+      minutes = cd.getUTCMinutes();
+      hasTime = true;
+    }
+
+    if (year && month && day) {
+      const baseTs = new Date(year, month - 1, day, hours, minutes, 0).getTime();
+      const tieBreaker = (idTs || createdTs) ? ((idTs || createdTs) % 60000) : 0;
+      return baseTs + tieBreaker;
+    }
+
+    return createdTs || idTs || 0;
+  }
+
+  toggleHistorySort(field) {
+    if (field === 'datetime') {
+      if (this.historySortBy === 'datetime-desc') {
+        this.historySortBy = 'datetime-asc';
+      } else {
+        this.historySortBy = 'datetime-desc';
+      }
+    } else if (field === 'branch') {
+      if (this.historySortBy === 'branch-asc') {
+        this.historySortBy = 'branch-desc';
+      } else {
+        this.historySortBy = 'branch-asc';
+      }
+    }
+    const sortSelect = document.getElementById('sort-reports');
+    if (sortSelect) sortSelect.value = this.historySortBy;
+    this.renderReportsTable();
+  }
+
+  updateSortHeaderIndicators() {
+    const sortBy = this.historySortBy || 'datetime-desc';
+    const dateTh = document.getElementById('th-sort-date');
+    const dateIcon = document.getElementById('sort-icon-date');
+    const branchTh = document.getElementById('th-sort-branch');
+    const branchIcon = document.getElementById('sort-icon-branch');
+    const sortSelect = document.getElementById('sort-reports');
+
+    if (sortSelect && sortSelect.value !== sortBy) {
+      sortSelect.value = sortBy;
+    }
+
+    if (dateTh) {
+      if (sortBy === 'datetime-desc') {
+        dateTh.classList.add('active-sort');
+        if (dateIcon) dateIcon.textContent = ' ▼';
+      } else if (sortBy === 'datetime-asc') {
+        dateTh.classList.add('active-sort');
+        if (dateIcon) dateIcon.textContent = ' ▲';
+      } else {
+        dateTh.classList.remove('active-sort');
+        if (dateIcon) dateIcon.textContent = '';
+      }
+    }
+
+    if (branchTh) {
+      if (sortBy === 'branch-asc') {
+        branchTh.classList.add('active-sort');
+        if (branchIcon) branchIcon.textContent = ' ▲';
+      } else if (sortBy === 'branch-desc') {
+        branchTh.classList.add('active-sort');
+        if (branchIcon) branchIcon.textContent = ' ▼';
+      } else {
+        branchTh.classList.remove('active-sort');
+        if (branchIcon) branchIcon.textContent = '';
+      }
+    }
+  }
+
+  hasReportIncompleteIssues(r) {
+    if (!r) return false;
+    const deletedIssueIds = Storage.getDeletedIssueIds ? Storage.getDeletedIssueIds() : new Set();
+
+    // 1. If report has structured issues array
+    if (Array.isArray(r.issues) && r.issues.length > 0) {
+      return r.issues.some((i, idx) => {
+        if (!i || !i.issue) return false;
+        const txt = String(i.issue).trim();
+        if (!txt) return false;
+        if (i.status === 'complete' || i.status === 'completed') return false;
+        const iId = String(i.id || '').trim();
+        const detId = `iss_${r.id}_${idx}`;
+        return !deletedIssueIds.has(iId) && !deletedIssueIds.has(detId) && !deletedIssueIds.has(txt);
+      });
+    }
+
+    // 2. If report has legacy issueList array
+    if (Array.isArray(r.issueList) && r.issueList.length > 0) {
+      return r.issueList.some(i => {
+        const txt = typeof i === 'string' ? i.trim() : (i && i.issue ? String(i.issue).trim() : '');
+        if (!txt) return false;
+        if (i && (i.status === 'complete' || i.status === 'completed')) return false;
+        return !deletedIssueIds.has(txt);
+      });
+    }
+
+    // 3. Fallback: only if no structured issues array exists or it is empty
+    const fallbackText = (r.unresolvedIssues || '').trim();
+    if (!fallbackText) return false;
+    if (deletedIssueIds.has(`iss_unresolved_${r.id}`) || deletedIssueIds.has(fallbackText)) {
+      return false;
+    }
+    const resolvedKeywords = [
+      'គ្មាន', 'none', 'បានដោះស្រាយរួចរាល់ទាំងអស់', 'គ្មានបញ្ហា',
+      'ដោះស្រាយរួច', 'រួចរាល់', 'បានដោះស្រាយ', 'complete', 'completed', 'n/a', '-'
+    ];
+    return !resolvedKeywords.includes(fallbackText.toLowerCase());
+  }
+
+  startNewReport() {
+    this.resetForm(true);
+    this.switchTab('form-tab');
+  }
+
   renderReportsTable() {
     const tbody = document.getElementById('reports-table-body');
     if (!tbody) return;
@@ -2960,13 +3417,7 @@
       const todayISO = new Date().toISOString().split('T')[0];
       reports = reports.filter(r => r.date === todayISO || (r.createdAt && r.createdAt.startsWith(todayISO)));
     } else if (this.historyQuickFilter === 'unresolved' || this.historyQuickFilter === 'challenges') {
-      reports = reports.filter(r => {
-        const hasUnresolvedIssues = r.unresolvedIssues && r.unresolvedIssues.trim() && !['គ្មាន', 'None', 'បានដោះស្រាយរួចរាល់ទាំងអស់', 'គ្មានបញ្ហា', 'ដោះស្រាយរួច'].includes(r.unresolvedIssues.trim());
-        const hasIncompleteIssues = Array.isArray(r.issues) && r.issues.some(i => i && i.issue && i.status !== 'complete');
-        const hasIssueList = Array.isArray(r.issueList) && r.issueList.length > 0 && r.issueList.some(i => (typeof i === 'string' ? i.trim() : i.issue?.trim()) && i.status !== 'complete');
-        const hasChallenges = r.operationChallenges && r.operationChallenges.trim() && !['គ្មាន', 'None', 'គ្មានបញ្ហា', 'មិនមាន'].includes(r.operationChallenges.trim());
-        return hasUnresolvedIssues || hasIncompleteIssues || hasIssueList || hasChallenges;
-      });
+      reports = reports.filter(r => this.hasReportIncompleteIssues(r));
     } else if (this.historyQuickFilter === 'approved') {
       reports = reports.filter(r => r.approvalStatus === 'approved');
     } else if (this.historyQuickFilter === 'pending') {
@@ -2999,10 +3450,26 @@
       return matchSearch && matchBranch && matchApproval && matchDate;
     });
 
+    // 3. Sort Reports by Date and Time (or chosen criteria)
+    const sortBy = this.historySortBy || 'datetime-desc';
+    reports.sort((a, b) => {
+      if (sortBy === 'datetime-asc') {
+        return this.getReportDateTimeTimestamp(a) - this.getReportDateTimeTimestamp(b);
+      } else if (sortBy === 'branch-asc') {
+        return (a.branch || '').localeCompare(b.branch || '', 'km');
+      } else if (sortBy === 'branch-desc') {
+        return (b.branch || '').localeCompare(a.branch || '', 'km');
+      }
+      // Default: 'datetime-desc' (Newest Date & Time First)
+      return this.getReportDateTimeTimestamp(b) - this.getReportDateTimeTimestamp(a);
+    });
+
+    this.updateSortHeaderIndicators();
+
     if (reports.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="8" class="table-empty-state">
+          <td colspan="9" class="table-empty-state">
             <div class="empty-state-box">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="empty-state-icon">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -3027,9 +3494,35 @@
     const tgTitle = this.currentLang === 'en' ? 'Share to Telegram' : 'ចែករំលែកទៅកាន់ Telegram';
     const deleteTitle = this.currentLang === 'en' ? 'Delete Report' : 'លុបរបាយការណ៍';
 
+    const deletedIssueIds = Storage.getDeletedIssueIds();
     tbody.innerHTML = reports.map(r => {
-      const hasChallenge = (r.operationChallenges && r.operationChallenges.trim() !== 'គ្មាន' && r.operationChallenges.trim() !== 'None') || (r.challengesList && r.challengesList.length > 0);
-      const hasUnresolved = (r.unresolvedIssues && r.unresolvedIssues.trim() && r.unresolvedIssues.trim() !== 'គ្មាន' && r.unresolvedIssues.trim() !== 'None' && r.unresolvedIssues.trim() !== 'បានដោះស្រាយរួចរាល់ទាំងអស់') || (r.issueList && r.issueList.length > 0);
+      const hasUnresolved = this.hasReportIncompleteIssues(r);
+      let unresolvedIssueText = '';
+      if (hasUnresolved) {
+        if (Array.isArray(r.issues) && r.issues.length > 0) {
+          unresolvedIssueText = r.issues
+            .filter((i, idx) => {
+              if (!i || !i.issue) return false;
+              const txt = String(i.issue).trim();
+              if (!txt || i.status === 'complete' || i.status === 'completed') return false;
+              const iId = String(i.id || '').trim();
+              const detId = `iss_${r.id}_${idx}`;
+              return !deletedIssueIds.has(iId) && !deletedIssueIds.has(detId) && !deletedIssueIds.has(txt);
+            })
+            .map(i => i.issue.trim())
+            .join('\n');
+        } else if (Array.isArray(r.issueList) && r.issueList.length > 0) {
+          unresolvedIssueText = r.issueList
+            .filter(i => {
+              const txt = typeof i === 'string' ? i.trim() : (i && i.issue ? String(i.issue).trim() : '');
+              return txt && i.status !== 'complete' && i.status !== 'completed' && !deletedIssueIds.has(txt);
+            })
+            .map(i => typeof i === 'string' ? i.trim() : i.issue.trim())
+            .join('\n');
+        } else {
+          unresolvedIssueText = (r.unresolvedIssues || '').trim();
+        }
+      }
       const reporterInitials = (r.reporterName || 'BS')
         .split(' ')
         .map(w => w[0])
@@ -3040,7 +3533,7 @@
       return `
         <tr class="history-table-row">
           <!-- Branch Column -->
-          <td>
+          <td class="history-issues-column">
             <div class="table-branch-pill">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="table-icon-blue">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -3050,16 +3543,44 @@
             </div>
           </td>
 
-          <!-- Date Column -->
+          <!-- Date & Time Column -->
           <td>
-            <div class="table-date-cell">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              <span>${r.dateDisplay || r.date || '-'}</span>
+            <div class="table-datetime-cell">
+              <div class="table-date-main">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>${r.dateDisplay || r.date || '-'}</span>
+              </div>
+              ${(() => {
+                const times = [];
+                if (r.openingTime && r.openingTime.trim()) times.push(r.openingTime.trim());
+                if (r.closingTime && r.closingTime.trim() && r.closingTime.trim() !== r.openingTime?.trim()) times.push(r.closingTime.trim());
+                
+                let timeBadge = '';
+                if (times.length > 0) {
+                  timeBadge = times.join(' - ');
+                } else if (r.createdAt) {
+                  const d = new Date(String(r.createdAt).replace(' ', 'T'));
+                  if (!isNaN(d.getTime())) {
+                    timeBadge = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                  }
+                }
+                
+                if (!timeBadge) return '';
+                return `
+                  <div class="table-time-pill" title="${this.currentLang === 'en' ? 'Shift / Report Time' : 'ម៉ោងបំពេញការងារ / របាយការណ៍'}">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>${this.escapeHtmlAttr(timeBadge)}</span>
+                  </div>
+                `;
+              })()}
             </div>
           </td>
 
@@ -3086,11 +3607,11 @@
                 const presNum = r.presentCount !== undefined && r.presentCount !== null && String(r.presentCount).trim() !== ''
                   ? String(r.presentCount).replace(/\D/g, '')
                   : '0';
-                const absNum = r.absentCount !== undefined && r.absentCount !== null
-                  ? parseInt(String(r.absentCount).replace(/\D/g, ''), 10) || 0
-                  : 0;
+                const absVal = r.absentCount !== undefined && r.absentCount !== null ? String(r.absentCount).trim() : '';
+                const hasAbsent = absVal !== '' && absVal !== '0' && absVal !== '0 នាក់' && absVal !== 'គ្មាន' && absVal.toLowerCase() !== 'none' && absVal !== '-';
                 const unitText = this.currentLang === 'en' ? 'staff' : 'នាក់';
-                const absentUnitText = this.currentLang === 'en' ? 'absent' : 'អវត្តមាន';
+                const absentLabelText = this.currentLang === 'en' ? 'Absent: ' : 'អវត្តមាន៖ ';
+                const absDisplay = this.formatAbsentDisplay(absVal, this.currentLang === 'en');
 
                 return `
                   <div class="attendance-pill-present" title="${presentLabel}${presNum} ${unitText}">
@@ -3098,11 +3619,10 @@
                     <span class="attendance-num">${presNum}</span>
                     <span class="attendance-label">${this.currentLang === 'en' ? 'Present' : 'វត្តមាន'}</span>
                   </div>
-                  ${absNum > 0 ? `
-                    <div class="attendance-pill-absent" title="${absentLabel}${absNum} ${unitText}">
+                  ${hasAbsent ? `
+                    <div class="attendance-pill-absent" title="${absentLabelText}${this.escapeHtmlAttr(absDisplay)}">
                       <span class="attendance-indicator-dot absent-dot"></span>
-                      <span class="attendance-num">${absNum}</span>
-                      <span class="attendance-label">${absentUnitText}</span>
+                      <span class="attendance-num">${this.escapeHtmlAttr(absDisplay)}</span>
                     </div>
                   ` : ''}
                 `;
@@ -3110,26 +3630,18 @@
             </div>
           </td>
 
-          <!-- Work Status, Challenges & Unresolved Issues Column -->
+          <!-- Work Status Column -->
           <td>
             <div class="table-work-status-box">
               <div class="table-work-status-text" title="${this.escapeHtmlAttr(r.workStatus || '')}">${this.escapeHtmlAttr(r.workStatus || '-')}</div>
               ${hasUnresolved ? `
-                <div class="table-unresolved-badge" title="${this.escapeHtmlAttr(r.unresolvedIssues || '')}">
-                  <span>🔴</span>
-                  <span>${this.escapeHtmlAttr(r.unresolvedIssues || '')}</span>
+                <div class="table-unresolved-badge" title="${this.escapeHtmlAttr(unresolvedIssueText)}">
+                  <span class="issue-status-dot"></span>
+                  <span>${this.escapeHtmlAttr(unresolvedIssueText)}</span>
                 </div>
-              ` : ''}
-              ${hasChallenge ? `
-                <div class="table-challenge-badge" title="${this.escapeHtmlAttr(r.operationChallenges || '')}">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="challenge-icon">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                  <span class="challenge-text">${this.escapeHtmlAttr(r.operationChallenges || '')}</span>
-                </div>
-              ` : ''}
+              ` : `<span class="table-issue-none">${this.currentLang === 'en' ? 'No unresolved issues' : 'គ្មានបញ្ហាមិនទាន់ដោះស្រាយ'}</span>`}
+            </div>
+          </td>
             </div>
           </td>
 
@@ -3233,12 +3745,14 @@
                 </svg>
               </button>
 
-              <button type="button" class="btn-table-action btn-table-delete" onclick="window.bsApp.deleteReport('${r.id}')" title="${deleteTitle}">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-              </button>
+              ${this.isCurrentUserAdminOrTopMgmt() ? `
+                <button type="button" class="btn-table-action btn-table-delete" onclick="window.bsApp.deleteReport('${r.id}')" title="${deleteTitle}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              ` : ''}
             </div>
           </td>
         </tr>
@@ -3263,13 +3777,7 @@
     const totalStaff = reports.reduce((sum, r) => sum + (parseInt(r.presentCount) || 0), 0);
     if (staffPresentEl) staffPresentEl.textContent = totalStaff;
 
-    const unresolvedCount = reports.filter(r => {
-      const hasUnresolvedIssues = r.unresolvedIssues && r.unresolvedIssues.trim() && !['គ្មាន', 'None', 'បានដោះស្រាយរួចរាល់ទាំងអស់', 'គ្មានបញ្ហា', 'ដោះស្រាយរួច'].includes(r.unresolvedIssues.trim());
-      const hasIncompleteIssues = Array.isArray(r.issues) && r.issues.some(i => i && i.issue && i.status !== 'complete');
-      const hasIssueList = Array.isArray(r.issueList) && r.issueList.length > 0 && r.issueList.some(i => (typeof i === 'string' ? i.trim() : i.issue?.trim()) && i.status !== 'complete');
-      const hasChallenges = r.operationChallenges && r.operationChallenges.trim() && !['គ្មាន', 'None', 'គ្មានបញ្ហា', 'មិនមាន'].includes(r.operationChallenges.trim());
-      return hasUnresolvedIssues || hasIncompleteIssues || hasIssueList || hasChallenges;
-    }).length;
+    const unresolvedCount = reports.filter(r => this.hasReportIncompleteIssues(r)).length;
     if (challengesEl) challengesEl.textContent = unresolvedCount;
 
     // Dynamic Filter Chip Counts
@@ -3301,8 +3809,7 @@
     const rateEl = document.getElementById('graph-val-rate');
     if (!viewport) return;
 
-    // Both Admin and Users of all branches can see all issue trends across the company
-    const reports = Storage.getReports();
+    const allIssues = this.getAllBranchIssues(true);
     const isEn = this.currentLang === 'en';
 
     // 1. Initialize stats for all official 27 branches
@@ -3322,8 +3829,8 @@
     let grandResolved = 0;
     let grandPending = 0;
 
-    reports.forEach(r => {
-      const canonical = this.getCanonicalBranch(r.branch) || 'Other';
+    allIssues.forEach(iss => {
+      const canonical = this.getCanonicalBranch(iss.branch) || 'Other';
       if (!branchStats[canonical]) {
         branchStats[canonical] = {
           branch: canonical,
@@ -3334,32 +3841,16 @@
         };
       }
 
-      if (Array.isArray(r.issues)) {
-        r.issues.forEach(iss => {
-          if (!iss || !iss.issue || !String(iss.issue).trim()) return;
-          branchStats[canonical].total++;
-          grandTotal++;
-          if (iss.status === 'complete') {
-            branchStats[canonical].resolved++;
-            grandResolved++;
-          } else {
-            branchStats[canonical].pending++;
-            grandPending++;
-          }
-          branchStats[canonical].issues.push(iss);
-        });
+      branchStats[canonical].total++;
+      grandTotal++;
+      if (iss.status === 'complete') {
+        branchStats[canonical].resolved++;
+        grandResolved++;
+      } else {
+        branchStats[canonical].pending++;
+        grandPending++;
       }
-
-      if (r.operationChallenges && String(r.operationChallenges).trim() && r.operationChallenges.trim() !== 'គ្មាន' && r.operationChallenges.trim() !== 'None') {
-        const hasExisting = branchStats[canonical].issues.some(i => i.issue === r.operationChallenges);
-        if (!hasExisting) {
-          branchStats[canonical].total++;
-          branchStats[canonical].pending++;
-          grandTotal++;
-          grandPending++;
-          branchStats[canonical].issues.push({ issue: r.operationChallenges, status: 'incomplete', note: '' });
-        }
-      }
+      branchStats[canonical].issues.push(iss);
     });
 
     // Update Summary KPI Strip
@@ -3616,11 +4107,20 @@
   }
 
   reloadAllBranchData() {
+    const isEn = this.currentLang === 'en';
+    const confirmMsg = isEn 
+      ? 'Reset and load initial sample demo data for all 27 branches? This will restore sample reports.' 
+      : 'តើអ្នកពិតជាចង់កំណត់ឡើងវិញ និងផ្ទុកទិន្នន័យគំរូសាខាទាំង ២៧ ឡើងវិញមែនទេ?';
+    if (!confirm(confirmMsg)) return;
+
+    Storage.clearDeletedTombstones();
     const initialReports = Storage.getInitialSampleReports();
     Storage.saveReports(initialReports);
     this.renderReportsTable();
     this.renderBranchIssuesGraph();
-    this.showToast(this.currentLang === 'en' ? 'Loaded data for all 27 branches' : 'បានផ្ទុកទិន្នន័យសាខាទាំង ២៧ រួចរាល់', 'success');
+    this.renderIssuesDashboard();
+    this.updateIssuesStatsAndBadge();
+    this.showToast(isEn ? 'Loaded data for all 27 branches' : 'បានផ្ទុកទិន្នន័យសាខាទាំង ២៧ រួចរាល់', 'success');
   }
 
   viewReportDoc(id) {
@@ -3631,6 +4131,8 @@
       this.closingPhotos = report.closingPhotos || [];
       this.additionalPhotos = report.additionalPhotos || [];
       this.loadCurrentFormData(this.currentReport);
+      this.isViewingSavedReport = true;
+      this.setReportFormReadOnly(true);
       this.updateLivePreview();
       this.switchTab('document-tab');
       const bName = this.getDisplayBranch(report.branch, this.currentLang);
@@ -3646,6 +4148,8 @@
       this.closingPhotos = report.closingPhotos || [];
       this.additionalPhotos = report.additionalPhotos || [];
       this.loadCurrentFormData(this.currentReport);
+      this.isViewingSavedReport = true;
+      this.setReportFormReadOnly(true);
       this.updateLivePreview();
       this.switchTab('document-tab');
       // Briefly allow DOM layout to update then trigger native print
@@ -3719,6 +4223,19 @@
         : 'របាយការណ៍ដែលបានរក្សាទុកក្នុងប្រវត្តិ ត្រូវបានចាក់សោរផ្លូវការ មិនអាចកែប្រែបានទេ!',
       'warning'
     );
+  }
+
+  setReportFormReadOnly(readOnly) {
+    const form = document.getElementById('report-form');
+    if (!form) return;
+    form.querySelectorAll('input, textarea, select').forEach(field => {
+      if (field.type === 'hidden' || field.type === 'file') return;
+      if (field.tagName === 'SELECT') field.disabled = readOnly;
+      else field.readOnly = readOnly;
+    });
+    form.querySelectorAll('.btn-add-item, .btn-remove-row, #btn-save-report').forEach(control => {
+      control.disabled = readOnly;
+    });
   }
 
   toggleReportApproval(id) {
@@ -3801,22 +4318,60 @@
   deleteReport(id) {
     const report = Storage.getReportById(id);
     if (!report || !this.canAccessReport(report)) return;
+    if (this.currentUser && !this.isCurrentUserAdminOrTopMgmt()) {
+      this.showToast(this.currentLang === 'en' ? 'Saved reports are locked for regular users.' : 'របាយការណ៍ដែលបានរក្សាទុក ត្រូវបានចាក់សោសម្រាប់ User ធម្មតា។', 'warning');
+      return;
+    }
     const confirmMsg = this.currentLang === 'en' ? 'Are you sure you want to delete this report?' : 'តើអ្នកប្រាកដជាចង់លុបរបាយការណ៍នេះមែនទេ?';
     if (confirm(confirmMsg)) {
       Storage.deleteReport(id);
+
+      // If currently editing or viewing the deleted report, reset form & clear draft
+      if (this.currentReport && this.currentReport.id === id) {
+        this.resetForm(true);
+        Storage.clearDraft(report.branch);
+      }
+
       this.renderReportsTable();
       this.updateStats();
       this.renderIssuesDashboard();
       this.updateIssuesStatsAndBadge();
+      if (typeof this.renderBranchIssuesGraph === 'function') {
+        this.renderBranchIssuesGraph();
+      }
       this.showToast(this.currentLang === 'en' ? 'Report deleted successfully' : 'បានលុបរបាយការណ៍រួចរាល់', 'primary');
+    }
+  }
+
+  clearAllReports() {
+    if (this.currentUser && !this.isCurrentUserAdminOrTopMgmt()) {
+      this.showToast(this.currentLang === 'en' ? 'Only administrators can clear all reports.' : 'មានតែអ្នកគ្រប់គ្រងប៉ុណ្ណោះដែលអាចលុបរបាយការណ៍ទាំងអស់។', 'warning');
+      return;
+    }
+    const isEn = this.currentLang === 'en';
+    const confirmMsg = isEn 
+      ? 'Are you sure you want to delete ALL reports and clear all drafts? This action cannot be undone.' 
+      : 'តើអ្នកប្រាកដជាចង់លុបរបាយការណ៍ទាំងអស់ និងជម្រះទិន្នន័យព្រាងមែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។';
+    if (confirm(confirmMsg)) {
+      Storage.clearAllReports();
+      this.resetForm(true);
+      this.renderReportsTable();
+      this.updateStats();
+      this.renderIssuesDashboard();
+      this.updateIssuesStatsAndBadge();
+      if (typeof this.renderBranchIssuesGraph === 'function') {
+        this.renderBranchIssuesGraph();
+      }
+      this.showToast(isEn ? 'All reports and drafts have been deleted.' : 'បានលុបរបាយការណ៍ និងទិន្នន័យព្រាងទាំងអស់រួចរាល់។', 'primary');
     }
   }
 
   // =========================================================================
   // BRANCH INCOMPLETE ISSUES DASHBOARD METHODS
   // =========================================================================
-  getAllBranchIssues() {
-    const reports = this.getAccessibleReports();
+  getAllBranchIssues(includeAllBranches = false) {
+    const reports = includeAllBranches ? Storage.getReports() : this.getAccessibleReports();
+    const deletedIssueIds = Storage.getDeletedIssueIds();
     const allIssues = [];
 
     reports.forEach(r => {
@@ -3825,6 +4380,10 @@
         r.issues.forEach((iss, idx) => {
           if (iss && iss.issue && iss.issue.trim()) {
             const deterministicId = iss.id || `iss_${r.id}_${idx}`;
+            const issueText = iss.issue.trim();
+            if (deletedIssueIds.has(deterministicId) || (iss.id && deletedIssueIds.has(String(iss.id))) || deletedIssueIds.has(issueText)) {
+              return; // Skip deleted issue
+            }
             allIssues.push({
               id: deterministicId,
               reportId: r.id,
@@ -3834,16 +4393,23 @@
               reporterName: r.reporterName || '',
               position: r.position || '',
               issue: iss.issue,
-              status: iss.status || 'incomplete',
-              note: iss.note || ''
+              status: iss.status === 'complete' || iss.status === 'completed' ? 'complete' : 'incomplete',
+              note: iss.note || '',
+              comments: Array.isArray(iss.comments) ? iss.comments : []
             });
           }
         });
       } else {
-        // Fallback: If no structured issues array, use unresolvedIssues and operationChallenges
-        if (r.unresolvedIssues && r.unresolvedIssues.trim() && r.unresolvedIssues.trim() !== 'គ្មាន' && r.unresolvedIssues.trim() !== 'None' && r.unresolvedIssues.trim() !== 'បានដោះស្រាយរួចរាល់ទាំងអស់') {
+        // Fallback: ONLY if report had no structured issues array at all or empty (legacy reports)
+        const fallbackText = (r.unresolvedIssues || '').trim();
+        const resolvedKeywords = ['គ្មាន', 'none', 'បានដោះស្រាយរួចរាល់ទាំងអស់', 'គ្មានបញ្ហា', 'ដោះស្រាយរួច', 'រួចរាល់', 'បានដោះស្រាយ', 'complete', 'completed', 'n/a', '-'];
+        if (fallbackText && !resolvedKeywords.includes(fallbackText.toLowerCase())) {
+          const fallbackId = `iss_unresolved_${r.id}`;
+          if (deletedIssueIds.has(fallbackId) || deletedIssueIds.has(fallbackText)) {
+            return; // Skip deleted fallback issue
+          }
           allIssues.push({
-            id: `iss_unresolved_${r.id}`,
+            id: fallbackId,
             reportId: r.id,
             branch: r.branch || 'មិនស្គាល់',
             date: r.date || '',
@@ -3852,21 +4418,8 @@
             position: r.position || '',
             issue: r.unresolvedIssues,
             status: 'incomplete',
-            note: 'បញ្ហាមិនទាន់ដោះស្រាយពេលបិទសាខា'
-          });
-        }
-        if (r.operationChallenges && r.operationChallenges.trim() && r.operationChallenges.trim() !== 'គ្មាន' && r.operationChallenges.trim() !== 'None' && r.operationChallenges !== r.unresolvedIssues) {
-          allIssues.push({
-            id: `iss_challenge_${r.id}`,
-            reportId: r.id,
-            branch: r.branch || 'មិនស្គាល់',
-            date: r.date || '',
-            dateDisplay: r.dateDisplay || r.date || '',
-            reporterName: r.reporterName || '',
-            position: r.position || '',
-            issue: r.operationChallenges,
-            status: 'incomplete',
-            note: 'បញ្ហាប្រឈមប្រតិបត្តិការ'
+            note: 'បញ្ហាមិនទាន់ដោះស្រាយពេលបិទសាខា',
+            comments: Array.isArray(r.issueComments) ? r.issueComments : []
           });
         }
       }
@@ -3877,7 +4430,7 @@
 
   updateIssuesStatsAndBadge() {
     const allIssues = this.getAllBranchIssues();
-    const incompleteIssues = allIssues.filter(i => i.status === 'incomplete');
+    const incompleteIssues = allIssues.filter(i => i.status !== 'complete');
     const resolvedIssues = allIssues.filter(i => i.status === 'complete');
     const uniqueBranchesWithIssues = new Set(incompleteIssues.map(i => i.branch).filter(Boolean));
 
@@ -3912,7 +4465,7 @@
     const container = document.getElementById('issues-grid-container');
     if (!container) return;
 
-    let issues = this.getAllBranchIssues();
+    let issues = this.getAllBranchIssues().filter(i => i.status !== 'complete');
 
     // Filters
     const searchTerm = (document.getElementById('search-issues')?.value || '').toLowerCase().trim();
@@ -3963,7 +4516,6 @@
       const emptyMsg = this.t('emptyIssuesText');
       container.innerHTML = `
         <div class="issues-empty-state">
-          <div class="issues-empty-icon">🎉</div>
           <h3>${emptyMsg}</h3>
           <p style="color: hsl(var(--muted-foreground)); font-size: 0.85rem; margin-top: 0.35rem;">
             ${this.currentLang === 'en' ? 'Try adjusting your search or filters to see past resolved records.' : 'សូមសាកល្បងប្តូរលក្ខខណ្ឌស្វែងរក ឬជ្រើសរើសមើលបញ្ហាដែលបានដោះស្រាយរួច។'}
@@ -4013,6 +4565,18 @@
                 <strong>${notePrefix}</strong> ${iss.note}
               </div>
             ` : ''}
+            <div class="issue-comments-thread">
+              ${(iss.comments || []).map(comment => `
+                <div class="issue-comment-item">
+                  <strong>${this.escapeHtmlAttr(comment.author || 'User')}</strong>
+                  <span>${this.escapeHtmlAttr(comment.text || '')}</span>
+                </div>
+              `).join('')}
+              <div class="issue-comment-compose">
+                <input type="text" class="form-input issue-comment-input" id="issue-comment-${iss.id}" placeholder="${isEn ? 'Write a comment or reply...' : 'សរសេរ Comment ឬ Reply...'}" autocomplete="off">
+                <button type="button" class="btn btn-sm btn-secondary" onclick="window.bsApp.addIssueComment('${iss.reportId}', '${iss.id}')">${isEn ? 'Send' : 'ផ្ញើ'}</button>
+              </div>
+            </div>
           </div>
 
           <div class="issue-card-footer">
@@ -4048,12 +4612,62 @@
 
     const success = Storage.deleteIssue(reportId, issueId);
     if (success) {
+      // Also sync in-memory currentReport and draft if currently viewing or editing this report
+      if (this.currentReport && (this.currentReport.id === reportId || !reportId)) {
+        if (Array.isArray(this.currentReport.issues)) {
+          this.currentReport.issues = this.currentReport.issues.filter((iss, idx) => 
+            iss.id !== issueId && `iss_${this.currentReport.id}_${idx}` !== issueId && iss.issue !== issueId
+          );
+        }
+        const remainingIncomplete = (this.currentReport.issues || []).filter(i => i && i.status !== 'complete' && i.status !== 'completed' && i.issue);
+        if (issueId === `iss_unresolved_${this.currentReport.id}` || remainingIncomplete.length === 0) {
+          this.currentReport.unresolvedIssues = '';
+          const unresHidden = document.getElementById('form-unresolved');
+          if (unresHidden) unresHidden.value = '';
+        } else {
+          this.currentReport.unresolvedIssues = remainingIncomplete.map(i => i.issue).join('\n');
+          const unresHidden = document.getElementById('form-unresolved');
+          if (unresHidden) unresHidden.value = this.currentReport.unresolvedIssues;
+        }
+        Storage.saveDraft(this.currentReport);
+        if (this.isEditingSavedReport || this.isViewingSavedReport) {
+          this.renderIssueRows(this.currentReport.issues);
+        }
+      }
+
       this.renderIssuesDashboard();
       this.updateIssuesStatsAndBadge();
       this.renderReportsTable();
       this.updateStats();
+      if (typeof this.renderBranchIssuesGraph === 'function') {
+        this.renderBranchIssuesGraph();
+      }
       const msg = isEn ? 'Issue deleted successfully.' : 'បានលុបបញ្ហារួចរាល់!';
       this.showToast(msg, 'success');
+    }
+  }
+
+  addIssueComment(reportId, issueId) {
+    const input = document.getElementById(`issue-comment-${issueId}`);
+    const text = input?.value?.trim();
+    if (!text) return;
+    const report = Storage.getReportById(reportId);
+    if (!report || !this.canAccessReport(report)) return;
+    const issue = Array.isArray(report.issues)
+      ? report.issues.find((item, index) => item.id === issueId || `iss_${report.id}_${index}` === issueId || item.issue === issueId)
+      : null;
+    if (issue) {
+      issue.comments = Array.isArray(issue.comments) ? issue.comments : [];
+      issue.comments.push({
+        id: `comment_${Date.now()}`,
+        author: this.currentUser?.fullName || this.currentUser?.username || 'User',
+        role: this.currentUser?.role || '',
+        text,
+        createdAt: new Date().toISOString()
+      });
+      Storage.saveReport(report);
+      this.renderIssuesDashboard();
+      this.updateIssuesStatsAndBadge();
     }
   }
 
@@ -4066,7 +4680,7 @@
       this.renderReportsTable();
       this.updateStats();
       const msg = newStatus === 'complete' 
-        ? (this.currentLang === 'en' ? 'Issue marked as resolved! 🎉' : 'បានសម្គាល់ថាបញ្ហាត្រូវបានដោះស្រាយរួចរាល់! 🎉')
+        ? (this.currentLang === 'en' ? 'Issue marked as resolved!' : 'បានសម្គាល់ថាបញ្ហាត្រូវបានដោះស្រាយរួចរាល់!')
         : (this.currentLang === 'en' ? 'Issue marked as incomplete.' : 'បានប្តូរស្ថានភាពជាមិនទាន់រួចរាល់។');
       this.showToast(msg, 'success');
     }
@@ -4116,9 +4730,25 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     const user = this.currentUser;
     if (!user) return false;
     const role = String(user.role || '').toLowerCase();
+    const roleId = String(user.roleId || '').toLowerCase();
     const username = String(user.username || '').toLowerCase();
-    return role.includes('system administrator') || role.includes('អ្នកគ្រប់គ្រងប្រព័ន្ធ') ||
-      username === 'admin' || username === 'sysadmin' || username === 'rithjengdavid';
+    return (
+      role.includes('admin') ||
+      role.includes('administrator') ||
+      role.includes('system') ||
+      role.includes('អ្នកគ្រប់គ្រង') ||
+      role.includes('នាយកដ្ឋាន') ||
+      role.includes('ថ្នាក់ដឹកនាំ') ||
+      role.includes('top management') ||
+      roleId === 'sys_admin' ||
+      roleId === 'admin' ||
+      roleId === 'top_management' ||
+      username === 'admin' ||
+      username === 'sysadmin' ||
+      username === 'rithjengdavid' ||
+      username === 'vid' ||
+      username === 'vif'
+    );
   }
 
   isCurrentUserTopManagement() {
@@ -4127,15 +4757,26 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     const role = String(user.role || '').toLowerCase();
     const roleId = String(user.roleId || '').toLowerCase();
     const username = String(user.username || '').toLowerCase();
-    return role.includes('top management') || 
-           role.includes('top-management') || 
-           role.includes('top_management') ||
-           role.includes('top-manament') ||
-           role.includes('topmanament') ||
-           role.includes('ថ្នាក់ដឹកនាំជាន់ខ្ពស់') || 
-           role.includes('គណៈគ្រប់គ្រង') ||
-           roleId === 'top_management' ||
-           username === 'vif';
+    return (
+      role.includes('top management') || 
+      role.includes('top-management') || 
+      role.includes('top_management') ||
+      role.includes('top-manament') ||
+      role.includes('topmanament') ||
+      role.includes('ថ្នាក់ដឹកនាំ') || 
+      role.includes('គណៈគ្រប់គ្រង') ||
+      role.includes('admin') ||
+      role.includes('administrator') ||
+      role.includes('នាយក') ||
+      roleId === 'top_management' ||
+      roleId === 'sys_admin' ||
+      roleId === 'admin' ||
+      username === 'admin' ||
+      username === 'sysadmin' ||
+      username === 'rithjengdavid' ||
+      username === 'vid' ||
+      username === 'vif'
+    );
   }
 
   isCurrentUserAdminOrTopMgmt() {
@@ -4210,6 +4851,32 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     return value;
   }
 
+  formatAbsentDisplay(absentVal, isEn = (this.currentLang === 'en')) {
+    if (absentVal === undefined || absentVal === null) {
+      return isEn ? 'None' : 'គ្មាន';
+    }
+    const str = String(absentVal).trim();
+    if (!str || str === '0' || str === '0 នាក់' || str.toLowerCase() === 'none' || str.toLowerCase() === '0 person' || str.toLowerCase() === '0 staff' || str === 'គ្មាន' || str === '-') {
+      return isEn ? 'None' : 'គ្មាន';
+    }
+    if (/^\d+$/.test(str)) {
+      const num = parseInt(str, 10);
+      if (num === 0) return isEn ? 'None' : 'គ្មាន';
+      return isEn ? (num === 1 ? '1 person' : `${num} persons`) : `${num} នាក់`;
+    }
+    return str;
+  }
+
+  setAbsentQuickTag(value) {
+    const input = document.getElementById('form-absent-count');
+    if (input) {
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      input.focus();
+    }
+  }
+
   setSelectBranch(selectEl, branchValue) {
     if (!selectEl || !branchValue) return;
     const canonical = this.getCanonicalBranch(branchValue);
@@ -4253,6 +4920,13 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
   // =========================================================================
   initAuth() {
     this.currentUser = Storage.getCurrentUser();
+    if (typeof Storage.syncUsersFromDatabase === 'function') {
+      Storage.syncUsersFromDatabase().then(() => {
+        if (this.isCurrentUserAdminOrTopMgmt()) {
+          this.renderUsersTable();
+        }
+      }).catch(() => {});
+    }
     if (this.currentUser) {
       this.populateBranchDropdowns();
       this.fillFormFromCurrentUser();
@@ -4264,14 +4938,122 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
       }
     }
     this.updateScreenVisibility();
+    this.updateIssueFeatureVisibility();
+    this.renderReportsTable();
     this.renderAuthNav();
+    this.updateDbIndicator(Storage.isDbOnline);
   }
 
-  updateScreenVisibility(forceShowApp = false) {
+  // =========================================================================
+  // MULTI-SYSTEM ROUTER & LAUNCHER (DAILY REPORT & FIXED ASSET)
+  // =========================================================================
+  initSystemRouter() {
+    window.addEventListener('hashchange', () => {
+      this.handleHashChange();
+    });
+
+    // Handle deep linking or initial view
+    this.handleInitialSystem();
+  }
+
+  handleInitialSystem() {
+    const hash = (window.location.hash || '').toLowerCase();
+    if (hash === '#portal') {
+      this.switchSystem('portal', false);
+      return;
+    }
+    if (hash === '#fixasset' || hash === '#fix-asset') {
+      this.switchSystem('fixasset', false);
+      return;
+    }
+    if (hash === '#report' || hash === '#daily-report') {
+      this.switchSystem('daily-report', false);
+      return;
+    }
+
+    // If no hash in URL:
+    const saved = Storage && typeof Storage.getActiveSystem === 'function' ? Storage.getActiveSystem() : null;
+    if (saved) {
+      this.switchSystem(saved, false);
+    } else {
+      // Default to the luxury Portal Launcher Hub
+      this.switchSystem('portal', false);
+    }
+  }
+
+  handleHashChange() {
+    const hash = (window.location.hash || '').toLowerCase();
+    if (hash === '#portal') {
+      this.switchSystem('portal', false);
+    } else if (hash === '#fixasset' || hash === '#fix-asset') {
+      this.switchSystem('fixasset', false);
+    } else if (hash === '#report' || hash === '#daily-report') {
+      this.switchSystem('daily-report', false);
+    }
+  }
+
+  switchSystem(sys, updateHash = true) {
+    if (sys === 'fix-asset') sys = 'fixasset';
+    if (sys === 'report') sys = 'daily-report';
+    this.activeSystem = sys;
+
+    if (Storage && typeof Storage.setActiveSystem === 'function') {
+      Storage.setActiveSystem(sys);
+    }
+
+    if (updateHash) {
+      if (sys === 'portal') {
+        if (window.location.hash !== '#portal') window.location.hash = '#portal';
+      } else if (sys === 'fixasset') {
+        if (window.location.hash !== '#fixasset') window.location.hash = '#fixasset';
+      } else {
+        if (window.location.hash !== '#report' && window.location.hash !== '#daily-report') {
+          window.location.hash = '#report';
+        }
+      }
+    }
+
+    this.updateScreenVisibility();
+  }
+
+  updateScreenVisibility() {
     const authScreen = document.getElementById('auth-gateway-screen');
     const mainApp = document.getElementById('main-app-wrapper');
+    const portalHub = document.getElementById('portal-hub-screen');
+    const fixAssetWrap = document.getElementById('fixasset-workspace-wrapper');
 
-    if (this.currentUser || forceShowApp) {
+    let currentSys = this.activeSystem || 'portal';
+    if (currentSys === 'fix-asset') currentSys = 'fixasset';
+    if (currentSys === 'report') currentSys = 'daily-report';
+
+    // 1. PORTAL HUB SCREEN
+    if (currentSys === 'portal') {
+      if (portalHub) portalHub.style.display = 'flex';
+      if (authScreen) authScreen.style.display = 'none';
+      if (mainApp) mainApp.style.display = 'none';
+      if (fixAssetWrap) fixAssetWrap.style.display = 'none';
+      this.updateSystemSwitcherPill('portal');
+      return;
+    }
+
+    // 2. FIXED ASSET SCREEN
+    if (currentSys === 'fixasset') {
+      if (portalHub) portalHub.style.display = 'none';
+      if (authScreen) authScreen.style.display = 'none';
+      if (mainApp) mainApp.style.display = 'none';
+      if (fixAssetWrap) fixAssetWrap.style.display = 'flex';
+      this.updateSystemSwitcherPill('fixasset');
+      this.ensureFixAssetFrameLoaded();
+      return;
+    }
+
+    // 3. DAILY REPORT SYSTEM
+    if (portalHub) portalHub.style.display = 'none';
+    if (fixAssetWrap) fixAssetWrap.style.display = 'none';
+    this.updateSystemSwitcherPill('daily-report');
+
+    const isAuthenticated = Boolean(this.currentUser && this.currentUser.username);
+    if (isAuthenticated) {
       if (authScreen) authScreen.style.display = 'none';
       if (mainApp) {
         mainApp.style.display = 'block';
@@ -4289,6 +5071,191 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     }
   }
 
+  updateSystemSwitcherPill(activeSys) {
+    const reportBtns = document.querySelectorAll('.sys-pill-btn[onclick*="daily-report"], #btn-switch-to-report');
+    const assetBtns = document.querySelectorAll('.sys-pill-btn[onclick*="fix-asset"], .sys-pill-btn[onclick*="fixasset"], #btn-switch-to-fixasset');
+    const portalBtns = document.querySelectorAll('.sys-pill-btn[onclick*="portal"], #btn-switch-to-portal');
+
+    reportBtns.forEach(btn => {
+      if (activeSys === 'daily-report') btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+
+    assetBtns.forEach(btn => {
+      if (activeSys === 'fixasset') btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+
+    portalBtns.forEach(btn => {
+      if (activeSys === 'portal') btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+  }
+
+  // =========================================================================
+  // FIXED ASSET SYSTEM EMBED & CONNECTION MANAGEMENT
+  // =========================================================================
+  ensureFixAssetFrameLoaded() {
+    const iframe = document.getElementById('fixasset-iframe');
+    const urlDisplay = document.getElementById('fixasset-current-url-display');
+    const offlineHint = document.getElementById('fixasset-offline-url-hint');
+    const targetUrl = Storage && typeof Storage.getFixAssetUrl === 'function' ? Storage.getFixAssetUrl() : 'http://localhost:8000';
+
+    if (urlDisplay) {
+      try {
+        const parsed = new URL(targetUrl);
+        urlDisplay.textContent = parsed.host || targetUrl;
+      } catch (e) {
+        urlDisplay.textContent = targetUrl;
+      }
+    }
+    if (offlineHint) {
+      offlineHint.textContent = targetUrl;
+    }
+
+    if (iframe) {
+      const currentIframeSrc = iframe.getAttribute('src') || '';
+      if (!currentIframeSrc || currentIframeSrc === 'about:blank' || !currentIframeSrc.startsWith(targetUrl)) {
+        iframe.src = targetUrl;
+      }
+    }
+
+    this.checkFixAssetConnection();
+  }
+
+  async checkFixAssetConnection(urlToTest = null) {
+    const targetUrl = urlToTest || (Storage && typeof Storage.getFixAssetUrl === 'function' ? Storage.getFixAssetUrl() : 'http://localhost:8000');
+    const dot = document.getElementById('fixasset-status-dot');
+    const text = document.getElementById('fixasset-status-text');
+    const overlay = document.getElementById('fixasset-offline-overlay');
+
+    if (!urlToTest) {
+      if (text) text.textContent = this.currentLang === 'en' ? 'Checking...' : 'កំពុងពិនិត្យ...';
+      if (dot) dot.style.background = '#f59e0b';
+    }
+
+    let isOnline = false;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2800);
+
+      await fetch(targetUrl, {
+        method: 'GET',
+        mode: 'no-cors',
+        cache: 'no-store',
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      isOnline = true;
+    } catch (err) {
+      isOnline = false;
+    }
+
+    if (!urlToTest) {
+      if (dot) dot.style.background = isOnline ? '#10b981' : '#ef4444';
+      if (text) {
+        text.textContent = isOnline 
+          ? (this.currentLang === 'en' ? 'Online' : 'ដំណើរការ')
+          : (this.currentLang === 'en' ? 'Offline' : 'មិនទាន់ភ្ជាប់');
+      }
+
+      if (overlay) {
+        overlay.style.display = isOnline ? 'none' : 'flex';
+      }
+    }
+
+    return isOnline;
+  }
+
+  reloadFixAssetFrame() {
+    const iframe = document.getElementById('fixasset-iframe');
+    const targetUrl = Storage && typeof Storage.getFixAssetUrl === 'function' ? Storage.getFixAssetUrl() : 'http://localhost:8000';
+    if (iframe) {
+      iframe.src = targetUrl;
+    }
+    this.checkFixAssetConnection();
+    this.showToast(this.currentLang === 'en' ? 'Reloading Fixed Asset frame...' : 'កំពុងផ្ទុកផ្ទាំង Fixed Asset ឡើងវិញ...', 'info');
+  }
+
+  openFixAssetNewTab() {
+    const targetUrl = Storage && typeof Storage.getFixAssetUrl === 'function' ? Storage.getFixAssetUrl() : 'http://localhost:8000';
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  openFixAssetSettings() {
+    const modal = document.getElementById('modal-fixasset-settings');
+    const input = document.getElementById('input-fixasset-url');
+    const statusBox = document.getElementById('settings-test-status');
+    const currentUrl = Storage && typeof Storage.getFixAssetUrl === 'function' ? Storage.getFixAssetUrl() : 'http://localhost:8000';
+
+    if (input) input.value = currentUrl;
+    if (statusBox) statusBox.style.display = 'none';
+    if (modal) modal.style.display = 'flex';
+  }
+
+  closeFixAssetSettings() {
+    const modal = document.getElementById('modal-fixasset-settings');
+    if (modal) modal.style.display = 'none';
+  }
+
+  async testFixAssetConnection() {
+    const input = document.getElementById('input-fixasset-url');
+    const statusBox = document.getElementById('settings-test-status');
+    let url = (input ? input.value : '').trim();
+    if (!url) url = 'http://localhost:8000';
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'http://' + url;
+    }
+
+    if (statusBox) {
+      statusBox.style.display = 'block';
+      statusBox.className = 'settings-test-status testing';
+      statusBox.style.padding = '0.65rem 1rem';
+      statusBox.style.borderRadius = '0.5rem';
+      statusBox.style.marginTop = '0.75rem';
+      statusBox.style.background = 'rgba(245, 158, 11, 0.12)';
+      statusBox.style.color = '#f59e0b';
+      statusBox.textContent = this.currentLang === 'en' ? 'Testing connection to ' + url + '...' : 'កំពុងធ្វើតេស្តភ្ជាប់ទៅកាន់ ' + url + '...';
+    }
+
+    const ok = await this.checkFixAssetConnection(url);
+    if (statusBox) {
+      if (ok) {
+        statusBox.className = 'settings-test-status success';
+        statusBox.style.background = 'rgba(16, 185, 129, 0.12)';
+        statusBox.style.color = '#10b981';
+        statusBox.textContent = this.currentLang === 'en' ? '✓ Server connected successfully!' : '✓ ភ្ជាប់ទៅកាន់ Server បានជោគជ័យ!';
+      } else {
+        statusBox.className = 'settings-test-status error';
+        statusBox.style.background = 'rgba(239, 68, 68, 0.12)';
+        statusBox.style.color = '#ef4444';
+        statusBox.textContent = this.currentLang === 'en' 
+          ? '✕ Unable to connect. Please ensure `php artisan serve` is running.'
+          : '✕ មិនអាចភ្ជាប់បានទេ។ សូមប្រាកដថាបានដំណើរការ `php artisan serve` រួចរាល់។';
+      }
+    }
+  }
+
+  saveFixAssetSettings() {
+    const input = document.getElementById('input-fixasset-url');
+    let url = (input ? input.value : '').trim();
+    if (!url) url = 'http://localhost:8000';
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'http://' + url;
+    }
+
+    if (Storage && typeof Storage.setFixAssetUrl === 'function') {
+      Storage.setFixAssetUrl(url);
+    }
+
+    this.closeFixAssetSettings();
+    this.reloadFixAssetFrame();
+    this.showToast(
+      this.currentLang === 'en' ? 'Server URL updated: ' + url : 'បានកែប្រែ URL ទៅកាន់: ' + url,
+      'success'
+    );
+  }
+
   renderAuthNav() {
     const container = document.getElementById('auth-nav-container');
     if (!container) return;
@@ -4304,7 +5271,7 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
 
       const role = this.currentUser.role || '';
       const uname = (this.currentUser.username || '').toLowerCase();
-      const isSystemAdmin = role.includes('System Administrator') || role.includes('អ្នកគ្រប់គ្រងប្រព័ន្ធ') || uname === 'admin' || uname === 'sysadmin' || uname === 'rithjengdavid';
+      const isSystemAdmin = this.isCurrentUserAdminOrTopMgmt();
 
       let roleBadgeTheme = 'badge-role-admin';
       if (isSystemAdmin) roleBadgeTheme = 'badge-role-sysadmin';
@@ -4378,12 +5345,21 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
   }
 
   // =========================================================================
+  // =========================================================================
   // USER CREDENTIALS & PASSWORDS INSPECTOR (ADMIN TOOL)
   // =========================================================================
-  openUsersModal() {
+  async openUsersModal() {
+    if (!this.isCurrentUserAdminOrTopMgmt()) {
+      this.showToast(this.currentLang === 'en' ? 'Access restricted: Only Admin or Top Management can view user accounts!' : 'សិទ្ធិត្រូវបានកំណត់៖ មានតែ Admin ឬ គណៈគ្រប់គ្រង ទើបអាចមើលបញ្ជីគណនីបាន!', 'warning');
+      return;
+    }
     const modal = document.getElementById('users-management-modal');
     if (!modal) return;
     this.populateBranchDropdowns();
+    this.usersFilterRole = 'all';
+    document.querySelectorAll('#users-role-filters .user-filter-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.filterRole === 'all');
+    });
     const searchInput = document.getElementById('search-users-input');
     const clearBtn = document.getElementById('btn-clear-search-users');
     if (searchInput) searchInput.value = '';
@@ -4392,6 +5368,11 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     if (addPanel) addPanel.style.display = 'none';
     modal.classList.add('active');
     this.renderUsersTable();
+
+    if (typeof Storage.syncUsersFromDatabase === 'function') {
+      await Storage.syncUsersFromDatabase();
+      this.renderUsersTable(searchInput?.value || '');
+    }
   }
 
   closeUsersModal() {
@@ -4401,48 +5382,131 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
 
   toggleAllPasswords() {
     this.showAllPasswords = !this.showAllPasswords;
+    const btn = document.getElementById('btn-toggle-all-passwords');
     const label = document.getElementById('label-toggle-all-pwd');
+    if (btn) {
+      btn.classList.toggle('is-active', this.showAllPasswords);
+    }
     if (label) {
       label.innerHTML = this.showAllPasswords 
-        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: -2px;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg><span>${this.currentLang === 'en' ? 'Hide All Passwords' : 'លាក់ Password ទាំងអស់'}</span>`
-        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: -2px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg><span>${this.currentLang === 'en' ? 'Show All Passwords' : 'បង្ហាញ Password ទាំងអស់'}</span>`;
+        ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg><span>${this.currentLang === 'en' ? 'Hide Passwords' : 'លាក់ Password'}</span>`
+        : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg><span>${this.currentLang === 'en' ? 'Show Passwords' : 'បង្ហាញ Password'}</span>`;
     }
     this.renderUsersTable(document.getElementById('search-users-input')?.value || '');
+  }
+
+  copyToClipboard(text, successMsg, btn = null) {
+    const showSuccess = () => {
+      this.showToast(successMsg, 'success');
+      if (btn) {
+        const origHtml = btn.innerHTML;
+        btn.classList.add('is-copied');
+        btn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        `;
+        setTimeout(() => {
+          btn.classList.remove('is-copied');
+          btn.innerHTML = origHtml;
+        }, 1200);
+      }
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showSuccess();
+      }).catch(() => {
+        this.fallbackCopy(text, showSuccess);
+      });
+    } else {
+      this.fallbackCopy(text, showSuccess);
+    }
+  }
+
+  fallbackCopy(text, callback) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '-9999px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (successful) {
+        if (callback) callback();
+      } else {
+        this.showToast(text, 'primary');
+      }
+    } catch (e) {
+      this.showToast(text, 'primary');
+    }
   }
 
   renderUsersTable(filterText = '') {
     const tbody = document.getElementById('users-table-body');
     const summary = document.getElementById('users-count-summary');
+    const headerBadge = document.getElementById('users-header-badge');
     if (!tbody) return;
 
     const users = Storage.getUsers();
     const query = filterText.trim().toLowerCase();
+    const roleFilter = this.usersFilterRole || 'all';
 
     const filtered = users.filter(u => {
+      // Role filter chip
+      if (roleFilter === 'admin') {
+        const r = (u.role || '').toLowerCase();
+        const un = (u.username || '').toLowerCase();
+        const isAdm = r.includes('system') || r.includes('អ្នកគ្រប់គ្រង') || r.includes('admin') || r.includes('នាយក') || r.includes('top') || un === 'rithjengdavid' || un === 'admin' || un === 'sysadmin' || un === 'vid' || un === 'vif';
+        if (!isAdm) return false;
+      } else if (roleFilter === 'manager') {
+        const r = (u.role || '').toLowerCase();
+        const isMgr = r.includes('ប្រធាន') || r.includes('manager') || r.includes('អនុប្រធាន');
+        if (!isMgr) return false;
+      } else if (roleFilter === 'staff') {
+        const r = (u.role || '').toLowerCase();
+        const isStaff = r.includes('បុគ្គលិក') || r.includes('សេវា') || r.includes('staff') || r.includes('ops');
+        if (!isStaff) return false;
+      }
+
       if (!query) return true;
       return (
         (u.fullName && u.fullName.toLowerCase().includes(query)) ||
         (u.username && u.username.toLowerCase().includes(query)) ||
         (u.role && u.role.toLowerCase().includes(query)) ||
         (u.branch && u.branch.toLowerCase().includes(query)) ||
-        (u.phone && u.phone.includes(query))
+        (u.phone && String(u.phone).includes(query))
       );
     });
 
+    if (headerBadge) {
+      headerBadge.textContent = this.currentLang === 'en' ? `${filtered.length} Users` : `${filtered.length} គណនី`;
+    }
+
     if (summary) {
-      summary.textContent = this.currentLang === 'en' ? `Total ${filtered.length} accounts (of ${users.length} total)` : `សរុប ${filtered.length} គណនី (នៃ ${users.length} គណនីទាំងអស់)`;
+      summary.textContent = this.currentLang === 'en' 
+        ? `Total ${filtered.length} accounts (${users.length} registered)` 
+        : `សរុប ${filtered.length} គណនី (នៃ ${users.length} គណនីក្នុងប្រព័ន្ធ)`;
     }
 
     if (filtered.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="7" style="text-align: center; padding: 2.5rem 1rem; color: hsl(var(--muted-foreground));">
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <span style="font-size: 0.9rem; font-weight: 500;">${this.currentLang === 'en' ? `No accounts match "${filterText}"` : `មិនមានគណនីដែលត្រូវនឹង "${filterText}" ទេ`}</span>
+          <td colspan="8" style="text-align: center; padding: 2.8rem 1rem; color: hsl(var(--muted-foreground));">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 0.65rem;">
+              <div style="width: 44px; height: 44px; border-radius: 50%; background: hsl(var(--muted)); display: flex; align-items: center; justify-content: center; opacity: 0.7;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </div>
+              <span style="font-size: 0.92rem; font-weight: 600; color: hsl(var(--foreground));">${this.currentLang === 'en' ? `No accounts match "${filterText}"` : `មិនមានគណនីដែលត្រូវនឹង "${filterText}" ទេ`}</span>
+              <span style="font-size: 0.78rem;">${this.currentLang === 'en' ? 'Try searching another keyword or switch role filter tab' : 'សូមសាកល្បងស្វែងរកពាក្យផ្សេង ឬចុចផ្ទាំងចម្រាញ់តួនាទីផ្សេង'}</span>
             </div>
           </td>
         </tr>
@@ -4461,8 +5525,11 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
 
       let avatarClass = 'avatar-blue';
       let badgeClass = 'badge-blue';
-      const r = u.role || '';
-      if (r.includes('System') || r.includes('អ្នកគ្រប់គ្រង')) {
+      const r = (u.role || '');
+      const uLower = (u.username || '').toLowerCase();
+      const isSystemAdmin = uLower === 'admin' || uLower === 'sysadmin' || uLower === 'rithjengdavid' || uLower === 'vid' || uLower === 'vif' || r.includes('System') || r.includes('អ្នកគ្រប់គ្រង') || r.includes('Admin') || r.includes('នាយកដ្ឋាន') || r.includes('Top Management') || r.includes('គណៈគ្រប់គ្រង');
+
+      if (isSystemAdmin) {
         avatarClass = 'avatar-purple';
         badgeClass = 'badge-purple';
       } else if (r.includes('Admin') || r.includes('នាយកដ្ឋាន')) {
@@ -4483,29 +5550,45 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
       }
 
       const pwdDisplay = this.showAllPasswords ? u.password : '••••••••';
-      const uLower = (u.username || '').toLowerCase();
-      const isProtectedAdmin = uLower === 'admin' || uLower === 'sysadmin' || uLower === 'rithjengdavid';
+      const isProtectedAdmin = uLower === 'admin' || uLower === 'sysadmin' || uLower === 'rithjengdavid' || uLower === 'vid' || uLower === 'vif';
+
+      let formattedDate = '-';
+      let formattedTime = '';
+      if (u.createdAt) {
+        try {
+          const d = new Date(u.createdAt);
+          if (!isNaN(d.getTime())) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            const hours = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            formattedDate = `${day}/${month}/${year}`;
+            formattedTime = `${hours}:${mins}`;
+          }
+        } catch (e) {}
+      }
 
       return `
         <tr data-user-id="${u.id}" class="users-table-row">
-          <!-- 1. ឈ្មោះ & AVATAR (Name & Avatar) -->
-          <td>
+          <!-- 1. បុគ្គលិក (Employee / Name) -->
+          <td class="col-user">
             <div class="user-cell-wrap">
               <div class="user-cell-avatar ${avatarClass}">
                 <span>${initials}</span>
               </div>
               <div class="user-cell-info">
-                <div class="user-cell-name">${u.fullName || u.username}</div>
-                <div class="user-cell-sub">${u.username}</div>
+                <span class="user-cell-name">${this.escapeHtmlAttr(u.fullName || u.username)}</span>
+                ${isProtectedAdmin ? '<span class="user-cell-badge-admin">🛡️ System Admin</span>' : ''}
               </div>
             </div>
           </td>
 
-          <!-- 2. USERNAME (ឈ្មោះគណនី) -->
-          <td>
+          <!-- 2. ឈ្មោះគណនី (Username) -->
+          <td class="col-username">
             <div class="user-username-box">
-              <code class="user-username-code">${u.username}</code>
-              <button type="button" class="btn-icon-cell btn-copy-username" data-username="${u.username}" title="${this.currentLang === 'en' ? 'Copy Username' : 'ចម្លង Username'}">
+              <code class="user-username-code">${this.escapeHtmlAttr(u.username)}</code>
+              <button type="button" class="btn-icon-cell btn-copy-username" data-username="${this.escapeHtmlAttr(u.username)}" title="${this.currentLang === 'en' ? 'Copy Username' : 'ចម្លង Username'}">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -4514,17 +5597,17 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
             </div>
           </td>
 
-          <!-- 3. PASSWORD (លេខសម្ងាត់) -->
-          <td>
+          <!-- 3. លេខសម្ងាត់ (Password) -->
+          <td class="col-password">
             <div class="pwd-cell-box">
-              <span class="pwd-text-val ${this.showAllPasswords ? 'pwd-revealed' : ''}" id="pwd-val-${u.id}" data-real-pwd="${u.password}">${pwdDisplay}</span>
+              <span class="pwd-text-val ${this.showAllPasswords ? 'pwd-revealed' : ''}" id="pwd-val-${u.id}" data-real-pwd="${this.escapeHtmlAttr(u.password)}">${this.escapeHtmlAttr(pwdDisplay)}</span>
               <button type="button" class="btn-icon-cell btn-toggle-row-pwd" data-target="pwd-val-${u.id}" title="${this.currentLang === 'en' ? 'Show / Hide' : 'បង្ហាញ / លាក់'}">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               </button>
-              <button type="button" class="btn-icon-cell btn-copy-pwd" data-pwd="${u.password}" title="${this.currentLang === 'en' ? 'Copy Password' : 'ចម្លង Password'}">
+              <button type="button" class="btn-icon-cell btn-copy-pwd" data-pwd="${this.escapeHtmlAttr(u.password)}" title="${this.currentLang === 'en' ? 'Copy Password' : 'ចម្លង Password'}">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -4533,40 +5616,69 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
             </div>
           </td>
 
-          <!-- 4. តួនាទី (ROLE) -->
-          <td>
-            <span class="demo-role-badge ${badgeClass}">${this.getDisplayRole(u.role, this.currentLang)}</span>
+          <!-- 4. តួនាទី (Role) -->
+          <td class="col-role">
+            <button type="button" class="demo-role-badge ${badgeClass} btn-quick-role-badge" data-user-id="${u.id}" title="${this.currentLang === 'en' ? 'Click to edit role' : 'ចុចដើម្បីប្តូរតួនាទី'}">
+              <span class="role-dot"></span>
+              <span>${this.escapeHtmlAttr(this.getDisplayRole(u.role, this.currentLang))}</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="role-edit-icon" style="margin-left: 5px; opacity: 0.75;">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+            </button>
           </td>
 
-          <!-- 5. សាខា (BRANCH) -->
-          <td>
-            <div class="user-branch-pill">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="user-branch-icon">
+          <!-- 5. សាខា (Branch) -->
+          <td class="col-branch">
+            <div class="user-branch-pill" title="${this.escapeHtmlAttr(this.getDisplayBranch(u.branch, this.currentLang))}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="user-branch-icon">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                 <circle cx="12" cy="10" r="3"></circle>
               </svg>
-              <span>${this.getDisplayBranch(u.branch, this.currentLang) || '-'}</span>
+              <span>${this.escapeHtmlAttr(this.getDisplayBranch(u.branch, this.currentLang) || '-')}</span>
             </div>
           </td>
 
-          <!-- 6. លេខទូរស័ព្ទ (PHONE) -->
-          <td>
-            <span class="user-phone-text">${u.phone || '-'}</span>
+          <!-- 6. លេខទូរស័ព្ទ (Phone) -->
+          <td class="col-phone">
+            <div class="user-phone-box">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="phone-ico">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              <span>${this.escapeHtmlAttr(u.phone || '-')}</span>
+            </div>
           </td>
 
-          <!-- 7. សកម្មភាព (ACTIONS) -->
-          <td style="text-align: right;">
+          <!-- 7. កាលបរិច្ឆេទបង្កើត (Created Date) -->
+          <td class="col-created">
+            <div class="user-created-box">
+              <span class="user-created-date">${formattedDate}</span>
+              ${formattedTime ? `<span class="user-created-time">${formattedTime}</span>` : ''}
+            </div>
+          </td>
+
+          <!-- 8. សកម្មភាព (Actions) -->
+          <td class="col-actions" style="text-align: right;">
             <div class="user-actions-row">
+              <button type="button" class="btn-cell-edit-role" data-user-id="${u.id}" title="${this.currentLang === 'en' ? 'Edit User Role' : 'ប្តូរតួនាទី'}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="19" y1="8" x2="19" y2="14"></line>
+                  <line x1="22" y1="11" x2="16" y2="11"></line>
+                </svg>
+                <span>${this.currentLang === 'en' ? 'Role' : 'តួនាទី'}</span>
+              </button>
               ${isProtectedAdmin ? `
                 <span class="badge-default-admin" title="Default System Administrator (Protected)">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
-                  <span>Default Admin</span>
+                  <span>ការពារ (Protected)</span>
                 </span>
               ` : `
-                <button type="button" class="btn-cell-delete" data-user-id="${u.id}" data-username="${u.username}" title="${this.currentLang === 'en' ? 'Delete Account' : 'លុបគណនី'}">
+                <button type="button" class="btn-cell-delete" data-user-id="${u.id}" data-username="${this.escapeHtmlAttr(u.username)}" title="${this.currentLang === 'en' ? 'Delete Account' : 'លុបគណនី'}">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -4580,22 +5692,18 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
       `;
     }).join('');
 
-    // Bind row action events
+    // Bind row action events with instant feedback and safe clipboard
     tbody.querySelectorAll('.btn-copy-username').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const username = e.currentTarget.dataset.username;
-        navigator.clipboard.writeText(username).then(() => {
-          this.showToast(this.currentLang === 'en' ? `Copied Username: ${username}` : `បានចម្លង Username: ${username}`, 'success');
-        });
+        this.copyToClipboard(username, this.currentLang === 'en' ? `Copied Username: ${username}` : `បានចម្លង Username: ${username}`, e.currentTarget);
       });
     });
 
     tbody.querySelectorAll('.btn-copy-pwd').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const pwd = e.currentTarget.dataset.pwd;
-        navigator.clipboard.writeText(pwd).then(() => {
-          this.showToast(this.currentLang === 'en' ? 'Password copied to clipboard!' : 'បានចម្លង Password រួចរាល់!', 'success');
-        });
+        this.copyToClipboard(pwd, this.currentLang === 'en' ? 'Password copied to clipboard!' : 'បានចម្លង Password រួចរាល់!', e.currentTarget);
       });
     });
 
@@ -4611,10 +5719,24 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
       });
     });
 
+    tbody.querySelectorAll('.btn-cell-edit-role, .btn-quick-role-badge').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const userId = e.currentTarget.dataset.userId;
+        if (userId) this.openEditRoleModal(userId);
+      });
+    });
+
     tbody.querySelectorAll('.btn-cell-delete').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = e.currentTarget.dataset.userId;
         const name = e.currentTarget.dataset.username;
+        
+        // Prevent deleting currently logged in user
+        if (this.currentUser && (this.currentUser.id === id || (this.currentUser.username || '').toLowerCase() === (name || '').toLowerCase())) {
+          this.showToast(this.currentLang === 'en' ? 'Cannot delete currently active logged-in account!' : 'មិនអាចលុបគណនីដែលអ្នកកំពុង Login ប្រើប្រាស់បានទេ!', 'error');
+          return;
+        }
+
         const confirmMsg = this.currentLang === 'en' ? `Are you sure you want to delete account "${name}"?` : `តើអ្នកប្រាកដជាចង់លុបគណនី "${name}" មែនទេ?`;
         if (confirm(confirmMsg)) {
           Storage.deleteUser(id);
@@ -4623,6 +5745,194 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
         }
       });
     });
+  }
+
+  showUserCreatedModal(user) {
+    const modal = document.getElementById('user-created-modal');
+    const grid = document.getElementById('user-created-grid');
+    if (!modal || !grid || !user) return;
+
+    let formattedDate = new Date().toLocaleString('km-KH');
+    try {
+      const d = new Date(user.createdAt || Date.now());
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const mins = String(d.getMinutes()).padStart(2, '0');
+      formattedDate = `${day}/${month}/${year} ${hours}:${mins}`;
+    } catch (e) {}
+
+    grid.innerHTML = `
+      <div class="user-detail-row">
+        <span class="user-detail-label">👤 ឈ្មោះពេញ (Full Name):</span>
+        <strong class="user-detail-val">${this.escapeHtmlAttr(user.fullName || user.username)}</strong>
+      </div>
+      <div class="user-detail-row">
+        <span class="user-detail-label">🔑 ឈ្មោះគណនី (Username):</span>
+        <code class="user-detail-code">${this.escapeHtmlAttr(user.username)}</code>
+      </div>
+      <div class="user-detail-row">
+        <span class="user-detail-label">🔒 លេខសម្ងាត់ (Password):</span>
+        <strong class="user-detail-val font-mono">${this.escapeHtmlAttr(user.password)}</strong>
+      </div>
+      <div class="user-detail-row">
+        <span class="user-detail-label">💼 តួនាទី (Role):</span>
+        <span class="user-detail-val">${this.escapeHtmlAttr(this.getDisplayRole(user.role, this.currentLang))}</span>
+      </div>
+      <div class="user-detail-row">
+        <span class="user-detail-label">🏢 សាខា (Branch):</span>
+        <strong class="user-detail-val">${this.escapeHtmlAttr(this.getDisplayBranch(user.branch, this.currentLang))}</strong>
+      </div>
+      <div class="user-detail-row">
+        <span class="user-detail-label">📞 លេខទូរស័ព្ទ (Phone):</span>
+        <span class="user-detail-val">${this.escapeHtmlAttr(user.phone || '-')}</span>
+      </div>
+      <div class="user-detail-row">
+        <span class="user-detail-label">🕒 កាលបរិច្ឆេទបង្កើត (Created):</span>
+        <span class="user-detail-val text-muted">${formattedDate}</span>
+      </div>
+      <div class="user-detail-row user-detail-status">
+        <span class="user-detail-label">💾 MySQL Database:</span>
+        <span class="badge-db-synced">🟢 បានរក្សាទុកក្នុង MySQL រួចរាល់</span>
+      </div>
+    `;
+
+    const copyBtn = document.getElementById('btn-copy-new-user-info');
+    if (copyBtn) {
+      copyBtn.onclick = () => {
+        const text = `BS Express Account:
+ឈ្មោះ: ${user.fullName || user.username}
+Username: ${user.username}
+Password: ${user.password}
+តួនាទី: ${user.role}
+សាខា: ${user.branch}
+លេខទូរស័ព្ទ: ${user.phone || '-'}
+កាលបរិច្ឆេទបង្កើត: ${formattedDate}`;
+        this.copyToClipboard(text, 'បានចម្លងព័ត៌មានគណនីជោគជ័យ!', copyBtn);
+      };
+    }
+
+    const viewBtn = document.getElementById('btn-view-in-users-modal');
+    if (viewBtn) {
+      viewBtn.onclick = () => {
+        modal.classList.remove('active');
+        this.openUsersModal();
+      };
+    }
+
+    const closeBtn = document.getElementById('btn-close-created-modal');
+    if (closeBtn) {
+      closeBtn.onclick = () => {
+        modal.classList.remove('active');
+      };
+    }
+
+    modal.classList.add('active');
+  }
+
+  // =========================================================================
+  // ADMIN ONLY: EDIT USER ROLE
+  // =========================================================================
+  openEditRoleModal(userId) {
+    if (!this.isCurrentUserAdminOrTopMgmt()) {
+      this.showToast(this.currentLang === 'en' ? 'Access restricted: Only Admin can edit user roles!' : 'សិទ្ធិត្រូវបានកំណត់៖ មានតែ Admin ទើបអាចកែប្រែតួនាទីបាន!', 'warning');
+      return;
+    }
+    const modal = document.getElementById('edit-user-role-modal');
+    if (!modal) return;
+
+    const users = Storage.getUsers();
+    const target = String(userId).trim().toLowerCase();
+    const user = users.find(u => (u.id && String(u.id).toLowerCase() === target) || (u.username && u.username.toLowerCase() === target));
+    if (!user) {
+      this.showToast('រកមិនឃើញគណនីនេះទេ!', 'error');
+      return;
+    }
+
+    const idInput = document.getElementById('edit-role-user-id');
+    if (idInput) idInput.value = user.id || user.username;
+
+    const fullnameEl = document.getElementById('edit-role-user-fullname');
+    if (fullnameEl) fullnameEl.textContent = user.fullName || user.username;
+
+    const unameEl = document.getElementById('edit-role-user-uname');
+    if (unameEl) unameEl.textContent = `@${user.username}`;
+
+    const branchEl = document.getElementById('edit-role-user-branch');
+    if (branchEl) branchEl.textContent = this.getDisplayBranch(user.branch, this.currentLang) || user.branch || '-';
+
+    const avatarEl = document.getElementById('edit-role-avatar');
+    if (avatarEl) {
+      const initials = (user.fullName || user.username || 'U')
+        .split(' ')
+        .filter(Boolean)
+        .map(n => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || 'U';
+      avatarEl.textContent = initials;
+    }
+
+    const selectEl = document.getElementById('edit-role-select');
+    if (selectEl) {
+      selectEl.value = user.role || 'បុគ្គលិកប្រតិបត្តិការ';
+    }
+
+    modal.classList.add('active');
+  }
+
+  closeEditRoleModal() {
+    const modal = document.getElementById('edit-user-role-modal');
+    if (modal) modal.classList.remove('active');
+  }
+
+  async submitEditRole() {
+    if (!this.isCurrentUserAdminOrTopMgmt()) {
+      this.showToast(this.currentLang === 'en' ? 'Access restricted: Only Admin can edit user roles!' : 'សិទ្ធិត្រូវបានកំណត់៖ មានតែ Admin ទើបអាចកែប្រែតួនាទីបាន!', 'warning');
+      return;
+    }
+
+    const userId = document.getElementById('edit-role-user-id')?.value;
+    const newRole = document.getElementById('edit-role-select')?.value;
+    if (!userId || !newRole) return;
+
+    const saveBtn = document.getElementById('btn-save-edit-role');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.style.opacity = '0.6';
+    }
+
+    try {
+      const res = await Storage.updateUserRole(userId, newRole);
+      if (!res.success) {
+        this.showToast(res.error, 'error');
+        return;
+      }
+
+      const roleDisplay = this.getDisplayRole(newRole, this.currentLang);
+      const targetName = res.user?.fullName || res.user?.username || 'User';
+      const successMsg = this.currentLang === 'en'
+        ? `Successfully updated ${targetName}'s role to "${roleDisplay}"!`
+        : `បានផ្លាស់ប្តូរតួនាទីរបស់ ${targetName} ទៅជា "${roleDisplay}" ជោគជ័យ!`;
+
+      this.showToast(successMsg, 'success');
+      this.closeEditRoleModal();
+      this.renderUsersTable(document.getElementById('search-users-input')?.value || '');
+
+      // If updated self, update current session and navbar
+      if (this.currentUser && (this.currentUser.id === userId || (this.currentUser.username || '').toLowerCase() === (res.user?.username || '').toLowerCase())) {
+        this.currentUser.role = newRole;
+        this.renderAuthNav();
+      }
+    } catch (e) {
+      this.showToast('មានបញ្ហាក្នុងការរក្សាទុកតួនាទី!', 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '1';
+      }
+    }
   }
 
   fillFormFromCurrentUser() {
@@ -4797,9 +6107,10 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     document.querySelector('.auth-clean-card')?.classList.toggle('register-mode', tabName === 'register');
   }
 
-  submitScreenLogin() {
+  async submitScreenLogin() {
     const username = document.getElementById('screen-login-username')?.value || '';
     const password = document.getElementById('screen-login-password')?.value || '';
+    const remember = Boolean(document.getElementById('screen-login-remember')?.checked);
     if (!username.trim()) {
       this.showToast('សូមបញ្ចូលឈ្មោះគណនី (Username)!', 'error');
       document.getElementById('screen-login-username')?.focus();
@@ -4810,10 +6121,10 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
       document.getElementById('screen-login-password')?.focus();
       return;
     }
-    this.handleLogin(username, password);
+    await this.handleLogin(username, password, remember);
   }
 
-  submitScreenRegister() {
+  async submitScreenRegister() {
     const fullName = document.getElementById('screen-reg-fullname')?.value || '';
     const username = document.getElementById('screen-reg-username')?.value || '';
     const role = document.getElementById('screen-reg-role')?.value || '';
@@ -4843,16 +6154,16 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
       return;
     }
 
-    this.handleRegister({ fullName, username, role, branch, phone, password, confirmPassword });
+    await this.handleRegister({ fullName, username, role, branch, phone, password, confirmPassword }, true);
   }
 
-  submitModalLogin() {
+  async submitModalLogin() {
     const username = document.getElementById('login-username')?.value || '';
     const password = document.getElementById('login-password')?.value || '';
-    this.handleLogin(username, password);
+    await this.handleLogin(username, password, true);
   }
 
-  submitModalRegister() {
+  async submitModalRegister() {
     const fullName = document.getElementById('reg-fullname')?.value || '';
     const username = document.getElementById('reg-username')?.value || '';
     const role = document.getElementById('reg-role')?.value || '';
@@ -4860,18 +6171,18 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     const phone = document.getElementById('reg-phone')?.value || '';
     const password = document.getElementById('reg-password')?.value || '';
     const confirmPassword = document.getElementById('reg-confirm-password')?.value || '';
-    this.handleRegister({ fullName, username, role, branch, phone, password, confirmPassword });
+    await this.handleRegister({ fullName, username, role, branch, phone, password, confirmPassword }, true);
   }
 
-  handleLogin(username, password) {
-    const result = Storage.authenticateUser(username, password);
+  async handleLogin(username, password, remember = true) {
+    const result = await Storage.authenticateUserAsync(username, password);
     if (!result.success) {
       this.showToast(result.error, 'error');
       return false;
     }
 
     this.currentUser = result.user;
-    Storage.setCurrentUser(this.currentUser);
+    Storage.setCurrentUser(this.currentUser, remember);
     this.populateBranchDropdowns();
     this.fillFormFromCurrentUser();
 
@@ -4886,20 +6197,22 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
 
     this.updateScreenVisibility();
     this.renderAuthNav();
+    this.updateDbIndicator(Storage.isDbOnline);
     this.closeAuthModal();
-    this.showToast(`${this.t('toastLoginSuccess')} ${this.currentUser.fullName} (${this.currentUser.role})!`, 'success');
+    const displayRole = this.getDisplayRole(this.currentUser.role, this.currentLang);
+    this.showToast(`${this.t('toastLoginSuccess')} ${this.currentUser.fullName} - ${displayRole}!`, 'success');
     return true;
   }
 
-  quickLogin(username = 'admin', password = '123') {
+  async quickLogin(username = 'admin', password = '123') {
     const userField = document.getElementById('screen-login-username') || document.getElementById('login-username');
     const passField = document.getElementById('screen-login-password') || document.getElementById('login-password');
     if (userField) userField.value = username;
     if (passField) passField.value = password;
-    return this.handleLogin(username, password);
+    return await this.handleLogin(username, password, true);
   }
 
-  handleRegister(formData) {
+  async handleRegister(formData, remember = true) {
     const { username, password, confirmPassword, fullName, role, branch, phone } = formData;
     
     if (!fullName || !username || !password || !role || !branch) {
@@ -4917,21 +6230,23 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
       return false;
     }
 
-    const result = Storage.registerUser({ username, password, fullName, role, branch, phone });
+    const result = await Storage.registerUser({ username, password, fullName, role, branch, phone });
     if (!result.success) {
       this.showToast(result.error, 'error');
       return false;
     }
 
     this.currentUser = result.user;
-    Storage.setCurrentUser(this.currentUser);
+    Storage.setCurrentUser(this.currentUser, remember);
     this.populateBranchDropdowns();
     this.fillFormFromCurrentUser();
     this.resetForm(true);
     this.updateScreenVisibility();
     this.renderAuthNav();
+    this.updateDbIndicator(Storage.isDbOnline);
     this.closeAuthModal();
     this.showToast(`${this.t('toastRegisterSuccess')} ${this.currentUser.fullName}!`, 'success');
+    this.showUserCreatedModal(result.user);
     return true;
   }
 
@@ -4943,6 +6258,7 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     this.resetForm(true);
     this.updateScreenVisibility();
     this.renderAuthNav();
+    this.updateDbIndicator(Storage.isDbOnline);
     this.showToast(this.t('toastLogoutSuccess'), 'primary');
   }
 
@@ -4962,6 +6278,38 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     });
     document.getElementById('btn-close-users-modal-footer')?.addEventListener('click', () => {
       this.closeUsersModal();
+    });
+    document.getElementById('users-management-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'users-management-modal') {
+        this.closeUsersModal();
+      }
+    });
+
+    // Edit User Role Modal events
+    document.getElementById('btn-close-edit-role-modal')?.addEventListener('click', () => {
+      this.closeEditRoleModal();
+    });
+    document.getElementById('btn-cancel-edit-role')?.addEventListener('click', () => {
+      this.closeEditRoleModal();
+    });
+    document.getElementById('btn-save-edit-role')?.addEventListener('click', () => {
+      this.submitEditRole();
+    });
+    document.getElementById('edit-user-role-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'edit-user-role-modal') {
+        this.closeEditRoleModal();
+      }
+    });
+
+    // Role filter chips in Inspector
+    document.querySelectorAll('#users-role-filters .user-filter-chip').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        document.querySelectorAll('#users-role-filters .user-filter-chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        this.usersFilterRole = btn.dataset.filterRole || 'all';
+        this.renderUsersTable(document.getElementById('search-users-input')?.value || '');
+      });
     });
 
     // Toggle All Passwords in Inspector
@@ -5003,12 +6351,16 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
       }
     });
 
+    document.getElementById('btn-close-quick-add-x')?.addEventListener('click', () => {
+      if (addPanel) addPanel.style.display = 'none';
+    });
+
     document.getElementById('btn-cancel-add-user')?.addEventListener('click', () => {
       if (addPanel) addPanel.style.display = 'none';
     });
 
     // Submit Admin Add User Form
-    document.getElementById('form-admin-add-user')?.addEventListener('submit', (e) => {
+    document.getElementById('form-admin-add-user')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const fullName = document.getElementById('admin-add-fullname')?.value || '';
       const username = document.getElementById('admin-add-username')?.value || '';
@@ -5017,7 +6369,7 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
       const branch = document.getElementById('admin-add-branch')?.value || '';
       const phone = document.getElementById('admin-add-phone')?.value || '';
 
-      const res = Storage.registerUser({ username, password, fullName, role, branch, phone });
+      const res = await Storage.registerUser({ username, password, fullName, role, branch, phone });
       if (!res.success) {
         this.showToast(res.error, 'error');
         return;
@@ -5026,7 +6378,12 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
       this.showToast(`បានបង្កើតគណនីថ្មី ${fullName} (${username}) ជោគជ័យ!`, 'success');
       document.getElementById('form-admin-add-user')?.reset();
       if (addPanel) addPanel.style.display = 'none';
+      this.usersFilterRole = 'all';
+      document.querySelectorAll('#users-role-filters .user-filter-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.filterRole === 'all');
+      });
       this.renderUsersTable();
+      this.showUserCreatedModal(res.user);
     });
 
     // Auth Switcher Tabs (Modal & First Screen)
@@ -5035,12 +6392,6 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
         const targetTab = e.currentTarget.dataset.authTab;
         this.switchAuthTab(targetTab);
       });
-    });
-
-    // Continue as guest button
-    document.getElementById('btn-continue-guest')?.addEventListener('click', () => {
-      this.updateScreenVisibility(true);
-      this.showToast('បានចូលជាភ្ញៀវសាកល្បង', 'primary');
     });
 
     // Toggle Password Visibility Eye buttons
@@ -5054,6 +6405,37 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
           e.currentTarget.textContent = isPwd ? '🔒' : '👁️';
         }
       });
+    });
+
+    // Enter Key Submission on Login Fields
+    ['screen-login-username', 'screen-login-password'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.submitScreenLogin();
+        }
+      });
+    });
+
+    // Enter Key Submission on Register Fields
+    ['screen-reg-fullname', 'screen-reg-username', 'screen-reg-phone', 'screen-reg-password', 'screen-reg-confirm-password'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.submitScreenRegister();
+        }
+      });
+    });
+
+    // Explicit Click Handlers for First Screen Buttons
+    document.getElementById('btn-screen-submit-login')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.submitScreenLogin();
+    });
+
+    document.getElementById('btn-screen-submit-register')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.submitScreenRegister();
     });
 
     // Quick Demo Account Click (1-Click Login)
@@ -5071,54 +6453,33 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
           if (el) el.value = pwd;
         });
 
-        this.handleLogin(user, pwd);
+        this.handleLogin(user, pwd, true);
       });
     });
 
     // Form Login Submit (Modal)
     document.getElementById('form-login')?.addEventListener('submit', (e) => {
       e.preventDefault();
-      const username = document.getElementById('login-username')?.value || '';
-      const password = document.getElementById('login-password')?.value || '';
-      this.handleLogin(username, password);
+      this.submitModalLogin();
     });
 
     // Form Login Submit (First Screen)
     document.getElementById('screen-form-login')?.addEventListener('submit', (e) => {
       e.preventDefault();
-      const username = document.getElementById('screen-login-username')?.value || '';
-      const password = document.getElementById('screen-login-password')?.value || '';
-      this.handleLogin(username, password);
+      this.submitScreenLogin();
     });
 
     // Form Register Submit (Modal)
     document.getElementById('form-register')?.addEventListener('submit', (e) => {
       e.preventDefault();
-      const fullName = document.getElementById('reg-fullname')?.value || '';
-      const username = document.getElementById('reg-username')?.value || '';
-      const role = document.getElementById('reg-role')?.value || '';
-      const branch = document.getElementById('reg-branch')?.value || '';
-      const phone = document.getElementById('reg-phone')?.value || '';
-      const password = document.getElementById('reg-password')?.value || '';
-      const confirmPassword = document.getElementById('reg-confirm-password')?.value || '';
-
-      this.handleRegister({ fullName, username, role, branch, phone, password, confirmPassword });
+      this.submitModalRegister();
     });
 
     // Form Register Submit (First Screen)
     document.getElementById('screen-form-register')?.addEventListener('submit', (e) => {
       e.preventDefault();
-      const fullName = document.getElementById('screen-reg-fullname')?.value || '';
-      const username = document.getElementById('screen-reg-username')?.value || '';
-      const role = document.getElementById('screen-reg-role')?.value || '';
-      const branch = document.getElementById('screen-reg-branch')?.value || '';
-      const phone = document.getElementById('screen-reg-phone')?.value || '';
-      const password = document.getElementById('screen-reg-password')?.value || '';
-      const confirmPassword = document.getElementById('screen-reg-confirm-password')?.value || '';
-
-      this.handleRegister({ fullName, username, role, branch, phone, password, confirmPassword });
+      this.submitScreenRegister();
     });
-
   }
 
 
