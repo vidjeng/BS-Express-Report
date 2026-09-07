@@ -1011,3 +1011,79 @@ body.dark-mode {
 .toast-container {
   z-index: 100000 !important;
 }
+
+/* ==========================================================================
+   UTILITY CLASSES (Replaces inline styles for clean code & accessibility)
+   ========================================================================== */
+.fa-quick-actions-card {
+  padding: 20px;
+}
+.fa-quick-actions-title {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: var(--fa-fg);
+}
+.fa-quick-actions-desc {
+  color: var(--fa-muted-fg);
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+.fa-quick-actions-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fa-card-mb {
+  margin-bottom: 16px;
+}
+
+.fa-search-wrapper-flex {
+  flex: 1;
+}
+
+.fa-col-w50 {
+  width: 50px;
+}
+.fa-col-actions-140 {
+  width: 140px;
+}
+.fa-col-actions-130 {
+  width: 130px;
+}
+.fa-col-actions-90 {
+  width: 90px;
+}
+.fa-col-actions-right {
+  width: 140px;
+  text-align: right;
+}
+
+.fa-select-minw-200 {
+  min-width: 200px;
+}
+
+.fa-reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.fa-report-card {
+  padding: 24px;
+}
+.fa-report-card-title {
+  margin-top: 0;
+  color: var(--fa-fg);
+  font-size: 1.05rem;
+}
+.fa-report-card-desc {
+  color: var(--fa-muted-fg);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.fa-modal-card-lg {
+  max-width: 720px;
+}
+
