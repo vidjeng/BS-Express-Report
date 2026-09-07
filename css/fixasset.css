@@ -71,8 +71,13 @@ body.dark-mode {
   color: var(--fa-fg);
   font-family: 'Inter', 'Kantumruy Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow: hidden;
-  display: flex;
+  display: none;
   flex-direction: row;
+}
+
+#fixasset-workspace-wrapper.active,
+#fixasset-workspace-wrapper[style*="display: flex"] {
+  display: flex !important;
 }
 
 /* Master Layout: Sidebar (left) + Content Area (right) */
@@ -792,29 +797,39 @@ body.dark-mode {
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   display: none;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .fa-modal-overlay.active {
   display: flex;
+  opacity: 1;
 }
 
 .fa-modal-card {
   width: 100%;
-  max-width: 520px;
+  max-width: 540px;
   background: var(--fa-card);
   border: 1px solid var(--fa-border);
-  border-radius: 10px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   max-height: 90vh;
+  transform: scale(0.96);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fa-modal-overlay.active .fa-modal-card {
+  transform: scale(1);
 }
 
 .fa-modal-header {
@@ -840,6 +855,7 @@ body.dark-mode {
   color: var(--fa-muted-fg);
   padding: 4px 8px;
   border-radius: 4px;
+  transition: all 0.15s ease;
 }
 .fa-modal-close:hover {
   background: var(--fa-muted);
@@ -862,6 +878,38 @@ body.dark-mode {
   justify-content: flex-end;
   gap: 10px;
   background: var(--fa-muted);
+}
+
+.fa-modal-footer .btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fa-modal-footer .btn-primary {
+  background: var(--fa-primary);
+  color: var(--fa-primary-fg);
+  border: 1px solid var(--fa-primary);
+}
+.fa-modal-footer .btn-primary:hover {
+  opacity: 0.9;
+}
+
+.fa-modal-footer .btn-outline {
+  background: transparent;
+  color: var(--fa-fg);
+  border: 1px solid var(--fa-border);
+}
+.fa-modal-footer .btn-outline:hover {
+  background: var(--fa-card);
 }
 
 .fa-form-grid {
@@ -935,18 +983,19 @@ body.dark-mode {
 
 /* ==========================================================================
    PRINT LAYOUT (A4 Handover Sheet & Barcode Stickers)
+   Scoped strictly to Fixed Asset Handover print mode to protect Daily Report
    ========================================================================== */
 @media print {
-  body * {
+  body.printing-fa * {
     visibility: hidden !important;
   }
 
-  #fa-printable-area,
-  #fa-printable-area * {
+  body.printing-fa #fa-printable-area,
+  body.printing-fa #fa-printable-area * {
     visibility: visible !important;
   }
 
-  #fa-printable-area {
+  body.printing-fa #fa-printable-area {
     position: fixed !important;
     left: 0 !important;
     top: 0 !important;
@@ -954,6 +1003,11 @@ body.dark-mode {
     background: #ffffff !important;
     color: #000000 !important;
     z-index: 9999999 !important;
-    padding: 20mm !important;
+    padding: 15mm !important;
   }
+}
+
+/* Ensure global toast notifications always sit above all workspaces and modals */
+.toast-container {
+  z-index: 100000 !important;
 }

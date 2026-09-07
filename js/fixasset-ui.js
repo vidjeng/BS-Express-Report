@@ -58,7 +58,51 @@ class BSExpressFixAssetUI {
     this.loadGrn();
   }
 
+  showToast(msg, type = 'success') {
+    if (window.bsApp && typeof window.bsApp.showToast === 'function') {
+      window.bsApp.showToast(msg, type === 'error' ? 'error' : (type === 'warning' ? 'warning' : (type === 'info' ? 'info' : 'success')));
+      return;
+    }
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    const icon = type === 'error' ? '❌' : (type === 'warning' ? '⚠️' : (type === 'info' ? 'ℹ️' : '✅'));
+    toast.innerHTML = `<span style="font-size: 1.1em; margin-right: 6px;">${icon}</span><span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      toast.style.transition = 'all 0.25s ease';
+      setTimeout(() => toast.remove(), 250);
+    }, 3500);
+  }
+
   bindEvents() {
+    // Escape key to close active modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        const activeModal = document.querySelector('.fa-modal-overlay.active');
+        if (activeModal) {
+          activeModal.classList.remove('active');
+        }
+      }
+    });
+
+    // Backdrop click-to-dismiss on all Fixed Asset modals
+    document.querySelectorAll('.fa-modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+        }
+      });
+    });
+
     // Sidebar & Tab Navigation
     document.querySelectorAll('[data-fa-tab]').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -552,7 +596,7 @@ class BSExpressFixAssetUI {
     const email = document.getElementById('fa-modal-emp-email').value.trim();
 
     if (!employee_name) {
-      alert('សូមបញ្ចូលឈ្មោះបុគ្គលិក!');
+      this.showToast('សូមបញ្ចូលឈ្មោះបុគ្គលិក!', 'warning');
       return;
     }
 
@@ -570,12 +614,12 @@ class BSExpressFixAssetUI {
         this.closeEmployeeModal();
         this.loadEmployees();
         this.loadStats();
-        alert(id ? 'បានកែប្រែព័ត៌មានបុគ្គលិកជោគជ័យ!' : 'បានបង្កើតបុគ្គលិកថ្មីជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែព័ត៌មានបុគ្គលិកជោគជ័យ!' : 'បានបង្កើតបុគ្គលិកថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + (data.error || 'បរាជ័យ'));
+        this.showToast('កំហុស៖ ' + (data.error || 'បរាជ័យ'), 'error');
       }
     } catch (e) {
-      alert('កំហុសបណ្ដាញ៖ ' + e.message);
+      this.showToast('កំហុសបណ្ដាញ៖ ' + e.message, 'error');
     }
   }
 
@@ -587,12 +631,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.loadEmployees();
         this.loadStats();
-        alert('បានលុបបុគ្គលិកជោគជ័យ');
+        this.showToast('បានលុបបុគ្គលិកជោគជ័យ', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -763,7 +807,7 @@ class BSExpressFixAssetUI {
     const unit_of_measure = document.getElementById('fa-modal-master-uom').value.trim() || 'Unit';
 
     if (!name) {
-      alert('សូមបញ្ចូលឈ្មោះសម្ភារៈ!');
+      this.showToast('សូមបញ្ចូលឈ្មោះសម្ភារៈ!', 'warning');
       return;
     }
 
@@ -781,12 +825,12 @@ class BSExpressFixAssetUI {
         this.closeItemMasterModal();
         this.loadItemMasters();
         this.loadStats();
-        alert('ជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែមុខទំនិញជោគជ័យ!' : 'បានបង្កើតមុខទំនិញថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -798,12 +842,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.loadItemMasters();
         this.loadStats();
-        alert('បានលុបរួចរាល់');
+        this.showToast('បានលុបមុខទំនិញរួចរាល់', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -985,7 +1029,7 @@ class BSExpressFixAssetUI {
     const itemCode = document.getElementById('fa-assign-item-code')?.value?.trim();
 
     if (!empName || !itemCode) {
-      alert('សូមបញ្ចូលឈ្មោះបុគ្គលិក និងលេខកូដសម្ភារៈ!');
+      this.showToast('សូមបញ្ចូលឈ្មោះបុគ្គលិក និងលេខកូដសម្ភារៈ!', 'warning');
       return;
     }
 
@@ -998,15 +1042,15 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success) {
         this.closeAssignModal();
-        alert(`បានបែងចែកសម្ភារៈ ${itemCode} ទៅកាន់ ${empName} ដោយជោគជ័យ!`);
+        this.showToast(`បានបែងចែកសម្ភារៈ ${itemCode} ទៅកាន់ ${empName} ដោយជោគជ័យ!`, 'success');
         this.loadStats();
         this.loadItems();
         this.loadAssignments();
       } else {
-        alert('កំហុស៖ ' + (data.error || 'មិនអាចបែងចែកបានទេ'));
+        this.showToast('កំហុស៖ ' + (data.error || 'មិនអាចបែងចែកបានទេ'), 'error');
       }
     } catch (e) {
-      alert('កំហុសប្រព័ន្ធ៖ ' + e.message);
+      this.showToast('កំហុសប្រព័ន្ធ៖ ' + e.message, 'error');
     }
   }
 
@@ -1021,15 +1065,15 @@ class BSExpressFixAssetUI {
       });
       const data = await res.json();
       if (data.success) {
-        alert(`បានដកហូតសម្ភារៈ ${itemCode} ត្រឡប់មកស្តុកវិញរួចរាល់!`);
+        this.showToast(`បានដកហូតសម្ភារៈ ${itemCode} ត្រឡប់មកស្តុកវិញរួចរាល់!`, 'success');
         this.loadStats();
         this.loadItems();
         this.loadAssignments();
       } else {
-        alert('កំហុស៖ ' + (data.error || 'មិនអាចដកហូតបានទេ'));
+        this.showToast('កំហុស៖ ' + (data.error || 'មិនអាចដកហូតបានទេ'), 'error');
       }
     } catch (e) {
-      alert('កំហុសប្រព័ន្ធ៖ ' + e.message);
+      this.showToast('កំហុសប្រព័ន្ធ៖ ' + e.message, 'error');
     }
   }
 
@@ -1081,7 +1125,7 @@ class BSExpressFixAssetUI {
         this.printAssignmentHandoverSheet(a, items);
       }
     } catch (e) {
-      alert('មិនអាចទាញយកព័ត៌មានលិខិតប្រគល់ទទួល៖ ' + e.message);
+      this.showToast('មិនអាចទាញយកព័ត៌មានលិខិតប្រគល់ទទួល៖ ' + e.message, 'error');
     }
   }
 
@@ -1257,7 +1301,7 @@ class BSExpressFixAssetUI {
     const name_en = document.getElementById('fa-modal-branch-name-en').value.trim();
 
     if (!name) {
-      alert('សូមបញ្ចូលឈ្មោះសាខា!');
+      this.showToast('សូមបញ្ចូលឈ្មោះសាខា!', 'warning');
       return;
     }
 
@@ -1274,12 +1318,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.closeBranchModal();
         this.loadBranches();
-        alert('ជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែព័ត៌មានសាខាជោគជ័យ!' : 'បានបង្កើតសាខាថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1290,12 +1334,12 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success) {
         this.loadBranches();
-        alert('បានលុបរួចរាល់');
+        this.showToast('បានលុបសាខារួចរាល់', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1366,7 +1410,7 @@ class BSExpressFixAssetUI {
     const name = document.getElementById('fa-modal-dept-name').value.trim();
     const name_en = document.getElementById('fa-modal-dept-name-en').value.trim();
 
-    if (!name) return alert('សូមបញ្ចូលឈ្មោះនាយកដ្ឋាន!');
+    if (!name) return this.showToast('សូមបញ្ចូលឈ្មោះនាយកដ្ឋាន!', 'warning');
     const payload = { id, name, name_en };
     const method = id ? 'PUT' : 'POST';
 
@@ -1380,12 +1424,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.closeDeptModal();
         this.loadDepartments();
-        alert('ជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែព័ត៌មាននាយកដ្ឋានជោគជ័យ!' : 'បានបង្កើតនាយកដ្ឋានថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1396,10 +1440,12 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success) {
         this.loadDepartments();
-        alert('បានលុបរួចរាល់');
+        this.showToast('បានលុបនាយកដ្ឋានរួចរាល់', 'success');
+      } else {
+        this.showToast('កំហុស៖ ' + (data.error || 'មិនអាចលុបបាន'), 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1472,7 +1518,7 @@ class BSExpressFixAssetUI {
     const name = document.getElementById('fa-modal-cat-name').value.trim();
     const name_en = document.getElementById('fa-modal-cat-name-en').value.trim();
 
-    if (!name) return alert('សូមបញ្ចូលឈ្មោះប្រភេទទំនិញ!');
+    if (!name) return this.showToast('សូមបញ្ចូលឈ្មោះប្រភេទទំនិញ!', 'warning');
     const payload = { id, name, name_en };
     const method = id ? 'PUT' : 'POST';
 
@@ -1486,12 +1532,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.closeCatModal();
         this.loadCategories();
-        alert('ជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែប្រភេទសម្ភារៈជោគជ័យ!' : 'បានបង្កើតប្រភេទសម្ភារៈថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1502,10 +1548,12 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success) {
         this.loadCategories();
-        alert('បានលុបរួចរាល់');
+        this.showToast('បានលុបប្រភេទទំនិញរួចរាល់', 'success');
+      } else {
+        this.showToast('កំហុស៖ ' + (data.error || 'មិនអាចលុបបាន'), 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1576,7 +1624,7 @@ class BSExpressFixAssetUI {
     const name = document.getElementById('fa-modal-type-name').value.trim();
     const name_en = document.getElementById('fa-modal-type-name-en').value.trim();
 
-    if (!name) return alert('សូមបញ្ចូលឈ្មោះ!');
+    if (!name) return this.showToast('សូមបញ្ចូលឈ្មោះ!', 'warning');
     const payload = { id, name, name_en };
     const method = id ? 'PUT' : 'POST';
 
@@ -1590,12 +1638,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.closeTypeModal();
         this.loadTypes();
-        alert('ជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែប្រភេទរងសម្ភារៈជោគជ័យ!' : 'បានបង្កើតប្រភេទរងថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1606,10 +1654,12 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success) {
         this.loadTypes();
-        alert('បានលុបរួចរាល់');
+        this.showToast('បានលុបរួចរាល់', 'success');
+      } else {
+        this.showToast('កំហុស៖ ' + (data.error || 'មិនអាចលុបបាន'), 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1688,7 +1738,7 @@ class BSExpressFixAssetUI {
     const email = document.getElementById('fa-modal-sup-email').value.trim();
     const address = document.getElementById('fa-modal-sup-addr').value.trim();
 
-    if (!name) return alert('សូមបញ្ចូលឈ្មោះអ្នកផ្គត់ផ្គង់!');
+    if (!name) return this.showToast('សូមបញ្ចូលឈ្មោះអ្នកផ្គត់ផ្គង់!', 'warning');
     const payload = { id, name, phone, email, address };
     const method = id ? 'PUT' : 'POST';
 
@@ -1702,12 +1752,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.closeSupplierModal();
         this.loadSuppliers();
-        alert('ជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែអ្នកផ្គត់ផ្គង់ជោគជ័យ!' : 'បានបង្កើតអ្នកផ្គត់ផ្គង់ថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1718,10 +1768,12 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success) {
         this.loadSuppliers();
-        alert('បានលុបរួចរាល់');
+        this.showToast('បានលុបអ្នកផ្គត់ផ្គង់រួចរាល់', 'success');
+      } else {
+        this.showToast('កំហុស៖ ' + (data.error || 'មិនអាចលុបបាន'), 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1801,7 +1853,7 @@ class BSExpressFixAssetUI {
     const id = document.getElementById('fa-modal-wh-id').value;
     const name = document.getElementById('fa-modal-wh-name').value.trim();
 
-    if (!name) return alert('សូមបញ្ចូលឈ្មោះឃ្លាំង!');
+    if (!name) return this.showToast('សូមបញ្ចូលឈ្មោះឃ្លាំង!', 'warning');
     const payload = { id, name };
     const method = id ? 'PUT' : 'POST';
 
@@ -1815,12 +1867,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.closeWarehouseModal();
         this.loadWarehouses();
-        alert('ជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែឃ្លាំងជោគជ័យ!' : 'បានបង្កើតឃ្លាំងថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1831,10 +1883,12 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success) {
         this.loadWarehouses();
-        alert('បានលុបរួចរាល់');
+        this.showToast('បានលុបឃ្លាំងរួចរាល់', 'success');
+      } else {
+        this.showToast('កំហុស៖ ' + (data.error || 'មិនអាចលុបបាន'), 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1905,7 +1959,7 @@ class BSExpressFixAssetUI {
     const name = document.getElementById('fa-modal-tow-name').value.trim();
     const name_en = document.getElementById('fa-modal-tow-name-en').value.trim();
 
-    if (!name) return alert('សូមបញ្ចូលឈ្មោះប្រភេទការងារ!');
+    if (!name) return this.showToast('សូមបញ្ចូលឈ្មោះប្រភេទការងារ!', 'warning');
     const payload = { id, name, name_en };
     const method = id ? 'PUT' : 'POST';
 
@@ -1919,12 +1973,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.closeTowModal();
         this.loadTypeOfWorks();
-        alert('ជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែប្រភេទការងារជោគជ័យ!' : 'បានបង្កើតប្រភេទការងារថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -1935,10 +1989,10 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success) {
         this.loadTypeOfWorks();
-        alert('បានលុបរួចរាល់');
+        this.showToast('បានលុបប្រភេទការងាររួចរាល់', 'success');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + data.error);
+      this.showToast('កំហុស៖ ' + data.error, 'error');
     }
   }
 
@@ -2007,7 +2061,7 @@ class BSExpressFixAssetUI {
   }
 
   pingDevice(name) {
-    alert(`[Hikvision ISAPI] ឧបករណ៍ "${name}" ត្រូវបានតភ្ជាប់ និងត្រួតពិនិត្យដោយជោគជ័យ (Status: Healthy / 200 OK)`);
+    this.showToast(`[Hikvision ISAPI] ឧបករណ៍ "${name}" ត្រូវបានតភ្ជាប់ និងត្រួតពិនិត្យដោយជោគជ័យ (Status: Healthy / 200 OK)`, 'success');
   }
 
   openCreateDeviceModal() {
@@ -2042,7 +2096,7 @@ class BSExpressFixAssetUI {
     const port = parseInt(document.getElementById('fa-modal-dev-port').value, 10) || 80;
     const username = document.getElementById('fa-modal-dev-user').value.trim() || 'admin';
 
-    if (!name || !host) return alert('សូមបញ្ចូលឈ្មោះ និង Host IP!');
+    if (!name || !host) return this.showToast('សូមបញ្ចូលឈ្មោះ និង Host IP!', 'warning');
     const payload = { id, name, host, port, username };
     const method = id ? 'PUT' : 'POST';
 
@@ -2056,12 +2110,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.closeDeviceModal();
         this.loadDevices();
-        alert('ជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែឧបករណ៍ជោគជ័យ!' : 'បានបង្កើតឧបករណ៍ថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -2072,10 +2126,12 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success) {
         this.loadDevices();
-        alert('បានលុបរួចរាល់');
+        this.showToast('បានលុបរួចរាល់', 'success');
+      } else {
+        this.showToast('កំហុស៖ ' + (data.error || 'មិនអាចលុបបាន'), 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -2161,7 +2217,7 @@ class BSExpressFixAssetUI {
     const user_login = document.getElementById('fa-modal-user-login').value.trim();
     const email = document.getElementById('fa-modal-user-email').value.trim();
 
-    if (!name || (!id && !user_login)) return alert('សូមបញ្ចូលឈ្មោះ និង Username!');
+    if (!name || (!id && !user_login)) return this.showToast('សូមបញ្ចូលឈ្មោះ និង Username!', 'warning');
     const payload = { id, name, user_login, username: user_login, email, status: 'Active' };
     const method = id ? 'PUT' : 'POST';
 
@@ -2175,12 +2231,12 @@ class BSExpressFixAssetUI {
       if (data.success) {
         this.closeUserModal();
         this.loadUsers();
-        alert('ជោគជ័យ!');
+        this.showToast(id ? 'បានកែប្រែគណនីអ្នកប្រើប្រាស់ជោគជ័យ!' : 'បានបង្កើតគណនីអ្នកប្រើប្រាស់ថ្មីជោគជ័យ!', 'success');
       } else {
-        alert('កំហុស៖ ' + data.error);
+        this.showToast('កំហុស៖ ' + data.error, 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -2191,10 +2247,12 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success) {
         this.loadUsers();
-        alert('បានលុបរួចរាល់');
+        this.showToast('បានលុបរួចរាល់', 'success');
+      } else {
+        this.showToast('កំហុស៖ ' + (data.error || 'មិនអាចលុបបាន'), 'error');
       }
     } catch (e) {
-      alert('កំហុស៖ ' + e.message);
+      this.showToast('កំហុស៖ ' + e.message, 'error');
     }
   }
 
@@ -2222,6 +2280,17 @@ class BSExpressFixAssetUI {
   // ===========================================================================
   // 11. PRINTING: OFFICIAL A4 HANDOVER CERTIFICATES & BARCODE LABELS
   // ===========================================================================
+  safePrint() {
+    document.body.classList.add('printing-fa');
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('printing-fa');
+    }, 1500);
+    window.addEventListener('afterprint', () => {
+      document.body.classList.remove('printing-fa');
+    }, { once: true });
+  }
+
   printEmployeeHandoverSheet(empName, assets) {
     const printArea = document.getElementById('fa-printable-area');
     if (!printArea) return;
@@ -2290,7 +2359,7 @@ class BSExpressFixAssetUI {
       </div>
     `;
 
-    window.print();
+    this.safePrint();
   }
 
   printAssignmentHandoverSheet(assignment, items) {
@@ -2355,7 +2424,7 @@ class BSExpressFixAssetUI {
       </div>
     `;
 
-    window.print();
+    this.safePrint();
   }
 
   printSingleBarcodeSticker(item) {
@@ -2379,7 +2448,7 @@ class BSExpressFixAssetUI {
       </div>
     `;
 
-    window.print();
+    this.safePrint();
   }
 
   // ===========================================================================

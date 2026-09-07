@@ -5028,10 +5028,14 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
 
     // 1. PORTAL HUB SCREEN
     if (currentSys === 'portal') {
+      document.body.classList.remove('fa-workspace-active');
       if (portalHub) portalHub.style.display = 'flex';
       if (authScreen) authScreen.style.display = 'none';
       if (mainApp) mainApp.style.display = 'none';
-      if (fixAssetWrap) fixAssetWrap.style.display = 'none';
+      if (fixAssetWrap) {
+        fixAssetWrap.style.display = 'none';
+        fixAssetWrap.classList.remove('active');
+      }
       this.updateSystemSwitcherPill('portal');
       return;
     }
@@ -5040,18 +5044,26 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     if (currentSys === 'fixasset') {
       const isAuthenticated = Boolean(this.currentUser && this.currentUser.username);
       if (!isAuthenticated) {
+        document.body.classList.remove('fa-workspace-active');
         if (portalHub) portalHub.style.display = 'none';
-        if (fixAssetWrap) fixAssetWrap.style.display = 'none';
+        if (fixAssetWrap) {
+          fixAssetWrap.style.display = 'none';
+          fixAssetWrap.classList.remove('active');
+        }
         if (mainApp) mainApp.style.display = 'none';
         if (authScreen) authScreen.style.display = 'grid';
         this.updateSystemSwitcherPill('fixasset');
         return;
       }
 
+      document.body.classList.add('fa-workspace-active');
       if (portalHub) portalHub.style.display = 'none';
       if (authScreen) authScreen.style.display = 'none';
       if (mainApp) mainApp.style.display = 'none';
-      if (fixAssetWrap) fixAssetWrap.style.display = 'flex';
+      if (fixAssetWrap) {
+        fixAssetWrap.style.display = 'flex';
+        fixAssetWrap.classList.add('active');
+      }
       this.updateSystemSwitcherPill('fixasset');
       if (window.fixAssetUI) {
         window.fixAssetUI.init();
@@ -5060,8 +5072,12 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
     }
 
     // 3. DAILY REPORT SYSTEM
+    document.body.classList.remove('fa-workspace-active');
     if (portalHub) portalHub.style.display = 'none';
-    if (fixAssetWrap) fixAssetWrap.style.display = 'none';
+    if (fixAssetWrap) {
+      fixAssetWrap.style.display = 'none';
+      fixAssetWrap.classList.remove('active');
+    }
     this.updateSystemSwitcherPill('daily-report');
 
     const isAuthenticated = Boolean(this.currentUser && this.currentUser.username);
