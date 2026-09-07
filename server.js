@@ -218,15 +218,15 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (pathname === '/api/fixasset/employees') {
-        const limit = Math.min(parseInt(parsedUrl.searchParams.get('limit') || '100', 10), 1000);
+        const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '100', 10), 1000);
         const employees = await getFixAssetEmployees(limit);
         return sendJson(res, 200, { success: true, count: employees.length, employees });
       }
 
       if (pathname === '/api/fixasset/items') {
-        const q = (parsedUrl.searchParams.get('q') || '').trim();
-        const limit = Math.min(parseInt(parsedUrl.searchParams.get('limit') || '50', 10), 200);
-        const offset = Math.max(parseInt(parsedUrl.searchParams.get('offset') || '0', 10), 0);
+        const q = (urlObj.searchParams.get('q') || '').trim();
+        const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '50', 10), 200);
+        const offset = Math.max(parseInt(urlObj.searchParams.get('offset') || '0', 10), 0);
         const result = await getFixAssetItems(q, limit, offset);
         return sendJson(res, 200, { success: true, total: result.total, limit, offset, items: result.items });
       }
