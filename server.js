@@ -19,14 +19,58 @@ import {
   saveBranchDraft,
   getFixAssetStats,
   getFixAssetBranches,
+  createFixAssetBranch,
+  updateFixAssetBranch,
+  deleteFixAssetBranch,
   getFixAssetDepartments,
+  createFixAssetDepartment,
+  updateFixAssetDepartment,
+  deleteFixAssetDepartment,
   getFixAssetCategories,
+  createFixAssetCategory,
+  updateFixAssetCategory,
+  deleteFixAssetCategory,
+  getFixAssetTypes,
+  createFixAssetType,
+  updateFixAssetType,
+  deleteFixAssetType,
+  getFixAssetSuppliers,
+  createFixAssetSupplier,
+  updateFixAssetSupplier,
+  deleteFixAssetSupplier,
+  getFixAssetWarehouses,
+  createFixAssetWarehouse,
+  updateFixAssetWarehouse,
+  deleteFixAssetWarehouse,
+  getFixAssetTypeOfWorks,
+  createFixAssetTypeOfWork,
+  updateFixAssetTypeOfWork,
+  deleteFixAssetTypeOfWork,
+  getFixAssetDevices,
+  createFixAssetDevice,
+  updateFixAssetDevice,
+  deleteFixAssetDevice,
+  getFixAssetUsers,
+  createFixAssetUser,
+  updateFixAssetUser,
+  deleteFixAssetUser,
+  getFixAssetItemMasters,
+  createFixAssetItemMaster,
+  updateFixAssetItemMaster,
+  deleteFixAssetItemMaster,
   getFixAssetEmployees,
+  createFixAssetEmployee,
+  updateFixAssetEmployee,
+  deleteFixAssetEmployee,
+  getEmployeeAssignedAssets,
   getFixAssetItems,
+  deleteFixAssetItem,
   getFixAssetAssignments,
+  getFixAssetAssignmentDetails,
   assignFixAssetItem,
   returnFixAssetItem,
-  getFixAssetGrn
+  getFixAssetGrn,
+  getFixAssetGrnDetails
 } from './db/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -219,27 +263,271 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (pathname === '/api/fixasset/branches') {
-        const branches = await getFixAssetBranches();
-        return sendJson(res, 200, { success: true, count: branches.length, branches });
+        if (req.method === 'GET') {
+          const branches = await getFixAssetBranches();
+          return sendJson(res, 200, { success: true, count: branches.length, branches });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const { name, name_en } = body;
+          if (!name) return sendJson(res, 400, { success: false, error: 'Name required' });
+          const id = await createFixAssetBranch(name, name_en);
+          return sendJson(res, 200, { success: true, message: 'Branch created', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          const { id, name, name_en } = body;
+          if (!id || !name) return sendJson(res, 400, { success: false, error: 'ID and Name required' });
+          await updateFixAssetBranch(id, name, name_en);
+          return sendJson(res, 200, { success: true, message: 'Branch updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          if (!id) return sendJson(res, 400, { success: false, error: 'ID required' });
+          await deleteFixAssetBranch(id);
+          return sendJson(res, 200, { success: true, message: 'Branch deleted' });
+        }
       }
 
       if (pathname === '/api/fixasset/departments') {
-        const departments = await getFixAssetDepartments();
-        return sendJson(res, 200, { success: true, count: departments.length, departments });
+        if (req.method === 'GET') {
+          const departments = await getFixAssetDepartments();
+          return sendJson(res, 200, { success: true, count: departments.length, departments });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const { name, name_en } = body;
+          if (!name) return sendJson(res, 400, { success: false, error: 'Department name required' });
+          const id = await createFixAssetDepartment(name, name_en);
+          return sendJson(res, 200, { success: true, message: 'Department created', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          const { id, name, name_en } = body;
+          if (!id || !name) return sendJson(res, 400, { success: false, error: 'ID and Name required' });
+          await updateFixAssetDepartment(id, name, name_en);
+          return sendJson(res, 200, { success: true, message: 'Department updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          if (!id) return sendJson(res, 400, { success: false, error: 'ID required' });
+          await deleteFixAssetDepartment(id);
+          return sendJson(res, 200, { success: true, message: 'Department deleted' });
+        }
       }
 
       if (pathname === '/api/fixasset/categories') {
-        const data = await getFixAssetCategories();
-        return sendJson(res, 200, { success: true, ...data });
+        if (req.method === 'GET') {
+          const data = await getFixAssetCategories();
+          return sendJson(res, 200, { success: true, ...data });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const { name, name_en } = body;
+          if (!name) return sendJson(res, 400, { success: false, error: 'Category name required' });
+          const id = await createFixAssetCategory(name, name_en);
+          return sendJson(res, 200, { success: true, message: 'Category created', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          const { id, name, name_en } = body;
+          await updateFixAssetCategory(id, name, name_en);
+          return sendJson(res, 200, { success: true, message: 'Category updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          await deleteFixAssetCategory(id);
+          return sendJson(res, 200, { success: true, message: 'Category deleted' });
+        }
+      }
+
+      if (pathname === '/api/fixasset/types') {
+        if (req.method === 'GET') {
+          const types = await getFixAssetTypes();
+          return sendJson(res, 200, { success: true, types });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const { name, name_en, category_id } = body;
+          const id = await createFixAssetType(name, name_en, category_id);
+          return sendJson(res, 200, { success: true, message: 'Item type created', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          const { id, name, name_en, category_id } = body;
+          await updateFixAssetType(id, name, name_en, category_id);
+          return sendJson(res, 200, { success: true, message: 'Item type updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          await deleteFixAssetType(id);
+          return sendJson(res, 200, { success: true, message: 'Item type deleted' });
+        }
+      }
+
+      if (pathname === '/api/fixasset/suppliers') {
+        if (req.method === 'GET') {
+          const suppliers = await getFixAssetSuppliers();
+          return sendJson(res, 200, { success: true, count: suppliers.length, suppliers });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const id = await createFixAssetSupplier(body);
+          return sendJson(res, 200, { success: true, message: 'Supplier created', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          await updateFixAssetSupplier(body);
+          return sendJson(res, 200, { success: true, message: 'Supplier updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          await deleteFixAssetSupplier(id);
+          return sendJson(res, 200, { success: true, message: 'Supplier deleted' });
+        }
+      }
+
+      if (pathname === '/api/fixasset/warehouses') {
+        if (req.method === 'GET') {
+          const warehouses = await getFixAssetWarehouses();
+          return sendJson(res, 200, { success: true, count: warehouses.length, warehouses });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const id = await createFixAssetWarehouse(body);
+          return sendJson(res, 200, { success: true, message: 'Warehouse created', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          await updateFixAssetWarehouse(body);
+          return sendJson(res, 200, { success: true, message: 'Warehouse updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          await deleteFixAssetWarehouse(id);
+          return sendJson(res, 200, { success: true, message: 'Warehouse deleted' });
+        }
+      }
+
+      if (pathname === '/api/fixasset/type-of-works') {
+        if (req.method === 'GET') {
+          const typeOfWorks = await getFixAssetTypeOfWorks();
+          return sendJson(res, 200, { success: true, count: typeOfWorks.length, type_of_works: typeOfWorks });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const id = await createFixAssetTypeOfWork(body);
+          return sendJson(res, 200, { success: true, message: 'Type of work created', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          await updateFixAssetTypeOfWork(body);
+          return sendJson(res, 200, { success: true, message: 'Type of work updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          await deleteFixAssetTypeOfWork(id);
+          return sendJson(res, 200, { success: true, message: 'Type of work deleted' });
+        }
+      }
+
+      if (pathname === '/api/fixasset/devices') {
+        if (req.method === 'GET') {
+          const devices = await getFixAssetDevices();
+          return sendJson(res, 200, { success: true, count: devices.length, devices });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const id = await createFixAssetDevice(body);
+          return sendJson(res, 200, { success: true, message: 'Device added', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          await updateFixAssetDevice(body);
+          return sendJson(res, 200, { success: true, message: 'Device updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          await deleteFixAssetDevice(id);
+          return sendJson(res, 200, { success: true, message: 'Device deleted' });
+        }
+      }
+
+      if (pathname === '/api/fixasset/users') {
+        if (req.method === 'GET') {
+          const users = await getFixAssetUsers();
+          return sendJson(res, 200, { success: true, count: users.length, users });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const id = await createFixAssetUser(body);
+          return sendJson(res, 200, { success: true, message: 'User created', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          await updateFixAssetUser(body);
+          return sendJson(res, 200, { success: true, message: 'User updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          await deleteFixAssetUser(id);
+          return sendJson(res, 200, { success: true, message: 'User deleted' });
+        }
+      }
+
+      if (pathname === '/api/fixasset/item-masters') {
+        if (req.method === 'GET') {
+          const masters = await getFixAssetItemMasters();
+          return sendJson(res, 200, { success: true, count: masters.length, item_masters: masters });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const id = await createFixAssetItemMaster(body);
+          return sendJson(res, 200, { success: true, message: 'Item master created', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          await updateFixAssetItemMaster(body);
+          return sendJson(res, 200, { success: true, message: 'Item master updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          await deleteFixAssetItemMaster(id);
+          return sendJson(res, 200, { success: true, message: 'Item master deleted' });
+        }
       }
 
       if (pathname === '/api/fixasset/employees') {
-        const q = (urlObj.searchParams.get('q') || '').trim();
-        const branchId = urlObj.searchParams.get('branch_id');
-        const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '100', 10), 1000);
-        const offset = Math.max(parseInt(urlObj.searchParams.get('offset') || '0', 10), 0);
-        const employees = await getFixAssetEmployees(q, branchId, limit, offset);
-        return sendJson(res, 200, { success: true, count: employees.length, employees });
+        if (req.method === 'GET') {
+          const q = (urlObj.searchParams.get('q') || '').trim();
+          const branchId = urlObj.searchParams.get('branch_id');
+          const status = urlObj.searchParams.get('status');
+          const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '100', 10), 1000);
+          const offset = Math.max(parseInt(urlObj.searchParams.get('offset') || '0', 10), 0);
+          const result = await getFixAssetEmployees(q, branchId, status, limit, offset);
+          return sendJson(res, 200, { success: true, count: result.employees.length, total: result.total, employees: result.employees });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const id = await createFixAssetEmployee(body);
+          return sendJson(res, 200, { success: true, message: 'Employee created', id });
+        }
+        if (req.method === 'PUT') {
+          const body = await parseJsonBody(req);
+          await updateFixAssetEmployee(body);
+          return sendJson(res, 200, { success: true, message: 'Employee updated' });
+        }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          await deleteFixAssetEmployee(id);
+          return sendJson(res, 200, { success: true, message: 'Employee deleted' });
+        }
+      }
+
+      if (pathname === '/api/fixasset/employees/assets') {
+        const name = urlObj.searchParams.get('name') || '';
+        const assets = await getEmployeeAssignedAssets(name);
+        return sendJson(res, 200, { success: true, count: assets.length, assets });
       }
 
       if (pathname === '/api/fixasset/items') {
@@ -252,10 +540,21 @@ const server = http.createServer(async (req, res) => {
           const result = await getFixAssetItems(q, status, categoryId, limit, offset);
           return sendJson(res, 200, { success: true, total: result.total, limit, offset, items: result.items });
         }
+        if (req.method === 'DELETE') {
+          const id = urlObj.searchParams.get('id');
+          await deleteFixAssetItem(id);
+          return sendJson(res, 200, { success: true, message: 'Item deleted' });
+        }
       }
 
       if (pathname === '/api/fixasset/assignments') {
         if (req.method === 'GET') {
+          const id = urlObj.searchParams.get('id');
+          if (id) {
+            const details = await getFixAssetAssignmentDetails(id);
+            if (!details) return sendJson(res, 404, { success: false, error: 'Assignment not found' });
+            return sendJson(res, 200, { success: true, ...details });
+          }
           const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '50', 10), 200);
           const assignments = await getFixAssetAssignments(limit);
           return sendJson(res, 200, { success: true, count: assignments.length, assignments });
@@ -282,9 +581,17 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (pathname === '/api/fixasset/grn') {
-        const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '50', 10), 200);
-        const grn = await getFixAssetGrn(limit);
-        return sendJson(res, 200, { success: true, count: grn.length, grn });
+        if (req.method === 'GET') {
+          const id = urlObj.searchParams.get('id');
+          if (id) {
+            const details = await getFixAssetGrnDetails(id);
+            if (!details) return sendJson(res, 404, { success: false, error: 'GRN not found' });
+            return sendJson(res, 200, { success: true, ...details });
+          }
+          const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '50', 10), 200);
+          const grn = await getFixAssetGrn(limit);
+          return sendJson(res, 200, { success: true, count: grn.length, grn });
+        }
       }
 
       return sendJson(res, 404, { success: false, error: `Endpoint ${pathname} not found` });

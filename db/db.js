@@ -475,24 +475,297 @@ export async function getFixAssetBranches() {
   return rows;
 }
 
+export async function createFixAssetBranch(name, name_en) {
+  if (!pool) return false;
+  const [res] = await pool.query(`INSERT INTO branches (name, name_en, created_at, updated_at) VALUES (?, ?, NOW(), NOW())`, [name, name_en || null]);
+  return res.insertId;
+}
+
+export async function updateFixAssetBranch(id, name, name_en) {
+  if (!pool) return false;
+  await pool.query(`UPDATE branches SET name = ?, name_en = ?, updated_at = NOW() WHERE id = ?`, [name, name_en || null, id]);
+  return true;
+}
+
+export async function deleteFixAssetBranch(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM branches WHERE id = ?`, [id]);
+  return true;
+}
+
 export async function getFixAssetDepartments() {
   if (!pool) return [];
   const [rows] = await pool.query(`SELECT id, name, name_en, label FROM departments ORDER BY id ASC;`);
   return rows;
 }
 
+export async function createFixAssetDepartment(name, name_en) {
+  if (!pool) return false;
+  const [res] = await pool.query(`INSERT INTO departments (name, name_en, created_at, updated_at) VALUES (?, ?, NOW(), NOW())`, [name, name_en || null]);
+  return res.insertId;
+}
+
+export async function updateFixAssetDepartment(id, name, name_en) {
+  if (!pool) return false;
+  await pool.query(`UPDATE departments SET name = ?, name_en = ?, updated_at = NOW() WHERE id = ?`, [name, name_en || null, id]);
+  return true;
+}
+
+export async function deleteFixAssetDepartment(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM departments WHERE id = ?`, [id]);
+  return true;
+}
+
 export async function getFixAssetCategories() {
   if (!pool) return { categories: [], types: [] };
   const [cats] = await pool.query(`SELECT id, name, name_en, label FROM item_categories ORDER BY id ASC;`);
-  const [types] = await pool.query(`SELECT id, name, name_en, label, category_id FROM item_types ORDER BY id ASC;`);
+  const [types] = await pool.query(`SELECT id, name, name_en FROM item_types ORDER BY id ASC;`);
   return { categories: cats, types };
 }
 
-export async function getFixAssetEmployees(q = '', branchId = null, limit = 100, offset = 0) {
+export async function createFixAssetCategory(name, name_en) {
+  if (!pool) return false;
+  const [res] = await pool.query(`INSERT INTO item_categories (name, name_en, created_at, updated_at) VALUES (?, ?, NOW(), NOW())`, [name, name_en || null]);
+  return res.insertId;
+}
+
+export async function updateFixAssetCategory(id, name, name_en) {
+  if (!pool) return false;
+  await pool.query(`UPDATE item_categories SET name = ?, name_en = ?, updated_at = NOW() WHERE id = ?`, [name, name_en || null, id]);
+  return true;
+}
+
+export async function deleteFixAssetCategory(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM item_categories WHERE id = ?`, [id]);
+  return true;
+}
+
+export async function getFixAssetTypes() {
   if (!pool) return [];
+  const [types] = await pool.query(`SELECT id, name, name_en FROM item_types ORDER BY id ASC;`);
+  return types;
+}
+
+export async function createFixAssetType(name, name_en) {
+  if (!pool) return false;
+  const [res] = await pool.query(`INSERT INTO item_types (name, name_en, created_at, updated_at) VALUES (?, ?, NOW(), NOW())`, [name, name_en || null]);
+  return res.insertId;
+}
+
+export async function updateFixAssetType(id, name, name_en) {
+  if (!pool) return false;
+  await pool.query(`UPDATE item_types SET name = ?, name_en = ?, updated_at = NOW() WHERE id = ?`, [name, name_en || null, id]);
+  return true;
+}
+
+export async function deleteFixAssetType(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM item_types WHERE id = ?`, [id]);
+  return true;
+}
+
+export async function getFixAssetSuppliers() {
+  if (!pool) return [];
+  const [rows] = await pool.query(`SELECT id, name, phone, email, address, created_at FROM suppliers ORDER BY id ASC;`);
+  return rows;
+}
+
+export async function createFixAssetSupplier(data) {
+  if (!pool) return false;
+  const [res] = await pool.query(`
+    INSERT INTO suppliers (name, phone, email, address, created_at, updated_at)
+    VALUES (?, ?, ?, ?, NOW(), NOW())
+  `, [data.name, data.phone || null, data.email || null, data.address || null]);
+  return res.insertId;
+}
+
+export async function updateFixAssetSupplier(data) {
+  if (!pool) return false;
+  await pool.query(`
+    UPDATE suppliers SET name = ?, phone = ?, email = ?, address = ?, updated_at = NOW()
+    WHERE id = ?
+  `, [data.name, data.phone || null, data.email || null, data.address || null, data.id]);
+  return true;
+}
+
+export async function deleteFixAssetSupplier(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM suppliers WHERE id = ?`, [id]);
+  return true;
+}
+
+export async function getFixAssetWarehouses() {
+  if (!pool) return [];
+  const [rows] = await pool.query(`SELECT id, name, branch_id, created_at FROM warehouses ORDER BY id ASC;`);
+  return rows;
+}
+
+export async function createFixAssetWarehouse(data) {
+  if (!pool) return false;
+  const [res] = await pool.query(`
+    INSERT INTO warehouses (name, branch_id, created_at, updated_at)
+    VALUES (?, ?, NOW(), NOW())
+  `, [data.name, data.branch_id || null]);
+  return res.insertId;
+}
+
+export async function updateFixAssetWarehouse(data) {
+  if (!pool) return false;
+  await pool.query(`
+    UPDATE warehouses SET name = ?, branch_id = ?, updated_at = NOW()
+    WHERE id = ?
+  `, [data.name, data.branch_id || null, data.id]);
+  return true;
+}
+
+export async function deleteFixAssetWarehouse(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM warehouses WHERE id = ?`, [id]);
+  return true;
+}
+
+export async function getFixAssetTypeOfWorks() {
+  if (!pool) return [];
+  const [rows] = await pool.query(`SELECT id, name, name_en, label, created_at FROM type_of_works ORDER BY id ASC;`);
+  return rows;
+}
+
+export async function createFixAssetTypeOfWork(data) {
+  if (!pool) return false;
+  const [res] = await pool.query(`
+    INSERT INTO type_of_works (name, name_en, label, created_at, updated_at)
+    VALUES (?, ?, ?, NOW(), NOW())
+  `, [data.name, data.name_en || null, data.label || null]);
+  return res.insertId;
+}
+
+export async function updateFixAssetTypeOfWork(data) {
+  if (!pool) return false;
+  await pool.query(`
+    UPDATE type_of_works SET name = ?, name_en = ?, label = ?, updated_at = NOW()
+    WHERE id = ?
+  `, [data.name, data.name_en || null, data.label || null, data.id]);
+  return true;
+}
+
+export async function deleteFixAssetTypeOfWork(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM type_of_works WHERE id = ?`, [id]);
+  return true;
+}
+
+export async function getFixAssetDevices() {
+  if (!pool) return [];
+  const [rows] = await pool.query(`
+    SELECT id, name, host, port, protocol, username, serial_number, model, firmware_version, is_connected, last_connected_at
+    FROM hikvision_devices ORDER BY id ASC;
+  `);
+  return rows;
+}
+
+export async function createFixAssetDevice(data) {
+  if (!pool) return false;
+  const [res] = await pool.query(`
+    INSERT INTO hikvision_devices (name, host, port, protocol, username, password, is_connected, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), NOW())
+  `, [data.name, data.host, data.port || 80, data.protocol || 'http', data.username || 'admin', data.password || '']);
+  return res.insertId;
+}
+
+export async function updateFixAssetDevice(data) {
+  if (!pool) return false;
+  await pool.query(`
+    UPDATE hikvision_devices
+    SET name = ?, host = ?, port = ?, protocol = ?, username = ?, updated_at = NOW()
+    WHERE id = ?
+  `, [data.name, data.host, data.port || 80, data.protocol || 'http', data.username || 'admin', data.id]);
+  return true;
+}
+
+export async function deleteFixAssetDevice(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM hikvision_devices WHERE id = ?`, [id]);
+  return true;
+}
+
+export async function getFixAssetUsers() {
+  if (!pool) return [];
+  const [rows] = await pool.query(`SELECT id, name, name_en, user_login, email, phone_number, status, created_at FROM fixasset_users ORDER BY id ASC;`);
+  return rows;
+}
+
+export async function createFixAssetUser(data) {
+  if (!pool) return false;
+  const [res] = await pool.query(`
+    INSERT INTO fixasset_users (name, user_login, email, password, status, created_at, updated_at)
+    VALUES (?, ?, ?, '123', ?, NOW(), NOW())
+  `, [data.name, data.user_login || data.username, data.email || null, data.status || 'Active']);
+  return res.insertId;
+}
+
+export async function updateFixAssetUser(data) {
+  if (!pool) return false;
+  await pool.query(`
+    UPDATE fixasset_users
+    SET name = ?, email = ?, status = ?, updated_at = NOW()
+    WHERE id = ?
+  `, [data.name, data.email || null, data.status || 'Active', data.id]);
+  return true;
+}
+
+export async function deleteFixAssetUser(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM fixasset_users WHERE id = ?`, [id]);
+  return true;
+}
+
+export async function getFixAssetItemMasters() {
+  if (!pool) return [];
+  const [rows] = await pool.query(`
+    SELECT m.id, m.code, m.name, m.model, m.brand, m.unit_price, m.unit_of_measure, m.quantity,
+           cat.name as category_name, t.name as item_type_name,
+           (SELECT count(*) FROM item_fixed_asset_codes c WHERE c.item_master_id = m.id AND c.is_assigned = 1) as assigned_count
+    FROM item_masters m
+    LEFT JOIN item_categories cat ON m.category_id = cat.id
+    LEFT JOIN item_types t ON m.item_type_id = t.id
+    ORDER BY m.id ASC;
+  `);
+  return rows;
+}
+
+export async function createFixAssetItemMaster(data) {
+  if (!pool) return false;
+  const code = data.code || ('ITM-' + Date.now().toString().slice(-6));
+  const [res] = await pool.query(`
+    INSERT INTO item_masters (code, name, model, brand, category_id, item_type_id, unit_price, quantity, unit_of_measure, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+  `, [code, data.name, data.model || null, data.brand || null, data.category_id || null, data.item_type_id || null, data.unit_price || 0, data.quantity || 1, data.unit_of_measure || 'Unit']);
+  return res.insertId;
+}
+
+export async function updateFixAssetItemMaster(data) {
+  if (!pool) return false;
+  await pool.query(`
+    UPDATE item_masters
+    SET code = ?, name = ?, model = ?, brand = ?, category_id = ?, item_type_id = ?, unit_price = ?, quantity = ?, unit_of_measure = ?, updated_at = NOW()
+    WHERE id = ?
+  `, [data.code, data.name, data.model || null, data.brand || null, data.category_id || null, data.item_type_id || null, data.unit_price || 0, data.quantity || 1, data.unit_of_measure || 'Unit', data.id]);
+  return true;
+}
+
+export async function deleteFixAssetItemMaster(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM item_masters WHERE id = ?`, [id]);
+  return true;
+}
+
+export async function getFixAssetEmployees(q = '', branchId = null, status = 'all', limit = 100, offset = 0) {
+  if (!pool) return { total: 0, employees: [] };
   let query = `
-    SELECT e.id, e.employee_code, e.employee_name, e.job_title, e.phone_number, e.email, e.status,
-           b.name as branch_name, d.name as department_name,
+    SELECT e.id, e.employee_code, e.employee_name, e.job_title, e.phone_number, e.email, e.status, e.date_of_hired,
+           b.name as branch_name, d.name as department_name, e.branch_id, e.department_id,
            (SELECT count(*) FROM item_fixed_asset_codes c WHERE c.assigned_to = e.employee_name) as assigned_items_count
     FROM employees e
     LEFT JOIN branches b ON e.branch_id = b.id
@@ -510,15 +783,61 @@ export async function getFixAssetEmployees(q = '', branchId = null, limit = 100,
     whereClauses.push("e.branch_id = ?");
     params.push(parseInt(branchId, 10));
   }
+  if (status && status !== 'all') {
+    whereClauses.push("e.status = ?");
+    params.push(status);
+  }
 
   if (whereClauses.length > 0) {
     query += " WHERE " + whereClauses.join(" AND ");
   }
 
+  const [countRows] = await pool.query(`
+    SELECT count(*) as total FROM employees e ${whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : ""}
+  `, params);
+
   query += " ORDER BY e.id ASC LIMIT ? OFFSET ?;";
   params.push(parseInt(limit, 10), parseInt(offset, 10));
 
   const [rows] = await pool.query(query, params);
+  return { total: countRows[0]?.total || 0, employees: rows };
+}
+
+export async function createFixAssetEmployee(data) {
+  if (!pool) return false;
+  const code = data.employee_code || ('EMP-' + Date.now().toString().slice(-4));
+  const [res] = await pool.query(`
+    INSERT INTO employees (employee_code, employee_name, branch_id, department_id, job_title, phone_number, email, status, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+  `, [code, data.employee_name, data.branch_id || null, data.department_id || null, data.job_title || 'Staff', data.phone_number || null, data.email || null, data.status || 'Hired']);
+  return res.insertId;
+}
+
+export async function updateFixAssetEmployee(data) {
+  if (!pool) return false;
+  await pool.query(`
+    UPDATE employees
+    SET employee_code = ?, employee_name = ?, branch_id = ?, department_id = ?, job_title = ?, phone_number = ?, email = ?, status = ?, updated_at = NOW()
+    WHERE id = ?
+  `, [data.employee_code, data.employee_name, data.branch_id || null, data.department_id || null, data.job_title || 'Staff', data.phone_number || null, data.email || null, data.status || 'Hired', data.id]);
+  return true;
+}
+
+export async function deleteFixAssetEmployee(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM employees WHERE id = ?`, [id]);
+  return true;
+}
+
+export async function getEmployeeAssignedAssets(empName) {
+  if (!pool) return [];
+  const [rows] = await pool.query(`
+    SELECT c.id, c.code, c.a_code, c.item_master_id, m.name as item_name, m.brand, m.model, m.unit_price, cat.name as category_name
+    FROM item_fixed_asset_codes c
+    LEFT JOIN item_masters m ON c.item_master_id = m.id
+    LEFT JOIN item_categories cat ON m.category_id = cat.id
+    WHERE c.assigned_to = ? AND c.is_assigned = 1
+  `, [empName]);
   return rows;
 }
 
@@ -568,6 +887,12 @@ export async function getFixAssetItems(q = '', status = 'all', categoryId = null
   return { total: countRows[0]?.total || 0, items: rows };
 }
 
+export async function deleteFixAssetItem(id) {
+  if (!pool) return false;
+  await pool.query(`DELETE FROM item_fixed_asset_codes WHERE id = ?`, [id]);
+  return true;
+}
+
 export async function getFixAssetAssignments(limit = 50) {
   if (!pool) return [];
   const [rows] = await pool.query(`
@@ -579,6 +904,29 @@ export async function getFixAssetAssignments(limit = 50) {
     ORDER BY a.id DESC LIMIT ?;
   `, [parseInt(limit, 10)]);
   return rows;
+}
+
+export async function getFixAssetAssignmentDetails(id) {
+  if (!pool) return null;
+  const [assignRows] = await pool.query(`
+    SELECT a.id, a.assignment_no, a.assign_date, a.return_date, a.status, a.notes,
+           e.employee_code, e.employee_name, e.job_title, b.name as branch_name, d.name as department_name
+    FROM asset_assignments a
+    LEFT JOIN employees e ON a.employee_id = e.id
+    LEFT JOIN branches b ON e.branch_id = b.id
+    LEFT JOIN departments d ON e.department_id = d.id
+    WHERE a.id = ?
+  `, [id]);
+
+  if (!assignRows || assignRows.length === 0) return null;
+
+  const [items] = await pool.query(`
+    SELECT i.id, i.item_code, i.product_name, i.asset_code, i.brand, i.condition, i.remark, i.quantity
+    FROM asset_assignment_items i
+    WHERE i.assignment_id = ?
+  `, [id]);
+
+  return { assignment: assignRows[0], items };
 }
 
 export async function assignFixAssetItem(employeeName, itemCode) {
@@ -604,14 +952,38 @@ export async function returnFixAssetItem(itemCode) {
 export async function getFixAssetGrn(limit = 50) {
   if (!pool) return [];
   const [rows] = await pool.query(`
-    SELECT g.id, g.grn_no, g.invoice_no, g.po_no, g.status, g.created_at,
-           s.name as supplier_name, b.name as branch_name
+    SELECT g.id, g.grn_number, g.reference_no, g.po_number, g.grn_type, g.status, g.transaction_date, g.created_at,
+           s.name as supplier_name, w.name as warehouse_name
     FROM grns g
     LEFT JOIN suppliers s ON g.supplier_id = s.id
-    LEFT JOIN branches b ON g.branch_id = b.id
+    LEFT JOIN warehouses w ON g.warehouse_id = w.id
     ORDER BY g.id DESC LIMIT ?;
   `, [parseInt(limit, 10)]);
   return rows;
+}
+
+export async function getFixAssetGrnDetails(id) {
+  if (!pool) return null;
+  const [grnRows] = await pool.query(`
+    SELECT g.id, g.grn_number, g.reference_no, g.po_number, g.grn_type, g.status, g.transaction_date, g.note, g.created_at,
+           s.name as supplier_name, s.phone as supplier_phone, w.name as warehouse_name
+    FROM grns g
+    LEFT JOIN suppliers s ON g.supplier_id = s.id
+    LEFT JOIN warehouses w ON g.warehouse_id = w.id
+    WHERE g.id = ?
+  `, [id]);
+
+  if (!grnRows || grnRows.length === 0) return null;
+
+  const [items] = await pool.query(`
+    SELECT gi.id, gi.item_code, gi.description, gi.brand, gi.po_quantity, gi.receive_quantity, gi.unit_price, gi.total_amount, gi.uom, gi.remark,
+           m.name as item_name
+    FROM grn_items gi
+    LEFT JOIN item_masters m ON gi.item_master_id = m.id
+    WHERE gi.grn_id = ?
+  `, [id]);
+
+  return { grn: grnRows[0], items };
 }
 
 function safeParseJson(str, fallback) {

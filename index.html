@@ -1491,262 +1491,776 @@
       </div>
     </header>
 
-    <!-- Sub-Module Navigation Ribbon -->
-    <nav class="fa-subnav" aria-label="Fixed Asset Navigation">
-      <button type="button" class="fa-nav-tab active" data-fa-tab="dashboard">
-        <span>📊</span> <span>ផ្ទាំងទិន្នន័យ (Dashboard)</span>
+    <!-- Mobile Sidebar Drawer Toggle Bar -->
+    <div class="fa-mobile-bar">
+      <button type="button" class="fa-mobile-toggle-btn" id="fa-mobile-toggle">
+        <span>☰</span> <span>Fixed Asset Menu</span>
       </button>
-      <button type="button" class="fa-nav-tab" data-fa-tab="items">
-        <span>🏷️</span> <span>បញ្ជីសម្ភារៈ (Items)</span>
-        <span class="fa-nav-badge" id="fa-nav-badge-items">7,183</span>
-      </button>
-      <button type="button" class="fa-nav-tab" data-fa-tab="employees">
-        <span>👥</span> <span>បុគ្គលិក (Employees)</span>
-        <span class="fa-nav-badge" id="fa-nav-badge-emp">615</span>
-      </button>
-      <button type="button" class="fa-nav-tab" data-fa-tab="assignments">
-        <span>🤝</span> <span>ប្រគល់សម្ភារៈ (Assignments)</span>
-      </button>
-      <button type="button" class="fa-nav-tab" data-fa-tab="grn">
-        <span>📥</span> <span>បញ្ចូលស្តុក (GRN)</span>
-      </button>
-      <button type="button" class="fa-nav-tab" data-fa-tab="branches">
-        <span>🏢</span> <span>សាខា &amp; ផ្នែក (29 Branches)</span>
-      </button>
-    </nav>
+      <span class="fa-badge fa-badge-assigned">Cloud D1 Online</span>
+    </div>
 
-    <!-- Native Fix Asset Panels Container -->
-    <main class="fixasset-container">
-      <!-- 1. DASHBOARD PANEL -->
-      <section class="fa-panel active" id="fa-panel-dashboard">
-        <div class="fa-stats-grid">
-          <div class="fa-stat-card">
-            <div class="fa-stat-icon icon-emerald">📦</div>
-            <div class="fa-stat-info">
-              <span class="fa-stat-label">សម្ភារៈសរុប (Total Assets)</span>
-              <strong class="fa-stat-value" id="fa-stat-total-items">7,183</strong>
-            </div>
-          </div>
-          <div class="fa-stat-card">
-            <div class="fa-stat-icon icon-blue">👤</div>
-            <div class="fa-stat-info">
-              <span class="fa-stat-label">បានបែងចែករួច (Assigned)</span>
-              <strong class="fa-stat-value" id="fa-stat-assigned">0</strong>
-            </div>
-          </div>
-          <div class="fa-stat-card">
-            <div class="fa-stat-icon icon-amber">🏬</div>
-            <div class="fa-stat-info">
-              <span class="fa-stat-label">ក្នុងស្តុកទំនេរ (Available)</span>
-              <strong class="fa-stat-value" id="fa-stat-in-stock">7,183</strong>
-            </div>
-          </div>
-          <div class="fa-stat-card">
-            <div class="fa-stat-icon icon-purple">👥</div>
-            <div class="fa-stat-info">
-              <span class="fa-stat-label">បុគ្គលិកសរុប (Employees)</span>
-              <strong class="fa-stat-value" id="fa-stat-total-emp">615</strong>
-            </div>
+    <!-- Master Enterprise Layout: Sidebar + Main Content -->
+    <div class="fa-layout">
+      <!-- Backdrop for Mobile Sidebar -->
+      <div class="fa-sidebar-backdrop" id="fa-sidebar-backdrop"></div>
+
+      <!-- Enterprise Sidebar -->
+      <aside class="fa-sidebar" id="fa-sidebar">
+        <div class="fa-sidebar-header">
+          <div class="fa-sidebar-logo">📦</div>
+          <div class="fa-sidebar-title-group">
+            <span class="fa-sidebar-title">Fixed Asset ERP</span>
+            <span class="fa-sidebar-subtitle">BS Express Logistics v2.0</span>
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 10px;">
-          <!-- Quick Operations Card -->
-          <div class="fa-table-card" style="padding: 24px;">
-            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #f8fafc;">⚡ ប្រតិបត្តិការរហ័ស (Quick Actions)</h3>
-            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">គ្រប់គ្រង និងតាមដានសម្ភារៈសាខាទាំង ២៩ ដោយរលូន និងលឿនរហ័សនៅលើ Cloudflare Edge</p>
-            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-              <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.switchTab('items')">
-                🔍 ស្វែងរកសម្ភារៈ &amp; Barcode
+        <nav class="fa-sidebar-nav">
+          <!-- GROUP 1: OVERVIEW -->
+          <div class="fa-nav-group">
+            <div class="fa-nav-group-title">Overview (ទិដ្ឋភាពទូទៅ)</div>
+            <a href="#dashboard" class="fa-nav-item active" data-fa-tab="dashboard">
+              <span class="fa-nav-icon">📊</span>
+              <span class="fa-nav-label">Dashboard</span>
+            </a>
+          </div>
+
+          <!-- GROUP 2: ASSET MANAGEMENT -->
+          <div class="fa-nav-group">
+            <div class="fa-nav-group-title">Asset Management (សម្ភារៈ)</div>
+            <a href="#employees" class="fa-nav-item" data-fa-tab="employees">
+              <span class="fa-nav-icon">👥</span>
+              <span class="fa-nav-label">Employees (បុគ្គលិក)</span>
+              <span class="fa-nav-badge" id="fa-nav-badge-emp">615</span>
+            </a>
+            <a href="#item-masters" class="fa-nav-item" data-fa-tab="item-masters">
+              <span class="fa-nav-icon">🏷️</span>
+              <span class="fa-nav-label">Items Master (បញ្ជីមេ)</span>
+              <span class="fa-nav-badge" id="fa-nav-badge-masters">74</span>
+            </a>
+            <a href="#items" class="fa-nav-item" data-fa-tab="items">
+              <span class="fa-nav-icon">🔢</span>
+              <span class="fa-nav-label">Asset Codes &amp; Barcode</span>
+              <span class="fa-nav-badge" id="fa-nav-badge-items">7,183</span>
+            </a>
+            <a href="#assignments" class="fa-nav-item" data-fa-tab="assignments">
+              <span class="fa-nav-icon">🤝</span>
+              <span class="fa-nav-label">Assign Assets (ប្រគល់)</span>
+              <span class="fa-nav-badge" id="fa-nav-badge-assign">134</span>
+            </a>
+            <a href="#grn" class="fa-nav-item" data-fa-tab="grn">
+              <span class="fa-nav-icon">📥</span>
+              <span class="fa-nav-label">Goods Received (GRN)</span>
+              <span class="fa-nav-badge">22</span>
+            </a>
+          </div>
+
+          <!-- GROUP 3: MASTER DATA -->
+          <div class="fa-nav-group">
+            <div class="fa-nav-group-title">Master Data (ទិន្នន័យគោល)</div>
+            <a href="#branches" class="fa-nav-item" data-fa-tab="branches">
+              <span class="fa-nav-icon">🏢</span>
+              <span class="fa-nav-label">Branches (២៩ សាខា)</span>
+            </a>
+            <a href="#departments" class="fa-nav-item" data-fa-tab="departments">
+              <span class="fa-nav-icon">🗂️</span>
+              <span class="fa-nav-label">Departments (១៣ ផ្នែក)</span>
+            </a>
+            <a href="#categories" class="fa-nav-item" data-fa-tab="categories">
+              <span class="fa-nav-icon">📂</span>
+              <span class="fa-nav-label">Categories (២៥ ប្រភេទ)</span>
+            </a>
+            <a href="#types" class="fa-nav-item" data-fa-tab="types">
+              <span class="fa-nav-icon">🔖</span>
+              <span class="fa-nav-label">Item Types (៥ កម្រិត)</span>
+            </a>
+            <a href="#suppliers" class="fa-nav-item" data-fa-tab="suppliers">
+              <span class="fa-nav-icon">🚚</span>
+              <span class="fa-nav-label">Suppliers (១៧ ផ្គត់ផ្គង់)</span>
+            </a>
+            <a href="#warehouses" class="fa-nav-item" data-fa-tab="warehouses">
+              <span class="fa-nav-icon">🏬</span>
+              <span class="fa-nav-label">Warehouses (ឃ្លាំង)</span>
+            </a>
+            <a href="#type-of-works" class="fa-nav-item" data-fa-tab="type-of-works">
+              <span class="fa-nav-icon">💼</span>
+              <span class="fa-nav-label">Type of Works (៧២)</span>
+            </a>
+          </div>
+
+          <!-- GROUP 4: REPORTS -->
+          <div class="fa-nav-group">
+            <div class="fa-nav-group-title">Reports (របាយការណ៍)</div>
+            <a href="#reports" class="fa-nav-item" data-fa-tab="reports">
+              <span class="fa-nav-icon">📈</span>
+              <span class="fa-nav-label">Reports &amp; Exports</span>
+            </a>
+          </div>
+
+          <!-- GROUP 5: ADMINISTRATION -->
+          <div class="fa-nav-group">
+            <div class="fa-nav-group-title">Administration (ការគ្រប់គ្រង)</div>
+            <a href="#users" class="fa-nav-item" data-fa-tab="users">
+              <span class="fa-nav-icon">👤</span>
+              <span class="fa-nav-label">User Management (១២)</span>
+            </a>
+            <a href="#devices" class="fa-nav-item" data-fa-tab="devices">
+              <span class="fa-nav-icon">📟</span>
+              <span class="fa-nav-label">Attendance Clocks (៤)</span>
+            </a>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="fa-main-content">
+        <!-- 1. DASHBOARD PANEL -->
+        <section class="fa-panel active" id="fa-panel-dashboard">
+          <div class="fa-stats-grid">
+            <div class="fa-stat-card">
+              <div class="fa-stat-icon-wrap fa-stat-icon-emerald">📦</div>
+              <div class="fa-stat-info">
+                <span class="fa-stat-label">សម្ភារៈសរុប (Total Assets)</span>
+                <strong class="fa-stat-val" id="fa-stat-total-items">7,183</strong>
+              </div>
+            </div>
+            <div class="fa-stat-card">
+              <div class="fa-stat-icon-wrap fa-stat-icon-blue">👤</div>
+              <div class="fa-stat-info">
+                <span class="fa-stat-label">បានបែងចែករួច (Assigned)</span>
+                <strong class="fa-stat-val" id="fa-stat-assigned">0</strong>
+              </div>
+            </div>
+            <div class="fa-stat-card">
+              <div class="fa-stat-icon-wrap fa-stat-icon-amber">🏬</div>
+              <div class="fa-stat-info">
+                <span class="fa-stat-label">ក្នុងស្តុកទំនេរ (Available)</span>
+                <strong class="fa-stat-val" id="fa-stat-in-stock">7,183</strong>
+              </div>
+            </div>
+            <div class="fa-stat-card">
+              <div class="fa-stat-icon-wrap fa-stat-icon-indigo">👥</div>
+              <div class="fa-stat-info">
+                <span class="fa-stat-label">បុគ្គលិកសរុប (Employees)</span>
+                <strong class="fa-stat-val" id="fa-stat-total-emp">615</strong>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 10px;">
+            <!-- Quick Actions -->
+            <div class="fa-table-card" style="padding: 24px;">
+              <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #f8fafc;">⚡ ប្រតិបត្តិការរហ័ស (Quick Actions)</h3>
+              <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">គ្រប់គ្រង និងតាមដានសម្ភារៈសាខាទាំង ២៩ ដោយរលូន និងលឿនរហ័សនៅលើ Cloudflare Edge</p>
+              <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.switchTab('items')">
+                  🔍 ស្វែងរកសម្ភារៈ &amp; Barcode
+                </button>
+                <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.switchTab('employees')">
+                  👥 មើលបុគ្គលិក &amp; សម្ភារៈកាន់កាប់
+                </button>
+                <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.switchTab('assignments')">
+                  ✍️ ប្រគល់សម្ភារៈថ្មី
+                </button>
+                <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.switchTab('item-masters')">
+                  🏷️ Item Masters (៧៤ មុខ)
+                </button>
+              </div>
+            </div>
+
+            <!-- Cloud System Architecture -->
+            <div class="fa-table-card" style="padding: 24px;">
+              <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #10b981;">☁️ ប្រព័ន្ធ Cloudflare D1 Serverless</h3>
+              <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 14px;">
+                ប្រព័ន្ធ Fixed Asset ដំណើរការលើ Cloudflare D1 ផ្ទាល់ (Region: APAC/Singapore) រួមបញ្ចូលគ្នាលើ One Cloud &amp; One Domain ជាមួយប្រព័ន្ធរបាយការណ៍។
+              </p>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 8px 12px; border-radius: 8px;">
+                <span>✓</span> <strong>Single Sign-On Universal Session Active</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. EMPLOYEES PANEL -->
+        <section class="fa-panel" id="fa-panel-employees">
+          <div class="fa-toolbar">
+            <input type="text" id="fa-emp-search-input" class="fa-search-input" placeholder="🔍 ស្វែងរកតាមឈ្មោះបុគ្គលិក, អត្តលេខ, តួនាទី...">
+            <select id="fa-emp-branch-filter" class="fa-select">
+              <option value="">-- គ្រប់សាខាទាំងអស់ (All Branches) --</option>
+            </select>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateEmployeeModal()">
+              ➕ បង្កើតបុគ្គលិកថ្មី
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>អត្តលេខ</th>
+                    <th>ឈ្មោះបុគ្គលិក</th>
+                    <th>តួនាទី</th>
+                    <th>សាខា</th>
+                    <th>សម្ភារៈកាន់កាប់</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-emp-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="fa-pagination">
+              <span id="fa-emp-page-info">កំពុងទាញយកទិន្នន័យ...</span>
+              <div class="fa-page-btns">
+                <button type="button" class="btn btn-outline btn-sm" id="fa-emp-prev-btn" onclick="window.fixAssetUI.prevEmpPage()">← ថយក្រោយ</button>
+                <button type="button" class="btn btn-outline btn-sm" id="fa-emp-next-btn" onclick="window.fixAssetUI.nextEmpPage()">បន្ទាប់ →</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. ITEM MASTERS PANEL -->
+        <section class="fa-panel" id="fa-panel-item-masters">
+          <div class="fa-toolbar">
+            <input type="text" id="fa-master-search-input" class="fa-search-input" placeholder="🔍 ស្វែងរក Item Master តាម Code, ឈ្មោះ, ម៉ាក...">
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateItemMasterModal()">
+              ➕ បង្កើត Item Master ថ្មី
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>កូដទំនិញ</th>
+                    <th>ឈ្មោះមុខទំនិញ</th>
+                    <th>ប្រភេទ</th>
+                    <th>កម្រិត</th>
+                    <th>ម៉ាក / ម៉ូដែល</th>
+                    <th>តម្លៃឯកតា</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-masters-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. ASSET CODES & BARCODES PANEL -->
+        <section class="fa-panel" id="fa-panel-items">
+          <div class="fa-toolbar">
+            <input type="text" id="fa-item-search-input" class="fa-search-input" placeholder="🔍 ស្វែងរកតាម Code, A-Code, ឈ្មោះ, ម៉ាក, អ្នកកាន់កាប់...">
+            <select id="fa-item-status-filter" class="fa-select">
+              <option value="all">-- ស្ថានភាពទាំងអស់ --</option>
+              <option value="in_stock">📦 ក្នុងស្តុក (Available)</option>
+              <option value="assigned">✓ បានបែងចែក (Assigned)</option>
+            </select>
+            <select id="fa-item-cat-filter" class="fa-select">
+              <option value="">-- គ្រប់ប្រភេទទាំងអស់ --</option>
+            </select>
+            <button type="button" class="btn btn-outline btn-sm" onclick="window.fixAssetUI.exportReport('listing')">
+              📊 Export CSV
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th>លេខកូដ (Code)</th>
+                    <th>ឈ្មោះសម្ភារៈ (Item Details)</th>
+                    <th>ប្រភេទ (Category)</th>
+                    <th>ស្ថានភាព (Status)</th>
+                    <th>អ្នកកាន់កាប់ (Assigned To)</th>
+                    <th>តម្លៃ ($)</th>
+                    <th>សកម្មភាព (Actions)</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-items-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="fa-pagination">
+              <span id="fa-items-page-info">កំពុងទាញយកទិន្នន័យ...</span>
+              <div class="fa-page-btns">
+                <button type="button" class="btn btn-outline btn-sm" id="fa-items-prev-btn" onclick="window.fixAssetUI.prevItemsPage()">← ថយក្រោយ</button>
+                <button type="button" class="btn btn-outline btn-sm" id="fa-items-next-btn" onclick="window.fixAssetUI.nextItemsPage()">បន្ទាប់ →</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. ASSIGNMENTS PANEL -->
+        <section class="fa-panel" id="fa-panel-assignments">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">កំណត់ត្រាប្រគល់-ទទួលសម្ភារៈ (Asset Assignments History)</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openAssignModal('')">
+              ✍️ ប្រគល់សម្ភារៈ (Assign Asset)
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th>លេខ Assignment</th>
+                    <th>បុគ្គលិកទទួល</th>
+                    <th>សាខា</th>
+                    <th>កាលបរិច្ឆេទ</th>
+                    <th>ស្ថានភាព</th>
+                    <th>កំណត់ចំណាំ</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-assign-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. GRN PANEL -->
+        <section class="fa-panel" id="fa-panel-grn">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">កំណត់ត្រាបញ្ចូលស្តុក (Goods Received Notes - GRN)</span>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th>លេខប័ណ្ណ GRN</th>
+                    <th>អ្នកផ្គត់ផ្គង់ (Supplier)</th>
+                    <th>វិក្កយបត្រ / PO</th>
+                    <th>ឃ្លាំងទទួល</th>
+                    <th>កាលបរិច្ឆេទ</th>
+                    <th>ស្ថានភាព</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-grn-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. BRANCHES PANEL -->
+        <section class="fa-panel" id="fa-panel-branches">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">សាខាប្រតិបត្តិការក្រុមហ៊ុន BS Express ទាំង ២៩</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateBranchModal()">
+              ➕ បង្កើតសាខាថ្មី
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>ឈ្មោះសាខា (Branch Name)</th>
+                    <th>កូដសាខា / Code</th>
+                    <th>ចំនួនបុគ្គលិកសរុប</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-branches-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. DEPARTMENTS PANEL -->
+        <section class="fa-panel" id="fa-panel-departments">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">នាយកដ្ឋាន &amp; ផ្នែក (១៣ នាយកដ្ឋាន)</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateDeptModal()">
+              ➕ បង្កើតនាយកដ្ឋានថ្មី
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>ឈ្មោះនាយកដ្ឋាន</th>
+                    <th>កូដ / English</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-depts-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. CATEGORIES PANEL -->
+        <section class="fa-panel" id="fa-panel-categories">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">ប្រភេទទំនិញ &amp; សម្ភារៈ (២៥ Categories)</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateCatModal()">
+              ➕ បង្កើតប្រភេទទំនិញថ្មី
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>ឈ្មោះប្រភេទទំនិញ</th>
+                    <th>English / Code</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-cats-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. ITEM TYPES PANEL -->
+        <section class="fa-panel" id="fa-panel-types">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">កម្រិតសម្ភារៈ (៥ Item Types)</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateTypeModal()">
+              ➕ បង្កើតកម្រិតថ្មី
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>ឈ្មោះកម្រិត</th>
+                    <th>English</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-types-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 11. SUPPLIERS PANEL -->
+        <section class="fa-panel" id="fa-panel-suppliers">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">បញ្ជីអ្នកផ្គត់ផ្គង់ (១៧ Suppliers)</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateSupplierModal()">
+              ➕ បន្ថែមអ្នកផ្គត់ផ្គង់ថ្មី
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>ឈ្មោះក្រុមហ៊ុន / អ្នកផ្គត់ផ្គង់</th>
+                    <th>លេខទូរស័ព្ទ</th>
+                    <th>អ៊ីមែល</th>
+                    <th>អាសយដ្ឋាន</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-suppliers-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 12. WAREHOUSES PANEL -->
+        <section class="fa-panel" id="fa-panel-warehouses">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">បញ្ជីឃ្លាំងស្តុក (Warehouses)</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateWarehouseModal()">
+              ➕ បង្កើតឃ្លាំងថ្មី
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>ឈ្មោះឃ្លាំង</th>
+                    <th>ទីតាំង / សាខា</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-warehouses-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 13. TYPE OF WORKS PANEL -->
+        <section class="fa-panel" id="fa-panel-type-of-works">
+          <div class="fa-toolbar">
+            <input type="text" id="fa-tow-search-input" class="fa-search-input" placeholder="🔍 ស្វែងរកប្រភេទការងារ (៧២ មុខ)...">
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateTowModal()">
+              ➕ បង្កើតប្រភេទការងារថ្មី
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>ឈ្មោះប្រភេទការងារ</th>
+                    <th>កូដ / English</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-tow-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 14. ATTENDANCE CLOCKS PANEL -->
+        <section class="fa-panel" id="fa-panel-devices">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">ឧបករណ៍ស្កេនវត្តមាន Hikvision Face &amp; Fingerprint (៤ ម៉ាស៊ីន)</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateDeviceModal()">
+              ➕ បន្ថែមម៉ាស៊ីនស្កេនថ្មី
+            </button>
+          </div>
+
+          <div class="fa-device-grid" id="fa-devices-grid">
+            <!-- Populated dynamically -->
+          </div>
+        </section>
+
+        <!-- 15. USERS PANEL -->
+        <section class="fa-panel" id="fa-panel-users">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">គណនីអ្នកប្រើប្រាស់ប្រព័ន្ធ (១២ Accounts)</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openCreateUserModal()">
+              ➕ បង្កើតគណនីថ្មី
+            </button>
+          </div>
+
+          <div class="fa-table-card">
+            <div class="fa-table-wrap">
+              <table class="fa-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>ឈ្មោះអ្នកប្រើប្រាស់</th>
+                    <th>Username</th>
+                    <th>អ៊ីមែល</th>
+                    <th>ស្ថានភាព</th>
+                    <th>សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="fa-users-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 16. REPORTS PANEL -->
+        <section class="fa-panel" id="fa-panel-reports">
+          <div class="fa-toolbar">
+            <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">ទាញយករបាយការណ៍ Fixed Asset (Export to Excel / CSV)</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div class="fa-table-card" style="padding: 24px;">
+              <h3 style="margin-top: 0; color: #f8fafc; font-size: 1.1rem;">📦 របាយការណ៍បញ្ជីសម្ភារៈទាំងអស់</h3>
+              <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5;">ទាញយកទិន្នន័យសម្ភារៈទាំង ៧,១៨៣ មុខ ជាមួយលេខកូដ FA, ស្ថានភាព, និងអ្នកកាន់កាប់។</p>
+              <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.exportReport('listing')">
+                📥 Download Full Asset Listing (CSV)
               </button>
-              <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.switchTab('employees')">
-                👥 មើលបុគ្គលិក &amp; សម្ភារៈកាន់កាប់
+            </div>
+
+            <div class="fa-table-card" style="padding: 24px;">
+              <h3 style="margin-top: 0; color: #f8fafc; font-size: 1.1rem;">🏷️ របាយការណ៍ Item Masters</h3>
+              <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5;">ទាញយកបញ្ជីមេ Item Masters ទាំង ៧៤ មុខ ជាមួយតម្លៃឯកតា និងប្រភេទ។</p>
+              <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.exportReport('masters')">
+                📥 Download Item Masters (CSV)
               </button>
-              <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.switchTab('assignments')">
-                ✍️ ប្រគល់សម្ភារៈថ្មី
+            </div>
+
+            <div class="fa-table-card" style="padding: 24px;">
+              <h3 style="margin-top: 0; color: #f8fafc; font-size: 1.1rem;">📥 របាយការណ៍បញ្ចូលស្តុក GRN</h3>
+              <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5;">ទាញយកប្រវត្តិនៃការបញ្ចូលស្តុកទំនិញពីអ្នកផ្គត់ផ្គង់ និងការបញ្ជាទិញ។</p>
+              <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.exportReport('grn')">
+                📥 Download GRN Summary (CSV)
               </button>
             </div>
           </div>
+        </section>
+      </main>
+    </div>
 
-          <!-- Cloud System Info Card -->
-          <div class="fa-table-card" style="padding: 24px;">
-            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #10b981;">☁️ ប្រព័ន្ធ Cloudflare D1 Serverless</h3>
-            <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 14px;">
-              ប្រព័ន្ធ Fixed Asset ដំណើរការលើ Cloudflare D1 ផ្ទាល់ (Region: APAC/Singapore) ដោយមិនចាំបាច់ដំណើរការ PHP/Laravel Server ឬបើក Port 8000 ឡើយ។
-            </p>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 8px 12px; border-radius: 8px;">
-              <span>✓</span> <strong>Single Sign-On Universal Session Active</strong>
+    <!-- =======================================================================
+         FIXED ASSET SYSTEM MODALS (ENTERPRISE SUITE)
+         ======================================================================= -->
+
+    <!-- Modal 1: Employee Form (Create / Edit) -->
+    <div class="fa-modal-overlay" id="fa-employee-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-employee-modal-title">➕ បង្កើតបុគ្គលិកថ្មី</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeEmployeeModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-emp-id">
+          <div class="fa-form-grid">
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-emp-code">អត្តលេខបុគ្គលិក (Employee Code)</label>
+              <input type="text" id="fa-modal-emp-code" class="fa-form-input">
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-emp-name">ឈ្មោះពេញ (Full Name) *</label>
+              <input type="text" id="fa-modal-emp-name" class="fa-form-input" placeholder="ឈ្មោះបុគ្គលិក...">
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-emp-branch">សាខា (Branch)</label>
+              <select id="fa-modal-emp-branch" class="fa-form-select"></select>
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-emp-dept">នាយកដ្ឋាន (Department)</label>
+              <select id="fa-modal-emp-dept" class="fa-form-select"></select>
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-emp-job">មុខតំណែង (Job Title)</label>
+              <input type="text" id="fa-modal-emp-job" class="fa-form-input" value="Staff">
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-emp-phone">លេខទូរស័ព្ទ (Phone)</label>
+              <input type="text" id="fa-modal-emp-phone" class="fa-form-input" placeholder="012 345 678">
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- 2. ITEMS & BARCODES PANEL -->
-      <section class="fa-panel" id="fa-panel-items">
-        <div class="fa-toolbar">
-          <input type="text" id="fa-item-search-input" class="fa-search-input" placeholder="🔍 ស្វែងរកតាម Code, A-Code, ឈ្មោះ, ម៉ាក, ម៉ូឌែល...">
-          <select id="fa-item-status-filter" class="fa-select">
-            <option value="all">-- ស្ថានភាពទាំងអស់ (All Status) --</option>
-            <option value="in_stock">📦 ក្នុងស្តុក (Available)</option>
-            <option value="assigned">✓ បានបែងចែក (Assigned)</option>
-          </select>
-          <select id="fa-item-cat-filter" class="fa-select">
-            <option value="">-- គ្រប់ប្រភេទទាំងអស់ (All Categories) --</option>
-          </select>
-          <button type="button" class="btn btn-outline btn-sm" onclick="window.fixAssetUI.exportItemsExcel()">
-            📊 Export
-          </button>
-        </div>
-
-        <div class="fa-table-card">
-          <div class="fa-table-container">
-            <table class="fa-table">
-              <thead>
-                <tr>
-                  <th>លេខកូដ (Code)</th>
-                  <th>ឈ្មោះសម្ភារៈ (Item Details)</th>
-                  <th>ប្រភេទ (Category)</th>
-                  <th>ស្ថានភាព (Status)</th>
-                  <th>អ្នកកាន់កាប់ (Assigned To)</th>
-                  <th>តម្លៃ ($)</th>
-                  <th>សកម្មភាព (Actions)</th>
-                </tr>
-              </thead>
-              <tbody id="fa-items-table-body">
-                <!-- Populated via JS -->
-              </tbody>
-            </table>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-emp-email">អ៊ីមែល (Email)</label>
+            <input type="email" id="fa-modal-emp-email" class="fa-form-input" placeholder="employee@bsexpress.com.kh">
           </div>
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeEmployeeModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveEmployee()">💾 រក្សាទុក</button>
+        </div>
+      </div>
+    </div>
 
-          <div class="fa-pagination">
-            <span id="fa-items-page-info">កំពុងទាញយកទិន្នន័យ...</span>
-            <div class="fa-page-btns">
-              <button type="button" class="btn btn-outline btn-sm" id="fa-items-prev-btn" onclick="window.fixAssetUI.prevItemsPage()">← ថយក្រោយ</button>
-              <button type="button" class="btn btn-outline btn-sm" id="fa-items-next-btn" onclick="window.fixAssetUI.nextItemsPage()">បន្ទាប់ →</button>
+    <!-- Modal 2: Employee Assigned Assets Viewer -->
+    <div class="fa-modal-overlay" id="fa-emp-assets-modal">
+      <div class="fa-modal-card" style="max-width: 720px;">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-emp-assets-title">📦 សម្ភារៈកាន់កាប់ដោយបុគ្គលិក</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeEmployeeAssetsModal()">✕</button>
+        </div>
+        <div class="fa-modal-body" id="fa-emp-assets-content">
+          <!-- Dynamic -->
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeEmployeeAssetsModal()">បិទ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 3: Item Master Form (Create / Edit) -->
+    <div class="fa-modal-overlay" id="fa-master-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-master-modal-title">➕ Item Master</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeItemMasterModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-master-id">
+          <div class="fa-form-grid">
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-master-code">កូដទំនិញ (Item Code)</label>
+              <input type="text" id="fa-modal-master-code" class="fa-form-input">
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-master-name">ឈ្មោះមុខទំនិញ (Item Name) *</label>
+              <input type="text" id="fa-modal-master-name" class="fa-form-input">
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-master-cat">ប្រភេទទំនិញ (Category)</label>
+              <select id="fa-modal-master-cat" class="fa-form-select"></select>
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-master-type">កម្រិតទំនិញ (Type)</label>
+              <select id="fa-modal-master-type" class="fa-form-select"></select>
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-master-brand">ម៉ាក (Brand)</label>
+              <input type="text" id="fa-modal-master-brand" class="fa-form-input">
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-master-model">ម៉ូដែល (Model)</label>
+              <input type="text" id="fa-modal-master-model" class="fa-form-input">
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-master-price">តម្លៃឯកតា ($)</label>
+              <input type="number" step="0.01" id="fa-modal-master-price" class="fa-form-input" value="0">
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-master-qty">ចំនួន (Quantity)</label>
+              <input type="number" id="fa-modal-master-qty" class="fa-form-input" value="1">
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- 3. EMPLOYEES PANEL -->
-      <section class="fa-panel" id="fa-panel-employees">
-        <div class="fa-toolbar">
-          <input type="text" id="fa-emp-search-input" class="fa-search-input" placeholder="🔍 ស្វែងរកតាមឈ្មោះបុគ្គលិក, អត្តលេខ, លេខទូរស័ព្ទ...">
-          <select id="fa-emp-branch-filter" class="fa-select">
-            <option value="">-- គ្រប់សាខាទាំងអស់ (All Branches) --</option>
-          </select>
-        </div>
-
-        <div class="fa-table-card">
-          <div class="fa-table-container">
-            <table class="fa-table">
-              <thead>
-                <tr>
-                  <th>អត្តលេខ</th>
-                  <th>ឈ្មោះបុគ្គលិក (Employee Name)</th>
-                  <th>តួនាទី (Role)</th>
-                  <th>សាខា (Branch)</th>
-                  <th>ផ្នែក (Department)</th>
-                  <th>សម្ភារៈកាន់កាប់ (Assigned Assets)</th>
-                </tr>
-              </thead>
-              <tbody id="fa-emp-table-body">
-                <!-- Populated via JS -->
-              </tbody>
-            </table>
-          </div>
-
-          <div class="fa-pagination">
-            <span id="fa-emp-page-info">ទិន្នន័យបុគ្គលិកសរុប 615 នាក់</span>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-master-uom">ខ្នាតរង្វាស់ (Unit of Measure)</label>
+            <input type="text" id="fa-modal-master-uom" class="fa-form-input" value="Unit">
           </div>
         </div>
-      </section>
-
-      <!-- 4. ASSIGNMENTS PANEL -->
-      <section class="fa-panel" id="fa-panel-assignments">
-        <div class="fa-toolbar">
-          <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">កំណត់ត្រាប្រគល់-ទទួលសម្ភារៈ (Asset Assignments History)</span>
-          <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openAssignModal('')">
-            ✍️ ប្រគល់សម្ភារៈ (Assign Asset)
-          </button>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeItemMasterModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveItemMaster()">💾 រក្សាទុក</button>
         </div>
+      </div>
+    </div>
 
-        <div class="fa-table-card">
-          <div class="fa-table-container">
-            <table class="fa-table">
-              <thead>
-                <tr>
-                  <th>លេខ Assignment</th>
-                  <th>បុគ្គលិកទទួល</th>
-                  <th>សាខា</th>
-                  <th>កាលបរិច្ឆេទ</th>
-                  <th>ស្ថានភាព</th>
-                  <th>កំណត់ចំណាំ</th>
-                </tr>
-              </thead>
-              <tbody id="fa-assign-table-body">
-                <!-- Populated via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- 5. GRN PANEL -->
-      <section class="fa-panel" id="fa-panel-grn">
-        <div class="fa-toolbar">
-          <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">កំណត់ត្រាបញ្ចូលស្តុក (Goods Received Notes - GRN)</span>
-        </div>
-
-        <div class="fa-table-card">
-          <div class="fa-table-container">
-            <table class="fa-table">
-              <thead>
-                <tr>
-                  <th>លេខប័ណ្ណ GRN</th>
-                  <th>អ្នកផ្គត់ផ្គង់ (Supplier)</th>
-                  <th>វិក្កយបត្រ / PO</th>
-                  <th>សាខាទទួល</th>
-                  <th>កាលបរិច្ឆេទ</th>
-                  <th>ស្ថានភាព</th>
-                </tr>
-              </thead>
-              <tbody id="fa-grn-table-body">
-                <!-- Populated via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- 6. BRANCHES PANEL -->
-      <section class="fa-panel" id="fa-panel-branches">
-        <div class="fa-toolbar">
-          <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">សាខាប្រតិបត្តិការក្រុមហ៊ុន BS Express ទាំង ២៩</span>
-        </div>
-
-        <div class="fa-table-card">
-          <div class="fa-table-container">
-            <table class="fa-table">
-              <thead>
-                <tr>
-                  <th style="width: 60px;">#</th>
-                  <th>ឈ្មោះសាខា (Branch Name)</th>
-                  <th>កូដសាខា / Code</th>
-                  <th>ចំនួនបុគ្គលិកសរុប</th>
-                </tr>
-              </thead>
-              <tbody id="fa-branches-table-body">
-                <!-- Populated via JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- Modals -->
-    <!-- Item Details Modal -->
+    <!-- Modal 4: Item Details Modal -->
     <div class="fa-modal-overlay" id="fa-item-modal">
       <div class="fa-modal-card">
         <div class="fa-modal-header">
@@ -1754,7 +2268,7 @@
           <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeItemDetailModal()">✕</button>
         </div>
         <div class="fa-modal-body" id="fa-item-modal-content">
-          <!-- Rendered dynamically -->
+          <!-- Dynamic -->
         </div>
         <div class="fa-modal-footer">
           <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeItemDetailModal()">បិទ</button>
@@ -1762,7 +2276,7 @@
       </div>
     </div>
 
-    <!-- Assign Modal -->
+    <!-- Modal 5: Assign Asset Modal -->
     <div class="fa-modal-overlay" id="fa-assign-modal">
       <div class="fa-modal-card">
         <div class="fa-modal-header">
@@ -1770,13 +2284,13 @@
           <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeAssignModal()">✕</button>
         </div>
         <div class="fa-modal-body">
-          <div class="form-item">
-            <label class="form-label" for="fa-assign-item-code">លេខកូដសម្ភារៈ (Asset Code):</label>
-            <input type="text" id="fa-assign-item-code" class="fa-search-input" placeholder="ឧទាហរណ៍៖ AC-000001" readonly>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-assign-item-code">លេខកូដសម្ភារៈ (Asset Code):</label>
+            <input type="text" id="fa-assign-item-code" class="fa-form-input" placeholder="ឧទាហរណ៍៖ AC-000001">
           </div>
-          <div class="form-item">
-            <label class="form-label" for="fa-assign-emp-name">ឈ្មោះបុគ្គលិកទទួល (Employee Name):</label>
-            <input type="text" id="fa-assign-emp-name" class="fa-search-input" placeholder="បញ្ចូលឈ្មោះបុគ្គលិកទទួលសម្ភារៈ...">
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-assign-emp-name">ឈ្មោះបុគ្គលិកទទួល (Employee Name):</label>
+            <input type="text" id="fa-assign-emp-name" class="fa-form-input" placeholder="បញ្ចូលឈ្មោះបុគ្គលិកទទួលសម្ភារៈ...">
           </div>
         </div>
         <div class="fa-modal-footer">
@@ -1785,6 +2299,270 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal 6: GRN Details Modal -->
+    <div class="fa-modal-overlay" id="fa-grn-modal">
+      <div class="fa-modal-card" style="max-width: 720px;">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title">ព័ត៌មានលម្អិតប័ណ្ណ GRN</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeGrnDetailsModal()">✕</button>
+        </div>
+        <div class="fa-modal-body" id="fa-grn-modal-content">
+          <!-- Dynamic -->
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeGrnDetailsModal()">បិទ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 7: Branch Modal -->
+    <div class="fa-modal-overlay" id="fa-branch-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-branch-modal-title">➕ សាខា</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeBranchModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-branch-id">
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-branch-name">ឈ្មោះសាខា (ភាសាខ្មែរ) *</label>
+            <input type="text" id="fa-modal-branch-name" class="fa-form-input">
+          </div>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-branch-name-en">កូដ / ឈ្មោះសាខា (English)</label>
+            <input type="text" id="fa-modal-branch-name-en" class="fa-form-input">
+          </div>
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeBranchModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveBranch()">💾 រក្សាទុក</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 8: Department Modal -->
+    <div class="fa-modal-overlay" id="fa-dept-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-dept-modal-title">➕ នាយកដ្ឋាន</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeDeptModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-dept-id">
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-dept-name">ឈ្មោះនាយកដ្ឋាន (ភាសាខ្មែរ) *</label>
+            <input type="text" id="fa-modal-dept-name" class="fa-form-input">
+          </div>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-dept-name-en">ឈ្មោះនាយកដ្ឋាន (English)</label>
+            <input type="text" id="fa-modal-dept-name-en" class="fa-form-input">
+          </div>
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeDeptModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveDept()">💾 រក្សាទុក</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 9: Category Modal -->
+    <div class="fa-modal-overlay" id="fa-cat-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-cat-modal-title">➕ ប្រភេទទំនិញ</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeCatModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-cat-id">
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-cat-name">ឈ្មោះប្រភេទទំនិញ (ភាសាខ្មែរ) *</label>
+            <input type="text" id="fa-modal-cat-name" class="fa-form-input">
+          </div>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-cat-name-en">កូដ / English</label>
+            <input type="text" id="fa-modal-cat-name-en" class="fa-form-input">
+          </div>
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeCatModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveCat()">💾 រក្សាទុក</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 10: Type Modal -->
+    <div class="fa-modal-overlay" id="fa-type-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-type-modal-title">➕ កម្រិតទំនិញ</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeTypeModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-type-id">
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-type-name">ឈ្មោះកម្រិត *</label>
+            <input type="text" id="fa-modal-type-name" class="fa-form-input">
+          </div>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-type-name-en">English</label>
+            <input type="text" id="fa-modal-type-name-en" class="fa-form-input">
+          </div>
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeTypeModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveType()">💾 រក្សាទុក</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 11: Supplier Modal -->
+    <div class="fa-modal-overlay" id="fa-supplier-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-sup-modal-title">➕ អ្នកផ្គត់ផ្គង់</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeSupplierModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-sup-id">
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-sup-name">ឈ្មោះក្រុមហ៊ុន / អ្នកផ្គត់ផ្គង់ *</label>
+            <input type="text" id="fa-modal-sup-name" class="fa-form-input">
+          </div>
+          <div class="fa-form-grid">
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-sup-phone">លេខទូរស័ព្ទ</label>
+              <input type="text" id="fa-modal-sup-phone" class="fa-form-input">
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-sup-email">អ៊ីមែល</label>
+              <input type="email" id="fa-modal-sup-email" class="fa-form-input">
+            </div>
+          </div>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-sup-addr">អាសយដ្ឋាន</label>
+            <input type="text" id="fa-modal-sup-addr" class="fa-form-input">
+          </div>
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeSupplierModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveSupplier()">💾 រក្សាទុក</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 12: Warehouse Modal -->
+    <div class="fa-modal-overlay" id="fa-warehouse-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-wh-modal-title">➕ ឃ្លាំងថ្មី</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeWarehouseModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-wh-id">
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-wh-name">ឈ្មោះឃ្លាំង *</label>
+            <input type="text" id="fa-modal-wh-name" class="fa-form-input">
+          </div>
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeWarehouseModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveWarehouse()">💾 រក្សាទុក</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 13: Type of Work Modal -->
+    <div class="fa-modal-overlay" id="fa-tow-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-tow-modal-title">➕ ប្រភេទការងារ</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeTowModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-tow-id">
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-tow-name">ឈ្មោះប្រភេទការងារ *</label>
+            <input type="text" id="fa-modal-tow-name" class="fa-form-input">
+          </div>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-tow-name-en">English / Code</label>
+            <input type="text" id="fa-modal-tow-name-en" class="fa-form-input">
+          </div>
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeTowModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveTow()">💾 រក្សាទុក</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 14: Biometric Device Modal -->
+    <div class="fa-modal-overlay" id="fa-device-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-device-modal-title">➕ ឧបករណ៍ស្កេន Hikvision</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeDeviceModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-dev-id">
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-dev-name">ឈ្មោះឧបករណ៍ *</label>
+            <input type="text" id="fa-modal-dev-name" class="fa-form-input" placeholder="Face Recognition Terminal 01">
+          </div>
+          <div class="fa-form-grid">
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-dev-host">IP Host Address *</label>
+              <input type="text" id="fa-modal-dev-host" class="fa-form-input" placeholder="192.168.1.100">
+            </div>
+            <div class="fa-form-group">
+              <label class="fa-form-label" for="fa-modal-dev-port">Port Number</label>
+              <input type="number" id="fa-modal-dev-port" class="fa-form-input" value="80">
+            </div>
+          </div>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-dev-user">Admin Username</label>
+            <input type="text" id="fa-modal-dev-user" class="fa-form-input" value="admin">
+          </div>
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeDeviceModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveDevice()">💾 រក្សាទុក</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 15: User Modal -->
+    <div class="fa-modal-overlay" id="fa-user-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title" id="fa-user-modal-title">➕ គណនីអ្នកប្រើប្រាស់</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeUserModal()">✕</button>
+        </div>
+        <div class="fa-modal-body">
+          <input type="hidden" id="fa-modal-user-id">
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-user-name">ឈ្មោះពេញ *</label>
+            <input type="text" id="fa-modal-user-name" class="fa-form-input">
+          </div>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-user-login">Username (Login) *</label>
+            <input type="text" id="fa-modal-user-login" class="fa-form-input">
+          </div>
+          <div class="fa-form-group">
+            <label class="fa-form-label" for="fa-modal-user-email">អ៊ីមែល</label>
+            <input type="email" id="fa-modal-user-email" class="fa-form-input">
+          </div>
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeUserModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.saveUser()">💾 រក្សាទុក</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Print Area for A4 Handover Certificates & Barcode Stickers -->
+    <div id="fa-printable-area"></div>
   </div>
 
   <!-- =========================================================================

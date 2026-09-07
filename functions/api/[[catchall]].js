@@ -321,13 +321,35 @@ export async function onRequest(context) {
 
     if (pathname === '/api/fixasset/branches') {
       try {
-        const { results } = await db.prepare(`
-          SELECT b.id, b.name, b.name_en, b.label,
-            (SELECT count(*) FROM employees e WHERE e.branch_id = b.id) as employee_count
-          FROM branches b
-          ORDER BY b.id ASC
-        `).all();
-        return json({ success: true, count: results.length, branches: results });
+        if (method === 'GET') {
+          const { results } = await db.prepare(`
+            SELECT b.id, b.name, b.name_en, b.label,
+              (SELECT count(*) FROM employees e WHERE e.branch_id = b.id) as employee_count
+            FROM branches b
+            ORDER BY b.id ASC
+          `).all();
+          return json({ success: true, count: results.length, branches: results });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const { name, name_en } = body;
+          if (!name) return json({ success: false, error: 'Branch name is required' }, 400);
+          await db.prepare("INSERT INTO branches (name, name_en, created_at, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, name_en || null).run();
+          return json({ success: true, message: 'Branch created successfully' });
+        }
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, name, name_en } = body;
+          if (!id || !name) return json({ success: false, error: 'ID and name required' }, 400);
+          await db.prepare("UPDATE branches SET name = ?, name_en = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, name_en || null, id).run();
+          return json({ success: true, message: 'Branch updated successfully' });
+        }
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          if (!id) return json({ success: false, error: 'ID required' }, 400);
+          await db.prepare("DELETE FROM branches WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Branch deleted' });
+        }
       } catch (e) {
         return json({ success: false, error: e.message }, 500);
       }
@@ -335,8 +357,30 @@ export async function onRequest(context) {
 
     if (pathname === '/api/fixasset/departments') {
       try {
-        const { results } = await db.prepare("SELECT id, name, name_en, label FROM departments ORDER BY id ASC").all();
-        return json({ success: true, count: results.length, departments: results });
+        if (method === 'GET') {
+          const { results } = await db.prepare("SELECT id, name, name_en, label FROM departments ORDER BY id ASC").all();
+          return json({ success: true, count: results.length, departments: results });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const { name, name_en } = body;
+          if (!name) return json({ success: false, error: 'Department name required' }, 400);
+          await db.prepare("INSERT INTO departments (name, name_en, created_at, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, name_en || null).run();
+          return json({ success: true, message: 'Department created successfully' });
+        }
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, name, name_en } = body;
+          if (!id || !name) return json({ success: false, error: 'ID and name required' }, 400);
+          await db.prepare("UPDATE departments SET name = ?, name_en = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, name_en || null, id).run();
+          return json({ success: true, message: 'Department updated successfully' });
+        }
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          if (!id) return json({ success: false, error: 'ID required' }, 400);
+          await db.prepare("DELETE FROM departments WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Department deleted' });
+        }
       } catch (e) {
         return json({ success: false, error: e.message }, 500);
       }
@@ -344,9 +388,247 @@ export async function onRequest(context) {
 
     if (pathname === '/api/fixasset/categories') {
       try {
-        const categories = await db.prepare("SELECT id, name, name_en, label FROM item_categories ORDER BY id ASC").all();
-        const types = await db.prepare("SELECT id, name, name_en, label, category_id FROM item_types ORDER BY id ASC").all();
-        return json({ success: true, categories: categories.results || [], types: types.results || [] });
+        if (method === 'GET') {
+          const categories = await db.prepare("SELECT id, name, name_en, label FROM item_categories ORDER BY id ASC").all();
+          const types = await db.prepare("SELECT id, name, name_en FROM item_types ORDER BY id ASC").all();
+          return json({ success: true, categories: categories.results || [], types: types.results || [] });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const { name, name_en } = body;
+          if (!name) return json({ success: false, error: 'Category name required' }, 400);
+          await db.prepare("INSERT INTO item_categories (name, name_en, created_at, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, name_en || null).run();
+          return json({ success: true, message: 'Category created' });
+        }
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, name, name_en } = body;
+          await db.prepare("UPDATE item_categories SET name = ?, name_en = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, name_en || null, id).run();
+          return json({ success: true, message: 'Category updated' });
+        }
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          await db.prepare("DELETE FROM item_categories WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Category deleted' });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/types') {
+      try {
+        if (method === 'GET') {
+          const { results } = await db.prepare("SELECT id, name, name_en FROM item_types ORDER BY id ASC").all();
+          return json({ success: true, types: results });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const { name, name_en } = body;
+          await db.prepare("INSERT INTO item_types (name, name_en, created_at, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, name_en || null).run();
+          return json({ success: true, message: 'Item type created' });
+        }
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, name, name_en } = body;
+          await db.prepare("UPDATE item_types SET name = ?, name_en = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, name_en || null, id).run();
+          return json({ success: true, message: 'Item type updated' });
+        }
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          await db.prepare("DELETE FROM item_types WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Item type deleted' });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/suppliers') {
+      try {
+        if (method === 'GET') {
+          const { results } = await db.prepare("SELECT id, name, phone, email, address, created_at FROM suppliers ORDER BY id ASC").all();
+          return json({ success: true, count: results.length, suppliers: results });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const { name, phone, email, address } = body;
+          if (!name) return json({ success: false, error: 'Supplier name required' }, 400);
+          await db.prepare("INSERT INTO suppliers (name, phone, email, address, created_at, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, phone || null, email || null, address || null).run();
+          return json({ success: true, message: 'Supplier created' });
+        }
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, name, phone, email, address } = body;
+          await db.prepare("UPDATE suppliers SET name = ?, phone = ?, email = ?, address = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, phone || null, email || null, address || null, id).run();
+          return json({ success: true, message: 'Supplier updated' });
+        }
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          await db.prepare("DELETE FROM suppliers WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Supplier deleted' });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/warehouses') {
+      try {
+        if (method === 'GET') {
+          const { results } = await db.prepare("SELECT id, name, branch_id, created_at FROM warehouses ORDER BY id ASC").all();
+          return json({ success: true, count: results.length, warehouses: results });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const { name, branch_id } = body;
+          if (!name) return json({ success: false, error: 'Warehouse name required' }, 400);
+          await db.prepare("INSERT INTO warehouses (name, branch_id, created_at, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, branch_id || null).run();
+          return json({ success: true, message: 'Warehouse created' });
+        }
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, name, branch_id } = body;
+          await db.prepare("UPDATE warehouses SET name = ?, branch_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, branch_id || null, id).run();
+          return json({ success: true, message: 'Warehouse updated' });
+        }
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          await db.prepare("DELETE FROM warehouses WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Warehouse deleted' });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/type-of-works') {
+      try {
+        if (method === 'GET') {
+          const { results } = await db.prepare("SELECT id, name, name_en, label, created_at FROM type_of_works ORDER BY id ASC").all();
+          return json({ success: true, count: results.length, type_of_works: results });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const { name, name_en, label } = body;
+          if (!name) return json({ success: false, error: 'Name required' }, 400);
+          await db.prepare("INSERT INTO type_of_works (name, name_en, label, created_at, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, name_en || null, label || null).run();
+          return json({ success: true, message: 'Type of work created' });
+        }
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, name, name_en, label } = body;
+          await db.prepare("UPDATE type_of_works SET name = ?, name_en = ?, label = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, name_en || null, label || null, id).run();
+          return json({ success: true, message: 'Type of work updated' });
+        }
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          await db.prepare("DELETE FROM type_of_works WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Type of work deleted' });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/devices') {
+      try {
+        if (method === 'GET') {
+          const { results } = await db.prepare("SELECT id, name, host, port, protocol, username, serial_number, model, firmware_version, is_connected, last_connected_at FROM hikvision_devices ORDER BY id ASC").all();
+          return json({ success: true, count: results.length, devices: results });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const { name, host, port, protocol, username, password } = body;
+          if (!name || !host) return json({ success: false, error: 'Name and Host required' }, 400);
+          await db.prepare("INSERT INTO hikvision_devices (name, host, port, protocol, username, password, is_connected, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, host, port || 80, protocol || 'http', username || 'admin', password || '').run();
+          return json({ success: true, message: 'Device added' });
+        }
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, name, host, port, protocol, username } = body;
+          await db.prepare("UPDATE hikvision_devices SET name = ?, host = ?, port = ?, protocol = ?, username = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, host, port || 80, protocol || 'http', username || 'admin', id).run();
+          return json({ success: true, message: 'Device updated' });
+        }
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          await db.prepare("DELETE FROM hikvision_devices WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Device deleted' });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/users') {
+      try {
+        if (method === 'GET') {
+          const { results } = await db.prepare("SELECT id, name, name_en, user_login, email, phone_number, status, created_at FROM fixasset_users ORDER BY id ASC").all();
+          return json({ success: true, count: results.length, users: results });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const { name, user_login, username, email, status } = body;
+          const loginName = user_login || username;
+          if (!name || !loginName) return json({ success: false, error: 'Name and Username required' }, 400);
+          await db.prepare("INSERT INTO fixasset_users (name, user_login, email, password, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, loginName, email || null, '123', status || 'Active').run();
+          return json({ success: true, message: 'User created' });
+        }
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, name, email, status } = body;
+          await db.prepare("UPDATE fixasset_users SET name = ?, email = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, email || null, status || 'Active', id).run();
+          return json({ success: true, message: 'User updated' });
+        }
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          await db.prepare("DELETE FROM fixasset_users WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'User deleted' });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/item-masters') {
+      try {
+        if (method === 'GET') {
+          const { results } = await db.prepare(`
+            SELECT m.id, m.code, m.name, m.model, m.brand, m.unit_price, m.unit_of_measure, m.quantity,
+                   cat.name as category_name, t.name as item_type_name,
+                   (SELECT count(*) FROM item_fixed_asset_codes c WHERE c.item_master_id = m.id AND c.is_assigned = 1) as assigned_count
+            FROM item_masters m
+            LEFT JOIN item_categories cat ON m.category_id = cat.id
+            LEFT JOIN item_types t ON m.item_type_id = t.id
+            ORDER BY m.id ASC
+          `).all();
+          return json({ success: true, count: results.length, item_masters: results });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const { code, name, model, brand, category_id, item_type_id, unit_price, quantity, unit_of_measure } = body;
+          if (!name) return json({ success: false, error: 'Name required' }, 400);
+          await db.prepare(`
+            INSERT INTO item_masters (code, name, model, brand, category_id, item_type_id, unit_price, quantity, unit_of_measure, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `).bind(code || ('ITM-' + Date.now().toString().slice(-6)), name, model || null, brand || null, category_id || null, item_type_id || null, unit_price || 0, quantity || 1, unit_of_measure || 'Unit').run();
+          return json({ success: true, message: 'Item master created' });
+        }
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, code, name, model, brand, category_id, item_type_id, unit_price, quantity, unit_of_measure } = body;
+          await db.prepare(`
+            UPDATE item_masters
+            SET code = ?, name = ?, model = ?, brand = ?, category_id = ?, item_type_id = ?, unit_price = ?, quantity = ?, unit_of_measure = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).bind(code, name, model || null, brand || null, category_id || null, item_type_id || null, unit_price || 0, quantity || 1, unit_of_measure || 'Unit', id).run();
+          return json({ success: true, message: 'Item master updated' });
+        }
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          await db.prepare("DELETE FROM item_masters WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Item master deleted' });
+        }
       } catch (e) {
         return json({ success: false, error: e.message }, 500);
       }
@@ -354,45 +636,96 @@ export async function onRequest(context) {
 
     if (pathname === '/api/fixasset/employees') {
       try {
-        const q = (url.searchParams.get('q') || '').trim();
-        const branchId = url.searchParams.get('branch_id');
-        const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10), 1000);
-        const offset = Math.max(parseInt(url.searchParams.get('offset') || '0', 10), 0);
+        if (method === 'GET') {
+          const q = (url.searchParams.get('q') || '').trim();
+          const branchId = url.searchParams.get('branch_id');
+          const status = url.searchParams.get('status');
+          const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10), 1000);
+          const offset = Math.max(parseInt(url.searchParams.get('offset') || '0', 10), 0);
 
-        let query = `
-          SELECT e.id, e.employee_code, e.employee_name, e.job_title, e.phone_number, e.email, e.status,
-                 b.name as branch_name, d.name as department_name,
-                 (SELECT count(*) FROM item_fixed_asset_codes c WHERE c.assigned_to = e.employee_name) as assigned_items_count
-          FROM employees e
-          LEFT JOIN branches b ON e.branch_id = b.id
-          LEFT JOIN departments d ON e.department_id = d.id
-        `;
-        let whereClauses = [];
-        let params = [];
+          let query = `
+            SELECT e.id, e.employee_code, e.employee_name, e.job_title, e.phone_number, e.email, e.status, e.date_of_hired,
+                   b.name as branch_name, d.name as department_name, e.branch_id, e.department_id,
+                   (SELECT count(*) FROM item_fixed_asset_codes c WHERE c.assigned_to = e.employee_name) as assigned_items_count
+            FROM employees e
+            LEFT JOIN branches b ON e.branch_id = b.id
+            LEFT JOIN departments d ON e.department_id = d.id
+          `;
+          let whereClauses = [];
+          let params = [];
 
-        if (q) {
-          whereClauses.push("(e.employee_code LIKE ? OR e.employee_name LIKE ? OR e.job_title LIKE ?)");
-          const f = `%${q}%`;
-          params.push(f, f, f);
+          if (q) {
+            whereClauses.push("(e.employee_code LIKE ? OR e.employee_name LIKE ? OR e.job_title LIKE ?)");
+            const f = `%${q}%`;
+            params.push(f, f, f);
+          }
+          if (branchId) {
+            whereClauses.push("e.branch_id = ?");
+            params.push(parseInt(branchId, 10));
+          }
+          if (status && status !== 'all') {
+            whereClauses.push("e.status = ?");
+            params.push(status);
+          }
+
+          if (whereClauses.length > 0) {
+            query += " WHERE " + whereClauses.join(" AND ");
+          }
+
+          query += " ORDER BY e.id ASC LIMIT ? OFFSET ?";
+          params.push(limit, offset);
+
+          const countQuery = `SELECT count(*) as total FROM employees e ${whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : ""}`;
+          const countStmt = params.length > 2 ? db.prepare(countQuery).bind(...params.slice(0, -2)) : db.prepare(countQuery);
+          const countRes = await countStmt.first();
+
+          const { results } = await db.prepare(query).bind(...params).all();
+          return json({ success: true, count: results.length, total: countRes ? countRes.total : results.length, employees: results });
         }
-        if (branchId) {
-          whereClauses.push("e.branch_id = ?");
-          params.push(parseInt(branchId, 10));
+
+        if (method === 'POST') {
+          const body = await request.json();
+          const { employee_code, employee_name, branch_id, department_id, job_title, phone_number, email, status } = body;
+          if (!employee_name) return json({ success: false, error: 'Employee name required' }, 400);
+          await db.prepare(`
+            INSERT INTO employees (employee_code, employee_name, branch_id, department_id, job_title, phone_number, email, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `).bind(employee_code || ('EMP-' + Date.now().toString().slice(-4)), employee_name, branch_id || null, department_id || null, job_title || 'Staff', phone_number || null, email || null, status || 'Hired').run();
+          return json({ success: true, message: 'Employee created' });
         }
 
-        if (whereClauses.length > 0) {
-          query += " WHERE " + whereClauses.join(" AND ");
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, employee_code, employee_name, branch_id, department_id, job_title, phone_number, email, status } = body;
+          await db.prepare(`
+            UPDATE employees
+            SET employee_code = ?, employee_name = ?, branch_id = ?, department_id = ?, job_title = ?, phone_number = ?, email = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).bind(employee_code, employee_name, branch_id || null, department_id || null, job_title || 'Staff', phone_number || null, email || null, status || 'Hired', id).run();
+          return json({ success: true, message: 'Employee updated' });
         }
 
-        query += " ORDER BY e.id ASC LIMIT ? OFFSET ?";
-        params.push(limit, offset);
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          await db.prepare("DELETE FROM employees WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Employee deleted' });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
 
-        const countQuery = `SELECT count(*) as total FROM employees e ${whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : ""}`;
-        const countStmt = params.length > 2 ? db.prepare(countQuery).bind(...params.slice(0, -2)) : db.prepare(countQuery);
-        const countRes = await countStmt.first();
-
-        const { results } = await db.prepare(query).bind(...params).all();
-        return json({ success: true, count: results.length, total: countRes ? countRes.total : results.length, employees: results });
+    if (pathname === '/api/fixasset/employees/assets') {
+      try {
+        const empName = url.searchParams.get('name') || '';
+        const { results } = await db.prepare(`
+          SELECT c.id, c.code, c.a_code, c.item_master_id, m.name as item_name, m.brand, m.model, m.unit_price, cat.name as category_name
+          FROM item_fixed_asset_codes c
+          LEFT JOIN item_masters m ON c.item_master_id = m.id
+          LEFT JOIN item_categories cat ON m.category_id = cat.id
+          WHERE c.assigned_to = ? AND c.is_assigned = 1
+        `).bind(empName).all();
+        return json({ success: true, count: results.length, assets: results });
       } catch (e) {
         return json({ success: false, error: e.message }, 500);
       }
@@ -469,6 +802,12 @@ export async function onRequest(context) {
 
           return json({ success: true, message: 'Item created successfully' });
         }
+
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          await db.prepare("DELETE FROM item_fixed_asset_codes WHERE id = ?").bind(id).run();
+          return json({ success: true, message: 'Item deleted' });
+        }
       } catch (e) {
         return json({ success: false, error: e.message }, 500);
       }
@@ -477,6 +816,24 @@ export async function onRequest(context) {
     if (pathname === '/api/fixasset/assignments') {
       try {
         if (method === 'GET') {
+          const id = url.searchParams.get('id');
+          if (id) {
+            const assignment = await db.prepare(`
+              SELECT a.*, e.employee_code, e.employee_name, b.name as branch_name, d.name as department_name
+              FROM asset_assignments a
+              LEFT JOIN employees e ON a.employee_id = e.id
+              LEFT JOIN branches b ON e.branch_id = b.id
+              LEFT JOIN departments d ON e.department_id = d.id
+              WHERE a.id = ?
+            `).bind(id).first();
+
+            const items = await db.prepare(`
+              SELECT * FROM asset_assignment_items WHERE assignment_id = ?
+            `).bind(id).all();
+
+            return json({ success: true, assignment, items: items.results || [] });
+          }
+
           const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 200);
           const { results } = await db.prepare(`
             SELECT a.id, a.assignment_no, a.assign_date, a.return_date, a.status, a.notes,
@@ -491,10 +848,16 @@ export async function onRequest(context) {
 
         if (method === 'POST') {
           const body = await request.json();
-          const { employee_name, item_code } = body;
+          const { employee_name, employee_id, item_code, notes, assign_date } = body;
           if (!employee_name || !item_code) {
             return json({ success: false, error: 'Employee name and item code are required' }, 400);
           }
+
+          const assignNo = 'ASN-' + Date.now().toString().slice(-6);
+          await db.prepare(`
+            INSERT INTO asset_assignments (assignment_no, employee_id, assign_date, status, notes, created_at, updated_at)
+            VALUES (?, ?, ?, 'assigned', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `).bind(assignNo, employee_id || 1, assign_date || new Date().toISOString().split('T')[0], notes || 'Handover').run();
 
           await db.prepare(`
             UPDATE item_fixed_asset_codes
@@ -502,7 +865,7 @@ export async function onRequest(context) {
             WHERE code = ? OR a_code = ?
           `).bind(employee_name, item_code, item_code).run();
 
-          return json({ success: true, message: `Successfully assigned ${item_code} to ${employee_name}` });
+          return json({ success: true, assignment_no: assignNo, message: `Successfully assigned ${item_code} to ${employee_name}` });
         }
       } catch (e) {
         return json({ success: false, error: e.message }, 500);
@@ -533,16 +896,51 @@ export async function onRequest(context) {
 
     if (pathname === '/api/fixasset/grn') {
       try {
-        const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 200);
-        const { results } = await db.prepare(`
-          SELECT g.id, g.grn_no, g.invoice_no, g.po_no, g.status, g.created_at,
-                 s.name as supplier_name, b.name as branch_name
-          FROM grns g
-          LEFT JOIN suppliers s ON g.supplier_id = s.id
-          LEFT JOIN branches b ON g.branch_id = b.id
-          ORDER BY g.id DESC LIMIT ?
-        `).bind(limit).all();
-        return json({ success: true, count: results.length, grn: results });
+        if (method === 'GET') {
+          const id = url.searchParams.get('id');
+          if (id) {
+            const grn = await db.prepare(`
+              SELECT g.id, g.grn_number, g.reference_no, g.po_number, g.grn_type, g.status, g.transaction_date, g.note, g.created_at,
+                     s.name as supplier_name, s.phone as supplier_phone, w.name as warehouse_name
+              FROM grns g
+              LEFT JOIN suppliers s ON g.supplier_id = s.id
+              LEFT JOIN warehouses w ON g.warehouse_id = w.id
+              WHERE g.id = ?
+            `).bind(id).first();
+
+            const items = await db.prepare(`
+              SELECT gi.id, gi.item_code, gi.description, gi.brand, gi.po_quantity, gi.receive_quantity, gi.unit_price, gi.total_amount, gi.uom, gi.remark,
+                     m.name as item_name
+              FROM grn_items gi
+              LEFT JOIN item_masters m ON gi.item_master_id = m.id
+              WHERE gi.grn_id = ?
+            `).bind(id).all();
+
+            return json({ success: true, grn, items: items.results || [] });
+          }
+
+          const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 200);
+          const { results } = await db.prepare(`
+            SELECT g.id, g.grn_number, g.reference_no, g.po_number, g.grn_type, g.status, g.transaction_date, g.created_at,
+                   s.name as supplier_name, w.name as warehouse_name
+            FROM grns g
+            LEFT JOIN suppliers s ON g.supplier_id = s.id
+            LEFT JOIN warehouses w ON g.warehouse_id = w.id
+            ORDER BY g.id DESC LIMIT ?
+          `).bind(limit).all();
+          return json({ success: true, count: results.length, grn: results });
+        }
+
+        if (method === 'POST') {
+          const body = await request.json();
+          const { grn_number, supplier_id, reference_no, po_number, warehouse_id, status } = body;
+          const no = grn_number || ('GRN-' + Date.now().toString().slice(-6));
+          await db.prepare(`
+            INSERT INTO grns (grn_number, supplier_id, reference_no, po_number, warehouse_id, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `).bind(no, supplier_id || null, reference_no || null, po_number || null, warehouse_id || null, status || 'Received').run();
+          return json({ success: true, grn_number: no, message: 'GRN created successfully' });
+        }
       } catch (e) {
         return json({ success: false, error: e.message }, 500);
       }
