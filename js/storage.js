@@ -292,17 +292,15 @@ const Storage = {
       const data = localStorage.getItem(STORAGE_KEY);
 
       if (!data) {
-        // In web environment with Cloudflare D1 backend, never auto-seed dummy reports.
-        // The authoritative reports will be fetched immediately from the database.
-        localStorage.setItem(SEEDED_KEY, 'true');
-        return [];
+        this.saveReports(INITIAL_REPORTS);
+        return INITIAL_REPORTS;
       }
 
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed)) {
         if (parsed.length === 0) {
-          localStorage.setItem(SEEDED_KEY, 'true');
-          return [];
+          this.saveReports(INITIAL_REPORTS);
+          return INITIAL_REPORTS;
         }
 
         if (!isSeeded) {
