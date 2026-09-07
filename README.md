@@ -1,49 +1,181 @@
 # BS Express - ប្រព័ន្ធគ្រប់គ្រង និងរបាយការណ៍ការងារប្រចាំថ្ងៃតាមសាខា
-### (BS Express Daily Branch Work Report System)
+### (BS Express Daily Branch Work Report & Fixed Asset System)
 
-ប្រព័ន្ធនេះត្រូវបានបង្កើតឡើងយ៉ាងផ្ចិតផ្ចង់ និងទំនើប ស្របតាមគំរូទម្រង់របាយការណ៍ផ្លូវការរបស់ក្រុមហ៊ុន **BS Express (ប៊ីអេស អ៊ិចប្រេស)**។
 
----
+(BS Express Daily Branch Work Report System)
 
-## 🌟 លក្ខណៈពិសេសចម្បង (Key Features)
+A lightweight, offline-first single-page web application for creating, previewing, exporting and archiving daily branch work reports that match the company’s official A4 report layout.
 
-1. **ទម្រង់របាយការណ៍ដូចគំរូរូបភាព ១០០% (Official A4 Standard Report)**:
-   - ក្បាលលិខិតជាតិ៖ **ព្រះរាជាណាចក្រកម្ពុជា ជាតិ សាសនា ព្រះមហាក្សត្រ** (ពុម្ពអក្សរមូល + ក្បាច់រចនាខ្មែរ)
-   - ឈ្មោះក្រុមហ៊ុន៖ **ក្រុមហ៊ុន ប៊ីអេស អ៊ិចប្រេស**
-   - តារាងព័ត៌មាន៖ សាខា, ថ្ងៃទីឆ្នាំ, ឈ្មោះអ្នករាយការណ៍, តួនាទី
-   - កាលវិភាគរបាយការណ៍ ២ដងក្នុងមួយថ្ងៃ (លើកទី១: ពេលបើកដំណើរការ | លើកទី២: ប្រតិបត្តិការ & ពេលបិទ)
-   - ចំណុច ១. របាយការណ៍ពេលបើកដំណើរការ (Opening Shift)
-   - ចំណុច ២. របាយការណ៍ប្រតិបត្តិការប្រចាំថ្ងៃ (Daily Operation)
-   - ចំណុច ៣. របាយការណ៍ពេលបិទដំណើរការ (Closing Shift)
-   - ហត្ថលេខា និងត្រា (ប្រធានសាខា / អ្នករាយការណ៍ & នាយកដ្ឋានប្រតិបត្តិការ)
-   - អាសយដ្ឋានក្រុមហ៊ុននៅបាតទំព័រ (KL Plaza, អគារ C11-C12, សង្កាត់ជ័យជំនះ, ខណ្ឌដូនពេញ, ភ្នំពេញ)
+## Key Features
 
-2. **ទម្រង់បំពេញរបាយការណ៍ឆ្លាតវៃ (Smart Form Builder)**:
-   - ជ្រើសរើសសាខាទូទាំង ២៥ ខេត្ត-ក្រុង ឬសាខាសំខាន់ៗ
-   - ផ្ទាំង Quick Tags សម្រាប់ចុចបំពេញឃ្លាពេញនិយមបានលឿន
-   - ប៊ូតុង **"ផ្ទុកទិន្នន័យគំរូ"** ដើម្បីបង្ហាញទិន្នន័យសាខាក្រចេះភ្លាមៗ
-   - ភ្ជាប់មុខងារ **Watermark លើរូបថតស្វ័យប្រវត្តិ** (បោះត្រាសាខា, ម៉ោង និងកាលបរិច្ឆេទលើរូបភាព)
+- Official A4-standard document layout (matches company template).
+  - Official header (Kingdom of Cambodia, Khmer typography), company name, meta table (branch / date / reporter / position).
+  - Three sections: Opening Shift, Daily Operation, Closing Shift.
+  - Signatures & official stamp area and footer address.
+- Interactive Smart Form Builder:
+  - Branch selector with a list of provinces/major branches.
+  - Quick tags for repeated phrases.
+  - “Load sample data” to prefill example reports.
+  - Client-side watermarking for uploaded photos (branch name, date, time, verification badge).
+- Sharing & Export:
+  - Telegram / Messenger friendly text format (emoji + headers).
+  - Print / Save as PDF (A4 layout).
+  - Export CSV / Excel that preserves Khmer characters.
+  - JSON backup & restore of all reports stored locally.
+- Branch analytics & history:
+  - Dashboard with total reports, active branches, staff totals, and tracked issues.
+  - Search & filter by branch and date.
 
-3. **ការចែករំលែក និងទាញយកទិន្នន័យ (Sharing & Export Options)**:
-   - **Telegram / Messenger Format**: ចម្លងអត្ថបទជាមួយ Emoji និង Header ស្អាតស្រាប់ សម្រាប់ផ្ញើចូលគ្រុបការងារ
-   - **Print / Save as PDF**: បោះពុម្ពទម្រង់ A4 ស្អាតឥតខ្ចោះ
-   - **Export CSV / Excel**: ទាញយកទិន្នន័យជាឯកសារ Excel
-   - **JSON Backup & Restore**: រក្សាទុកទិន្នន័យការពារការបាត់បង់
+## How to run
 
-4. **ផ្ទាំងគ្រប់គ្រងស្ថិតិ និងប្រវត្តិ (Branch Analytics & History)**:
-   - Dashboard បង្ហាញចំនួនរបាយការណ៍សរុប, សាខាសកម្ម, វត្តមានបុគ្គលិក, និងបញ្ហាប្រឈមកំពុងដោះស្រាយ
-   - តារាងស្វែងរក (Search & Filter) តាមសាខា និងកាលបរិច្ឆេទ
+### Option 1 — Node.js (recommended for local testing)
+1. From the repository root:
+   - npm install   (optional if you add server dependencies)
+   - node server.js
+2. Open http://localhost:3000
 
----
+### Option 2 — Static
+- Open `index.html` directly in any modern browser (Chrome, Edge, Firefox, Safari). Most UI flows work, but some local-network convenience (LAN access) is easier when using the Node server.
 
-## 🚀 របៀបបើកដំណើរការ (How to Run)
+## Project structure (important files)
 
-### ជម្រើសទី ១: ដំណើរការជាមួយ Node.js
-```bash
-cd "C:\Users\USER\.gemini\antigravity-ide\scratch\bs-express-report"
-node server.js
-```
-រួចបើក Browser ទៅកាន់៖ **`http://localhost:3000`**
+- `index.html`
+  - The single-page UI (Khmer default, English toggle via data-i18n attributes).
+  - 5-step wizard: Branch info → Opening → Operations → Closing → Review & Export.
+  - Live A4 preview that mirrors form data and is used for printing/exporting.
+  - Photo upload inputs for opening & closing sections.
+- `server.js`
+  - Small ES module HTTP server that serves static files from the repository directory.
+  - Prints both localhost and LAN IPv4 addresses at startup.
+- `package.json`
+  - Minimal metadata and start script: `"start": "node server.js"`.
+- `css/`
+  - `style.css`, `print.css` (A4 print styles and UI).
+- `js/`
+  - `app.js` — main client-side application logic (wizard, UI wiring, event handlers, preview updates).
+  - `export-util.js` — export and sharing helpers (Telegram formatting, CSV export, print).
+  - `storage.js` — localStorage-backed persistence, sample data, user management, import/export JSON.
+  - `watermark.js` — client-side image watermarking using HTML5 Canvas.
+- `assets/`
+  - Logos and images referenced in the A4 template and UI.
+- `manifest.json`
+  - Web app manifest metadata for installability / PWA behavior.
+- `Open-In-Chrome.bat`, `start.bat`, `start.ps1`
+  - Helper scripts for quickly opening or launching the project on Windows.
 
-### ជម្រើសទី ២: បើកឯកសារ `index.html` ដោយផ្ទាល់
-អ្នកអាចចុចទ្វេដង (Double Click) លើឯកសារ `index.html` ក្នុងកម្មវិធីរុករក (Chrome, Edge, Firefox, Safari)។
+## Source file details and responsibilities
+
+
+### server.js
+- Purpose: a tiny, dependency-free ES module HTTP server for local testing.
+- Key behavior:
+  - Resolves requested path relative to the repository directory, strips query strings.
+  - Maps file extension → Content-Type using a MIME_TYPES table.
+  - Reads files with `fs.readFile` and returns them with correct Content-Type.
+  - Returns 404 for missing files, 500 for other FS errors.
+  - `getLocalIPs()` enumerates `os.networkInterfaces()` and logs local IPv4 addresses so other devices on the LAN can access the server.
+- Notes:
+  - Uses `type: "module"` in `package.json` so `server.js` is run as an ES module.
+  - Good for local testing; consider path normalization and streaming for production (see Implementation Notes).
+
+### index.html
+- Purpose: main SPA markup and A4 printable layout.
+- Key elements:
+  - Authentication gateway (login/register) and a "guest" continue button for demo/testing.
+  - Top navigation with language and theme toggles.
+  - Stepper/form wizard controlling five steps (branch info, opening, operations, closing, review).
+  - Live preview area with A4 document layout (header, three sections, footer, signature block).
+  - Buttons for saving, exporting (Telegram, Print, CSV/Excel), and viewing full A4 document.
+- i18n:
+  - HTML uses `data-i18n` attributes to allow dynamic label switching between Khmer and English.
+- Photo uploads:
+  - `<input type="file">` controls for opening & closing photos; client JS applies watermark and shows preview.
+
+### js/app.js (main client app)
+- Role (overview):
+  - Orchestrates UI flow: wizard navigation, progress bar, form validation, live preview binding, handling of load-sample, reset, and save actions.
+  - Binds DOM elements, reacts to input changes (updates preview fields), wires up export actions (calls ExportUtil), and delegates storage to Storage.
+  - Handles user session (persisting current user in localStorage via Storage.setCurrentUser / getCurrentUser).
+  - Coordinates photo uploads: reads selected files, calls `WatermarkUtil.addWatermark(file, meta)` to get a watermarked data URL, displays previews, and stores watermarked images in the report object.
+- Large single file, packed with helper functions and UI view manipulations (controls the primary UX).
+
+### js/export-util.js
+- Purpose: central utilities to format & export report data.
+- Main functions:
+  - `formatForTelegram(report, lang)`
+    - Returns a Markdown-like text block suitable for pasting into Telegram / Messenger groups.
+    - Produces Khmer or English output with emojis and labeled sections.
+  - `exportToCsv(reports)`
+    - Converts an array of report objects to CSV.
+    - Uses UTF-8 BOM (`\uFEFF`) so Excel opens Khmer correctly.
+    - Escapes quotes and replaces newlines to keep CSV well-formed.
+    - Triggers a browser download with a timestamped filename.
+  - `printReport()`
+    - Calls `window.print()` to invoke the browser print dialog for A4/PDF export.
+- Implementation notes:
+  - CSV headers include both Khmer field labels and the usual metadata fields (ID, branch, date, reporter, etc.)
+  - The CSV download is generated client-side using Blob and object URLs.
+
+### js/watermark.js
+- Purpose: apply a consistent, attractive watermark badge onto uploaded photos using the HTML5 Canvas API.
+- `addWatermark(file, meta): Promise<string>`
+  - Reads the image file via FileReader → loads into Image.
+  - Resizes image to a maximum dimension (maxDim = 1200) to bound memory and file size.
+  - Draws the original photo to canvas and overlays a semi-transparent badge in the bottom-right containing:
+    - Branch name (meta.branch or default),
+    - Date and time (meta.date/meta.time or computed),
+    - A short verified text (localized Khmer text plus an icon).
+  - Uses `canvas.toDataURL('image/jpeg', 0.85)` to return a JPEG data URL.
+- Visual styling:
+  - Semi-opaque dark box, left accent stripe (orange), white & colored text; font sizes scale with image width.
+- Notes:
+  - Uses canvas.roundRect and other modern Canvas features (supported in modern browsers).
+  - Returns base64 data URLs which are stored with the report (good for offline/portable reports).
+
+### js/storage.js
+- Purpose: client-side persistence and user/session management using localStorage.
+- Keys used:
+  - `STORAGE_KEY = 'bs_express_daily_reports'` — stores the report array as JSON.
+  - `SETTINGS_KEY = 'bs_express_settings'` — app settings.
+  - `bs_express_users` — local users and authentication demo.
+  - `bs_express_session` — current logged-in session.
+- Main features:
+  - `INITIAL_REPORTS` and `SAMPLE_REPORT`: seeded demo data that matches the official A4 sample image and demonstrates multi-branch data.
+  - `getReports()`, `saveReports(reports)`, `saveReport(report)`, `getReportById(id)`, `deleteReport(id)` — CRUD operations for reports.
+  - `exportAllAsJson()` / `importFromJson(json)` — backup & restore workflow for portability.
+- User management & auth:
+  - `getUsers()`, `saveUsers()`, `findUserByUsername(username)`, `registerUser({...})`, `authenticateUser(username, password)`, `deleteUser(id)`, `updateUserPassword(username, newPassword)`.
+  - Ensures one default `sys_admin` user is present.
+  - `getCurrentUser()` / `setCurrentUser(user)` / `logout()` manage session data in localStorage.
+- Branch list and roles:
+  - `BRANCH_LIST` constant includes many branch names (Khmer), exposed as `window.BRANCH_LIST` for UI to populate selects.
+  - `USER_ROLES` and `INITIAL_USERS` provide role metadata and a sample admin user.
+- Notes:
+  - Storage module seeds demo data if no data is present (convenient for first-run demos).
+  - All persistence is localStorage-only (client-side). Import/export enables moving to another browser or backing up to files.
+
+## Implementation notes & considerations
+
+- Path resolution & server safety:
+  - `server.js` works for simple local testing. For production or sharing publicly, add path normalization and guard against path traversal (ensure resolved paths stay inside the repository root).
+  - Consider using streaming (`fs.createReadStream`) to serve large files efficiently and adding cache-control headers for static assets.
+- MIME types:
+  - `server.js` contains a common mapping; consider expanding it (woff2, webp, mp4, etc.) if you add those asset types.
+- SPA routing:
+  - The project is a static SPA; if you add client-side routing, the server should fall back unknown HTML routes to `index.html`.
+- Data persistence:
+  - Current persistence is localStorage + JSON export/import. For shared, multi-device persistence add a small server API and lightweight DB (SQLite or JSON file).
+- Browser support:
+  - The watermark and canvas features require modern browsers; if older browser support is required, add feature detection/fallbacks.
+
+## Contributing & repository hygiene
+
+- Add `.gitignore` entries for `node_modules`, build artifacts, OS files.
+- Add `LICENSE` and `CONTRIBUTING.md` for open-source clarity.
+- Add a short `CHANGELOG` and README badges (node version, license).
+- If you add server-side dependencies later, document them and add an npm start script that runs the server via `package.json` (already contains a simple start script).
+
+## Credits
+
+© 2026 BS Express • Maintained by vidjeng
+
