@@ -5038,12 +5038,24 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
 
     // 2. FIXED ASSET SCREEN
     if (currentSys === 'fixasset') {
+      const isAuthenticated = Boolean(this.currentUser && this.currentUser.username);
+      if (!isAuthenticated) {
+        if (portalHub) portalHub.style.display = 'none';
+        if (fixAssetWrap) fixAssetWrap.style.display = 'none';
+        if (mainApp) mainApp.style.display = 'none';
+        if (authScreen) authScreen.style.display = 'grid';
+        this.updateSystemSwitcherPill('fixasset');
+        return;
+      }
+
       if (portalHub) portalHub.style.display = 'none';
       if (authScreen) authScreen.style.display = 'none';
       if (mainApp) mainApp.style.display = 'none';
       if (fixAssetWrap) fixAssetWrap.style.display = 'flex';
       this.updateSystemSwitcherPill('fixasset');
-      this.ensureFixAssetFrameLoaded();
+      if (window.fixAssetUI) {
+        window.fixAssetUI.init();
+      }
       return;
     }
 
@@ -5093,167 +5105,24 @@ ${issue.note ? `📝 *ផែនការដោះស្រាយ៖* ${issue.not
   }
 
   // =========================================================================
-  // FIXED ASSET SYSTEM EMBED & CONNECTION MANAGEMENT
+  // FIXED ASSET SYSTEM (100% NATIVE CLOUD-FIRST UI DELEGATES)
   // =========================================================================
   ensureFixAssetFrameLoaded() {
-    const iframe = document.getElementById('fixasset-iframe');
-    const urlDisplay = document.getElementById('fixasset-current-url-display');
-    const offlineHint = document.getElementById('fixasset-offline-url-hint');
-    const targetUrl = Storage && typeof Storage.getFixAssetUrl === 'function' ? Storage.getFixAssetUrl() : 'http://localhost:8000';
-
-    if (urlDisplay) {
-      try {
-        const parsed = new URL(targetUrl);
-        urlDisplay.textContent = parsed.host || targetUrl;
-      } catch (e) {
-        urlDisplay.textContent = targetUrl;
-      }
+    if (window.fixAssetUI) {
+      window.fixAssetUI.init();
     }
-    if (offlineHint) {
-      offlineHint.textContent = targetUrl;
-    }
-
-    if (iframe) {
-      const currentIframeSrc = iframe.getAttribute('src') || '';
-      if (!currentIframeSrc || currentIframeSrc === 'about:blank' || !currentIframeSrc.startsWith(targetUrl)) {
-        iframe.src = targetUrl;
-      }
-    }
-
-    this.checkFixAssetConnection();
-  }
-
-  async checkFixAssetConnection(urlToTest = null) {
-    const targetUrl = urlToTest || (Storage && typeof Storage.getFixAssetUrl === 'function' ? Storage.getFixAssetUrl() : 'http://localhost:8000');
-    const dot = document.getElementById('fixasset-status-dot');
-    const text = document.getElementById('fixasset-status-text');
-    const overlay = document.getElementById('fixasset-offline-overlay');
-
-    if (!urlToTest) {
-      if (text) text.textContent = this.currentLang === 'en' ? 'Checking...' : 'កំពុងពិនិត្យ...';
-      if (dot) dot.style.background = '#f59e0b';
-    }
-
-    let isOnline = false;
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2800);
-
-      await fetch(targetUrl, {
-        method: 'GET',
-        mode: 'no-cors',
-        cache: 'no-store',
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      isOnline = true;
-    } catch (err) {
-      isOnline = false;
-    }
-
-    if (!urlToTest) {
-      if (dot) dot.style.background = isOnline ? '#10b981' : '#ef4444';
-      if (text) {
-        text.textContent = isOnline 
-          ? (this.currentLang === 'en' ? 'Online' : 'ដំណើរការ')
-          : (this.currentLang === 'en' ? 'Offline' : 'មិនទាន់ភ្ជាប់');
-      }
-
-      if (overlay) {
-        overlay.style.display = isOnline ? 'none' : 'flex';
-      }
-    }
-
-    return isOnline;
   }
 
   reloadFixAssetFrame() {
-    const iframe = document.getElementById('fixasset-iframe');
-    const targetUrl = Storage && typeof Storage.getFixAssetUrl === 'function' ? Storage.getFixAssetUrl() : 'http://localhost:8000';
-    if (iframe) {
-      iframe.src = targetUrl;
+    if (window.fixAssetUI) {
+      window.fixAssetUI.loadStats();
+      window.fixAssetUI.switchTab(window.fixAssetUI.activeTab || 'dashboard');
     }
-    this.checkFixAssetConnection();
-    this.showToast(this.currentLang === 'en' ? 'Reloading Fixed Asset frame...' : 'កំពុងផ្ទុកផ្ទាំង Fixed Asset ឡើងវិញ...', 'info');
+    this.showToast(this.currentLang === 'en' ? 'Refreshed Fixed Asset data' : 'បានផ្ទុកទិន្នន័យ Fixed Asset ឡើងវិញ', 'success');
   }
 
   openFixAssetNewTab() {
-    const targetUrl = Storage && typeof Storage.getFixAssetUrl === 'function' ? Storage.getFixAssetUrl() : 'http://localhost:8000';
-    window.open(targetUrl, '_blank', 'noopener,noreferrer');
-  }
-
-  openFixAssetSettings() {
-    const modal = document.getElementById('modal-fixasset-settings');
-    const input = document.getElementById('input-fixasset-url');
-    const statusBox = document.getElementById('settings-test-status');
-    const currentUrl = Storage && typeof Storage.getFixAssetUrl === 'function' ? Storage.getFixAssetUrl() : 'http://localhost:8000';
-
-    if (input) input.value = currentUrl;
-    if (statusBox) statusBox.style.display = 'none';
-    if (modal) modal.style.display = 'flex';
-  }
-
-  closeFixAssetSettings() {
-    const modal = document.getElementById('modal-fixasset-settings');
-    if (modal) modal.style.display = 'none';
-  }
-
-  async testFixAssetConnection() {
-    const input = document.getElementById('input-fixasset-url');
-    const statusBox = document.getElementById('settings-test-status');
-    let url = (input ? input.value : '').trim();
-    if (!url) url = 'http://localhost:8000';
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'http://' + url;
-    }
-
-    if (statusBox) {
-      statusBox.style.display = 'block';
-      statusBox.className = 'settings-test-status testing';
-      statusBox.style.padding = '0.65rem 1rem';
-      statusBox.style.borderRadius = '0.5rem';
-      statusBox.style.marginTop = '0.75rem';
-      statusBox.style.background = 'rgba(245, 158, 11, 0.12)';
-      statusBox.style.color = '#f59e0b';
-      statusBox.textContent = this.currentLang === 'en' ? 'Testing connection to ' + url + '...' : 'កំពុងធ្វើតេស្តភ្ជាប់ទៅកាន់ ' + url + '...';
-    }
-
-    const ok = await this.checkFixAssetConnection(url);
-    if (statusBox) {
-      if (ok) {
-        statusBox.className = 'settings-test-status success';
-        statusBox.style.background = 'rgba(16, 185, 129, 0.12)';
-        statusBox.style.color = '#10b981';
-        statusBox.textContent = this.currentLang === 'en' ? '✓ Server connected successfully!' : '✓ ភ្ជាប់ទៅកាន់ Server បានជោគជ័យ!';
-      } else {
-        statusBox.className = 'settings-test-status error';
-        statusBox.style.background = 'rgba(239, 68, 68, 0.12)';
-        statusBox.style.color = '#ef4444';
-        statusBox.textContent = this.currentLang === 'en' 
-          ? '✕ Unable to connect. Please ensure `php artisan serve` is running.'
-          : '✕ មិនអាចភ្ជាប់បានទេ។ សូមប្រាកដថាបានដំណើរការ `php artisan serve` រួចរាល់។';
-      }
-    }
-  }
-
-  saveFixAssetSettings() {
-    const input = document.getElementById('input-fixasset-url');
-    let url = (input ? input.value : '').trim();
-    if (!url) url = 'http://localhost:8000';
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'http://' + url;
-    }
-
-    if (Storage && typeof Storage.setFixAssetUrl === 'function') {
-      Storage.setFixAssetUrl(url);
-    }
-
-    this.closeFixAssetSettings();
-    this.reloadFixAssetFrame();
-    this.showToast(
-      this.currentLang === 'en' ? 'Server URL updated: ' + url : 'បានកែប្រែ URL ទៅកាន់: ' + url,
-      'success'
-    );
+    window.open('#fixasset', '_blank');
   }
 
   renderAuthNav() {

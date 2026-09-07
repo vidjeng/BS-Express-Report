@@ -7,6 +7,7 @@
   <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="css/style.css?v=20.8">
   <link rel="stylesheet" href="css/print.css?v=20.8" media="print">
+  <link rel="stylesheet" href="css/fixasset.css?v=21.0">
   <!-- Google Fonts, Favicon & Chrome Manifest -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1414,7 +1415,10 @@
   <!-- =========================================================================
        FIXED ASSET EMBEDDED WORKSPACE WRAPPER
        ========================================================================= -->
-  <div id="fixasset-workspace-wrapper" style="display: none;">
+  <!-- =========================================================================
+       FIXED ASSET EMBEDDED WORKSPACE WRAPPER (100% NATIVE CLOUD-FIRST UI)
+       ========================================================================= -->
+  <div id="fixasset-workspace-wrapper" style="display: none; flex-direction: column; width: 100%;">
     <!-- Fixed Asset Top Navbar -->
     <header class="shadcn-navbar no-print fixasset-navbar">
       <div class="navbar-container">
@@ -1427,7 +1431,7 @@
             <h1 class="brand-title">BS Express - Fixed Asset</h1>
             <div class="brand-badge badge-emerald">
               <span class="badge-dot dot-emerald"></span>
-              <span class="brand-badge-text" data-i18n="systemFixAssetBadge">គ្រប់គ្រងសម្ភារៈ &amp; វត្តមាន</span>
+              <span class="brand-badge-text">គ្រប់គ្រងសម្ភារៈ &amp; ទ្រព្យសកម្ម</span>
             </div>
           </div>
         </a>
@@ -1450,30 +1454,20 @@
 
         <!-- Actions Toolbar -->
         <div class="navbar-actions">
-          <!-- Server Status Indicator -->
-          <div class="fixasset-status-badge" id="fixasset-status-badge" title="Status of Fixed Asset Server">
-            <span class="fixasset-status-dot" id="fixasset-status-dot"></span>
-            <span class="fixasset-status-text" id="fixasset-status-text">Checking...</span>
+          <!-- Database Cloud Edge Status -->
+          <div class="fixasset-status-badge" id="fixasset-status-badge" title="Cloudflare D1 APAC Database Connected">
+            <span class="fixasset-status-dot" id="fixasset-status-dot" style="background: #10b981;"></span>
+            <span class="fixasset-status-text" id="fixasset-status-text">Cloudflare D1 Online</span>
           </div>
 
-          <!-- Fixed Asset Credential Pill -->
-          <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; font-size: 0.8rem; color: #10b981; font-weight: 600;">
-            🔑 <span>vid / 123</span>
-          </div>
-
-          <!-- Server URL Display / Setting Button -->
-          <button type="button" class="btn btn-outline btn-sm" onclick="window.bsApp && window.bsApp.openFixAssetSettings()" title="Configure Fixed Asset Server URL">
-            ⚙️ <span id="fixasset-current-url-display">localhost:8000</span>
-          </button>
-
-          <!-- Reload Frame Button -->
-          <button type="button" class="btn btn-outline btn-sm" onclick="window.bsApp && window.bsApp.reloadFixAssetFrame()" title="Reload Fixed Asset Frame">
+          <!-- Refresh Data Button -->
+          <button type="button" class="btn btn-outline btn-sm" onclick="window.fixAssetUI && window.fixAssetUI.loadStats(); window.fixAssetUI && window.fixAssetUI.switchTab(window.fixAssetUI.activeTab);" title="Refresh Data">
             🔄 <span data-i18n="btnReloadFrame">ផ្ទុកឡើងវិញ</span>
           </button>
 
-          <!-- Open in New Tab Button -->
-          <button type="button" class="btn btn-primary btn-sm" onclick="window.bsApp && window.bsApp.openFixAssetNewTab()" title="Open Fixed Asset in Dedicated Tab">
-            ↗️ <span data-i18n="btnOpenInNewTab">បើកផ្ទាំងថ្មី</span>
+          <!-- Export Excel Button -->
+          <button type="button" class="btn btn-outline btn-sm" onclick="window.fixAssetUI && window.fixAssetUI.exportItemsExcel()" title="Export Items to Excel">
+            📊 <span>Export Excel</span>
           </button>
 
           <!-- Theme Toggle -->
@@ -1497,67 +1491,298 @@
       </div>
     </header>
 
-    <!-- Embedded iFrame Workspace & Fallback Helper Container -->
-    <div class="fixasset-frame-container">
-      <iframe id="fixasset-iframe" class="fixasset-iframe" src="about:blank" title="BS Express Fixed Asset Management System"></iframe>
-      
-      <!-- Disconnected / Offline Helper Overlay (shown if connection fails) -->
-      <div class="fixasset-offline-overlay" id="fixasset-offline-overlay" style="display: none;">
-        <div class="fixasset-offline-card">
-          <div class="offline-icon-wrap">📦</div>
-          <h3>មិនទាន់អាចតភ្ជាប់ទៅកាន់ Server Fixed Asset</h3>
-          <p>ប្រព័ន្ធមិនអាចភ្ជាប់ទៅកាន់ URL: <code id="fixasset-offline-url-hint">http://localhost:8000</code> បានទេ។</p>
-          <div class="offline-steps-box">
-            <div class="step-line"><strong>ជំហានទី ១៖</strong> បើក Terminal ក្នុងថត <code class="code-pill">fixasset</code></div>
-            <div class="step-line"><strong>ជំហានទី ២៖</strong> ដំណើរការ Command ខាងក្រោមដើម្បី Start Server៖</div>
-            <div class="code-copy-box">
-              <code>php artisan serve --port=8000</code>
-              <button type="button" class="btn-copy-code" onclick="navigator.clipboard.writeText('php artisan serve --port=8000'); alert('បានចម្លង Command រួចរាល់!');">ចម្លង</button>
+    <!-- Sub-Module Navigation Ribbon -->
+    <nav class="fa-subnav" aria-label="Fixed Asset Navigation">
+      <button type="button" class="fa-nav-tab active" data-fa-tab="dashboard">
+        <span>📊</span> <span>ផ្ទាំងទិន្នន័យ (Dashboard)</span>
+      </button>
+      <button type="button" class="fa-nav-tab" data-fa-tab="items">
+        <span>🏷️</span> <span>បញ្ជីសម្ភារៈ (Items)</span>
+        <span class="fa-nav-badge" id="fa-nav-badge-items">7,183</span>
+      </button>
+      <button type="button" class="fa-nav-tab" data-fa-tab="employees">
+        <span>👥</span> <span>បុគ្គលិក (Employees)</span>
+        <span class="fa-nav-badge" id="fa-nav-badge-emp">615</span>
+      </button>
+      <button type="button" class="fa-nav-tab" data-fa-tab="assignments">
+        <span>🤝</span> <span>ប្រគល់សម្ភារៈ (Assignments)</span>
+      </button>
+      <button type="button" class="fa-nav-tab" data-fa-tab="grn">
+        <span>📥</span> <span>បញ្ចូលស្តុក (GRN)</span>
+      </button>
+      <button type="button" class="fa-nav-tab" data-fa-tab="branches">
+        <span>🏢</span> <span>សាខា &amp; ផ្នែក (29 Branches)</span>
+      </button>
+    </nav>
+
+    <!-- Native Fix Asset Panels Container -->
+    <main class="fixasset-container">
+      <!-- 1. DASHBOARD PANEL -->
+      <section class="fa-panel active" id="fa-panel-dashboard">
+        <div class="fa-stats-grid">
+          <div class="fa-stat-card">
+            <div class="fa-stat-icon icon-emerald">📦</div>
+            <div class="fa-stat-info">
+              <span class="fa-stat-label">សម្ភារៈសរុប (Total Assets)</span>
+              <strong class="fa-stat-value" id="fa-stat-total-items">7,183</strong>
             </div>
-            <div class="step-line"><strong>ជំហានទី ៣៖</strong> ចុចប៊ូតុង <strong>"ផ្ទុកឡើងវិញ"</strong> ខាងក្រោម។</div>
           </div>
-          <div class="offline-actions-row">
-            <button type="button" class="btn btn-primary" onclick="window.bsApp && window.bsApp.reloadFixAssetFrame()">🔄 ផ្ទុកឡើងវិញ (Reload)</button>
-            <button type="button" class="btn btn-outline" onclick="window.bsApp && window.bsApp.openFixAssetNewTab()">↗️ បើកផ្ទាំងថ្មី (Open New Tab)</button>
-            <button type="button" class="btn btn-outline" onclick="window.bsApp && window.bsApp.openFixAssetSettings()">⚙️ ប្តូរ Server URL</button>
-            <button type="button" class="btn btn-text-link" onclick="window.bsApp && window.bsApp.switchSystem('daily-report')">← ត្រឡប់ទៅប្រព័ន្ធរបាយការណ៍</button>
+          <div class="fa-stat-card">
+            <div class="fa-stat-icon icon-blue">👤</div>
+            <div class="fa-stat-info">
+              <span class="fa-stat-label">បានបែងចែករួច (Assigned)</span>
+              <strong class="fa-stat-value" id="fa-stat-assigned">0</strong>
+            </div>
           </div>
-          <div style="margin-top: 14px; padding: 10px; background: rgba(59, 130, 246, 0.08); border-radius: 8px; font-size: 0.85rem; color: #94a3b8; text-align: left;">
-            🔑 <strong>គណនី Login Fixed Asset:</strong><br>
-            • <strong>Username:</strong> <code style="color: #60a5fa;">vid</code> ឬ <code style="color: #60a5fa;">admin</code> ឬ <code style="color: #60a5fa;">superadmin</code><br>
-            • <strong>Password:</strong> <code style="color: #34d399;">123</code> ឬ <code style="color: #34d399;">12345678</code>
+          <div class="fa-stat-card">
+            <div class="fa-stat-icon icon-amber">🏬</div>
+            <div class="fa-stat-info">
+              <span class="fa-stat-label">ក្នុងស្តុកទំនេរ (Available)</span>
+              <strong class="fa-stat-value" id="fa-stat-in-stock">7,183</strong>
+            </div>
           </div>
+          <div class="fa-stat-card">
+            <div class="fa-stat-icon icon-purple">👥</div>
+            <div class="fa-stat-info">
+              <span class="fa-stat-label">បុគ្គលិកសរុប (Employees)</span>
+              <strong class="fa-stat-value" id="fa-stat-total-emp">615</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 10px;">
+          <!-- Quick Operations Card -->
+          <div class="fa-table-card" style="padding: 24px;">
+            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #f8fafc;">⚡ ប្រតិបត្តិការរហ័ស (Quick Actions)</h3>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">គ្រប់គ្រង និងតាមដានសម្ភារៈសាខាទាំង ២៩ ដោយរលូន និងលឿនរហ័សនៅលើ Cloudflare Edge</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+              <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.switchTab('items')">
+                🔍 ស្វែងរកសម្ភារៈ &amp; Barcode
+              </button>
+              <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.switchTab('employees')">
+                👥 មើលបុគ្គលិក &amp; សម្ភារៈកាន់កាប់
+              </button>
+              <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.switchTab('assignments')">
+                ✍️ ប្រគល់សម្ភារៈថ្មី
+              </button>
+            </div>
+          </div>
+
+          <!-- Cloud System Info Card -->
+          <div class="fa-table-card" style="padding: 24px;">
+            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #10b981;">☁️ ប្រព័ន្ធ Cloudflare D1 Serverless</h3>
+            <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 14px;">
+              ប្រព័ន្ធ Fixed Asset ដំណើរការលើ Cloudflare D1 ផ្ទាល់ (Region: APAC/Singapore) ដោយមិនចាំបាច់ដំណើរការ PHP/Laravel Server ឬបើក Port 8000 ឡើយ។
+            </p>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 8px 12px; border-radius: 8px;">
+              <span>✓</span> <strong>Single Sign-On Universal Session Active</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. ITEMS & BARCODES PANEL -->
+      <section class="fa-panel" id="fa-panel-items">
+        <div class="fa-toolbar">
+          <input type="text" id="fa-item-search-input" class="fa-search-input" placeholder="🔍 ស្វែងរកតាម Code, A-Code, ឈ្មោះ, ម៉ាក, ម៉ូឌែល...">
+          <select id="fa-item-status-filter" class="fa-select">
+            <option value="all">-- ស្ថានភាពទាំងអស់ (All Status) --</option>
+            <option value="in_stock">📦 ក្នុងស្តុក (Available)</option>
+            <option value="assigned">✓ បានបែងចែក (Assigned)</option>
+          </select>
+          <select id="fa-item-cat-filter" class="fa-select">
+            <option value="">-- គ្រប់ប្រភេទទាំងអស់ (All Categories) --</option>
+          </select>
+          <button type="button" class="btn btn-outline btn-sm" onclick="window.fixAssetUI.exportItemsExcel()">
+            📊 Export
+          </button>
+        </div>
+
+        <div class="fa-table-card">
+          <div class="fa-table-container">
+            <table class="fa-table">
+              <thead>
+                <tr>
+                  <th>លេខកូដ (Code)</th>
+                  <th>ឈ្មោះសម្ភារៈ (Item Details)</th>
+                  <th>ប្រភេទ (Category)</th>
+                  <th>ស្ថានភាព (Status)</th>
+                  <th>អ្នកកាន់កាប់ (Assigned To)</th>
+                  <th>តម្លៃ ($)</th>
+                  <th>សកម្មភាព (Actions)</th>
+                </tr>
+              </thead>
+              <tbody id="fa-items-table-body">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="fa-pagination">
+            <span id="fa-items-page-info">កំពុងទាញយកទិន្នន័យ...</span>
+            <div class="fa-page-btns">
+              <button type="button" class="btn btn-outline btn-sm" id="fa-items-prev-btn" onclick="window.fixAssetUI.prevItemsPage()">← ថយក្រោយ</button>
+              <button type="button" class="btn btn-outline btn-sm" id="fa-items-next-btn" onclick="window.fixAssetUI.nextItemsPage()">បន្ទាប់ →</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. EMPLOYEES PANEL -->
+      <section class="fa-panel" id="fa-panel-employees">
+        <div class="fa-toolbar">
+          <input type="text" id="fa-emp-search-input" class="fa-search-input" placeholder="🔍 ស្វែងរកតាមឈ្មោះបុគ្គលិក, អត្តលេខ, លេខទូរស័ព្ទ...">
+          <select id="fa-emp-branch-filter" class="fa-select">
+            <option value="">-- គ្រប់សាខាទាំងអស់ (All Branches) --</option>
+          </select>
+        </div>
+
+        <div class="fa-table-card">
+          <div class="fa-table-container">
+            <table class="fa-table">
+              <thead>
+                <tr>
+                  <th>អត្តលេខ</th>
+                  <th>ឈ្មោះបុគ្គលិក (Employee Name)</th>
+                  <th>តួនាទី (Role)</th>
+                  <th>សាខា (Branch)</th>
+                  <th>ផ្នែក (Department)</th>
+                  <th>សម្ភារៈកាន់កាប់ (Assigned Assets)</th>
+                </tr>
+              </thead>
+              <tbody id="fa-emp-table-body">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="fa-pagination">
+            <span id="fa-emp-page-info">ទិន្នន័យបុគ្គលិកសរុប 615 នាក់</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. ASSIGNMENTS PANEL -->
+      <section class="fa-panel" id="fa-panel-assignments">
+        <div class="fa-toolbar">
+          <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">កំណត់ត្រាប្រគល់-ទទួលសម្ភារៈ (Asset Assignments History)</span>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.fixAssetUI.openAssignModal('')">
+            ✍️ ប្រគល់សម្ភារៈ (Assign Asset)
+          </button>
+        </div>
+
+        <div class="fa-table-card">
+          <div class="fa-table-container">
+            <table class="fa-table">
+              <thead>
+                <tr>
+                  <th>លេខ Assignment</th>
+                  <th>បុគ្គលិកទទួល</th>
+                  <th>សាខា</th>
+                  <th>កាលបរិច្ឆេទ</th>
+                  <th>ស្ថានភាព</th>
+                  <th>កំណត់ចំណាំ</th>
+                </tr>
+              </thead>
+              <tbody id="fa-assign-table-body">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. GRN PANEL -->
+      <section class="fa-panel" id="fa-panel-grn">
+        <div class="fa-toolbar">
+          <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">កំណត់ត្រាបញ្ចូលស្តុក (Goods Received Notes - GRN)</span>
+        </div>
+
+        <div class="fa-table-card">
+          <div class="fa-table-container">
+            <table class="fa-table">
+              <thead>
+                <tr>
+                  <th>លេខប័ណ្ណ GRN</th>
+                  <th>អ្នកផ្គត់ផ្គង់ (Supplier)</th>
+                  <th>វិក្កយបត្រ / PO</th>
+                  <th>សាខាទទួល</th>
+                  <th>កាលបរិច្ឆេទ</th>
+                  <th>ស្ថានភាព</th>
+                </tr>
+              </thead>
+              <tbody id="fa-grn-table-body">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. BRANCHES PANEL -->
+      <section class="fa-panel" id="fa-panel-branches">
+        <div class="fa-toolbar">
+          <span style="font-weight: 600; font-size: 1rem; color: #f8fafc;">សាខាប្រតិបត្តិការក្រុមហ៊ុន BS Express ទាំង ២៩</span>
+        </div>
+
+        <div class="fa-table-card">
+          <div class="fa-table-container">
+            <table class="fa-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">#</th>
+                  <th>ឈ្មោះសាខា (Branch Name)</th>
+                  <th>កូដសាខា / Code</th>
+                  <th>ចំនួនបុគ្គលិកសរុប</th>
+                </tr>
+              </thead>
+              <tbody id="fa-branches-table-body">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Item Details Modal -->
+    <div class="fa-modal-overlay" id="fa-item-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title">ព័ត៌មានលម្អិតនៃសម្ភារៈ</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeItemDetailModal()">✕</button>
+        </div>
+        <div class="fa-modal-body" id="fa-item-modal-content">
+          <!-- Rendered dynamically -->
+        </div>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeItemDetailModal()">បិទ</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- =========================================================================
-       FIXED ASSET SETTINGS MODAL
-       ========================================================================= -->
-  <div class="modal-overlay" id="modal-fixasset-settings" style="display: none;">
-    <div class="modal-card modal-md">
-      <div class="modal-header">
-        <h3 class="modal-title" data-i18n="fixAssetServerSettings">ការកំណត់ Server Fixed Asset</h3>
-        <button type="button" class="modal-close-btn" onclick="window.bsApp && window.bsApp.closeFixAssetSettings()">✕</button>
-      </div>
-      <div class="modal-body">
-        <p class="modal-desc">កំណត់អាសយដ្ឋាន URL នៃប្រព័ន្ធ Fixed Asset (Laravel) ដែលកំពុងដំណើរការ៖</p>
-        <div class="form-item">
-          <label class="form-label" for="input-fixasset-url" data-i18n="fixAssetServerUrlLabel">Server URL</label>
-          <input type="text" id="input-fixasset-url" class="form-input" placeholder="http://localhost:8000">
+    <!-- Assign Modal -->
+    <div class="fa-modal-overlay" id="fa-assign-modal">
+      <div class="fa-modal-card">
+        <div class="fa-modal-header">
+          <h3 class="fa-modal-title">ប្រគល់សម្ភារៈជូនបុគ្គលិក</h3>
+          <button type="button" class="fa-modal-close" onclick="window.fixAssetUI.closeAssignModal()">✕</button>
         </div>
-        <div class="quick-url-presets">
-          <span class="preset-label">ជម្រើសរហ័ស៖</span>
-          <button type="button" class="btn-preset-pill" onclick="document.getElementById('input-fixasset-url').value = 'http://localhost:8000'">localhost:8000</button>
-          <button type="button" class="btn-preset-pill" onclick="document.getElementById('input-fixasset-url').value = 'http://127.0.0.1:8080'">127.0.0.1:8080</button>
-          <button type="button" class="btn-preset-pill" onclick="document.getElementById('input-fixasset-url').value = 'http://192.168.1.67:8000'">192.168.1.67:8000</button>
+        <div class="fa-modal-body">
+          <div class="form-item">
+            <label class="form-label" for="fa-assign-item-code">លេខកូដសម្ភារៈ (Asset Code):</label>
+            <input type="text" id="fa-assign-item-code" class="fa-search-input" placeholder="ឧទាហរណ៍៖ AC-000001" readonly>
+          </div>
+          <div class="form-item">
+            <label class="form-label" for="fa-assign-emp-name">ឈ្មោះបុគ្គលិកទទួល (Employee Name):</label>
+            <input type="text" id="fa-assign-emp-name" class="fa-search-input" placeholder="បញ្ចូលឈ្មោះបុគ្គលិកទទួលសម្ភារៈ...">
+          </div>
         </div>
-        <div class="settings-test-status" id="settings-test-status" style="display: none;"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline btn-sm" onclick="window.bsApp && window.bsApp.testFixAssetConnection()">⚡ ធ្វើតេស្តការតភ្ជាប់ (Test)</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="window.bsApp && window.bsApp.saveFixAssetSettings()" data-i18n="btnSaveSettings">រក្សាទុកការកំណត់</button>
+        <div class="fa-modal-footer">
+          <button type="button" class="btn btn-outline" onclick="window.fixAssetUI.closeAssignModal()">បោះបង់</button>
+          <button type="button" class="btn btn-primary" onclick="window.fixAssetUI.submitAssign()">✓ រក្សាទុកការប្រគល់</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2214,6 +2439,7 @@
   <script src="js/storage.js?v=20.8"></script>
   <script src="js/watermark.js?v=20.8"></script>
   <script src="js/export-util.js?v=20.8"></script>
+  <script src="js/fixasset-ui.js?v=21.0"></script>
   <script src="js/app.js?v=20.8"></script>
 
 </body>

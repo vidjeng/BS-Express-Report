@@ -19,8 +19,14 @@ import {
   saveBranchDraft,
   getFixAssetStats,
   getFixAssetBranches,
+  getFixAssetDepartments,
+  getFixAssetCategories,
   getFixAssetEmployees,
-  getFixAssetItems
+  getFixAssetItems,
+  getFixAssetAssignments,
+  assignFixAssetItem,
+  returnFixAssetItem,
+  getFixAssetGrn
 } from './db/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -217,18 +223,68 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { success: true, count: branches.length, branches });
       }
 
+      if (pathname === '/api/fixasset/departments') {
+        const departments = await getFixAssetDepartments();
+        return sendJson(res, 200, { success: true, count: departments.length, departments });
+      }
+
+      if (pathname === '/api/fixasset/categories') {
+        const data = await getFixAssetCategories();
+        return sendJson(res, 200, { success: true, ...data });
+      }
+
       if (pathname === '/api/fixasset/employees') {
+        const q = (urlObj.searchParams.get('q') || '').trim();
+        const branchId = urlObj.searchParams.get('branch_id');
         const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '100', 10), 1000);
-        const employees = await getFixAssetEmployees(limit);
+        const offset = Math.max(parseInt(urlObj.searchParams.get('offset') || '0', 10), 0);
+        const employees = await getFixAssetEmployees(q, branchId, limit, offset);
         return sendJson(res, 200, { success: true, count: employees.length, employees });
       }
 
       if (pathname === '/api/fixasset/items') {
-        const q = (urlObj.searchParams.get('q') || '').trim();
+        if (req.method === 'GET') {
+          const q = (urlObj.searchParams.get('q') || '').trim();
+          const status = (urlObj.searchParams.get('status') || 'all').toLowerCase();
+          const categoryId = urlObj.searchParams.get('category_id');
+          const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '50', 10), 200);
+          const offset = Math.max(parseInt(urlObj.searchParams.get('offset') || '0', 10), 0);
+          const result = await getFixAssetItems(q, status, categoryId, limit, offset);
+          return sendJson(res, 200, { success: true, total: result.total, limit, offset, items: result.items });
+        }
+      }
+
+      if (pathname === '/api/fixasset/assignments') {
+        if (req.method === 'GET') {
+          const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '50', 10), 200);
+          const assignments = await getFixAssetAssignments(limit);
+          return sendJson(res, 200, { success: true, count: assignments.length, assignments });
+        }
+        if (req.method === 'POST') {
+          const body = await parseJsonBody(req);
+          const { employee_name, item_code } = body;
+          if (!employee_name || !item_code) {
+            return sendJson(res, 400, { success: false, error: 'employee_name and item_code are required' });
+          }
+          await assignFixAssetItem(employee_name, item_code);
+          return sendJson(res, 200, { success: true, message: `Assigned ${item_code} to ${employee_name}` });
+        }
+      }
+
+      if (pathname === '/api/fixasset/return' && req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const { item_code } = body;
+        if (!item_code) {
+          return sendJson(res, 400, { success: false, error: 'item_code is required' });
+        }
+        await returnFixAssetItem(item_code);
+        return sendJson(res, 200, { success: true, message: `Returned ${item_code}` });
+      }
+
+      if (pathname === '/api/fixasset/grn') {
         const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '50', 10), 200);
-        const offset = Math.max(parseInt(urlObj.searchParams.get('offset') || '0', 10), 0);
-        const result = await getFixAssetItems(q, limit, offset);
-        return sendJson(res, 200, { success: true, total: result.total, limit, offset, items: result.items });
+        const grn = await getFixAssetGrn(limit);
+        return sendJson(res, 200, { success: true, count: grn.length, grn });
       }
 
       return sendJson(res, 404, { success: false, error: `Endpoint ${pathname} not found` });

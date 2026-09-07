@@ -8,22 +8,12 @@ echo            (Dedicated for Google Chrome)
 echo =======================================================
 echo.
 
-:: 1. Check and start Fixed Asset Laravel Server on Port 8000
-netstat -ano | findstr /R /C:":8000 .*LISTENING" >nul 2>&1
-if errorlevel 1 (
-  echo [1/2] Starting Fixed Asset System Server (Port 8000)...
-  start /min "BS Fixed Asset Server (Port 8000)" cmd /c "cd /d \"%~dp0fixasset\" && php artisan serve --host=0.0.0.0 --port=8000"
-  timeout /t 2 /nobreak >nul
-) else (
-  echo [1/2] Fixed Asset System Server is already running on Port 8000.
-)
-
-:: 2. Start Daily Report Node Server on Port 3000
-echo [2/2] Starting Daily Report Server (Port 3000)...
+:: 1. Start Unified BS Express System Server on Port 3000
+echo [1/1] Starting Unified BS Express Server (Port 3000)...
 echo.
-echo   🌐 Unified Portal:   http://localhost:3000
-echo   📦 Fixed Asset App:  http://localhost:8000
+echo   🌐 Unified System:   http://localhost:3000
 echo   📱 Local Network:    http://192.168.1.67:3000
+echo   ☁️ Cloudflare Live:  https://bs-express-report.pages.dev
 echo.
 
 :: Launch directly in Google Chrome App mode (Clean desktop window)

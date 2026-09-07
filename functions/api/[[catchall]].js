@@ -310,7 +310,8 @@ export async function onRequest(context) {
             (SELECT count(*) FROM employees) as total_employees,
             (SELECT count(*) FROM branches) as total_branches,
             (SELECT count(*) FROM item_masters) as total_masters,
-            (SELECT count(*) FROM asset_assignments) as total_assignments
+            (SELECT count(*) FROM asset_assignments) as total_assignments,
+            (SELECT count(*) FROM grns) as total_grn
         `).first();
         return json({ success: true, stats });
       } catch (e) {
@@ -320,8 +321,32 @@ export async function onRequest(context) {
 
     if (pathname === '/api/fixasset/branches') {
       try {
-        const { results } = await db.prepare("SELECT id, name, name_en, label FROM branches ORDER BY id ASC").all();
+        const { results } = await db.prepare(`
+          SELECT b.id, b.name, b.name_en, b.label,
+            (SELECT count(*) FROM employees e WHERE e.branch_id = b.id) as employee_count
+          FROM branches b
+          ORDER BY b.id ASC
+        `).all();
         return json({ success: true, count: results.length, branches: results });
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/departments') {
+      try {
+        const { results } = await db.prepare("SELECT id, name, name_en, label FROM departments ORDER BY id ASC").all();
+        return json({ success: true, count: results.length, departments: results });
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/categories') {
+      try {
+        const categories = await db.prepare("SELECT id, name, name_en, label FROM item_categories ORDER BY id ASC").all();
+        const types = await db.prepare("SELECT id, name, name_en, label, category_id FROM item_types ORDER BY id ASC").all();
+        return json({ success: true, categories: categories.results || [], types: types.results || [] });
       } catch (e) {
         return json({ success: false, error: e.message }, 500);
       }
@@ -329,9 +354,45 @@ export async function onRequest(context) {
 
     if (pathname === '/api/fixasset/employees') {
       try {
+        const q = (url.searchParams.get('q') || '').trim();
+        const branchId = url.searchParams.get('branch_id');
         const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10), 1000);
-        const { results } = await db.prepare("SELECT id, employee_code, employee_name, job_title, department_id, branch_id, status FROM employees ORDER BY id ASC LIMIT ?").bind(limit).all();
-        return json({ success: true, count: results.length, employees: results });
+        const offset = Math.max(parseInt(url.searchParams.get('offset') || '0', 10), 0);
+
+        let query = `
+          SELECT e.id, e.employee_code, e.employee_name, e.job_title, e.phone_number, e.email, e.status,
+                 b.name as branch_name, d.name as department_name,
+                 (SELECT count(*) FROM item_fixed_asset_codes c WHERE c.assigned_to = e.employee_name) as assigned_items_count
+          FROM employees e
+          LEFT JOIN branches b ON e.branch_id = b.id
+          LEFT JOIN departments d ON e.department_id = d.id
+        `;
+        let whereClauses = [];
+        let params = [];
+
+        if (q) {
+          whereClauses.push("(e.employee_code LIKE ? OR e.employee_name LIKE ? OR e.job_title LIKE ?)");
+          const f = `%${q}%`;
+          params.push(f, f, f);
+        }
+        if (branchId) {
+          whereClauses.push("e.branch_id = ?");
+          params.push(parseInt(branchId, 10));
+        }
+
+        if (whereClauses.length > 0) {
+          query += " WHERE " + whereClauses.join(" AND ");
+        }
+
+        query += " ORDER BY e.id ASC LIMIT ? OFFSET ?";
+        params.push(limit, offset);
+
+        const countQuery = `SELECT count(*) as total FROM employees e ${whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : ""}`;
+        const countStmt = params.length > 2 ? db.prepare(countQuery).bind(...params.slice(0, -2)) : db.prepare(countQuery);
+        const countRes = await countStmt.first();
+
+        const { results } = await db.prepare(query).bind(...params).all();
+        return json({ success: true, count: results.length, total: countRes ? countRes.total : results.length, employees: results });
       } catch (e) {
         return json({ success: false, error: e.message }, 500);
       }
@@ -339,38 +400,149 @@ export async function onRequest(context) {
 
     if (pathname === '/api/fixasset/items') {
       try {
-        const q = (url.searchParams.get('q') || '').trim();
-        const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 200);
-        const offset = Math.max(parseInt(url.searchParams.get('offset') || '0', 10), 0);
+        if (method === 'GET') {
+          const q = (url.searchParams.get('q') || '').trim();
+          const status = (url.searchParams.get('status') || 'all').toLowerCase();
+          const categoryId = url.searchParams.get('category_id');
+          const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 200);
+          const offset = Math.max(parseInt(url.searchParams.get('offset') || '0', 10), 0);
 
-        if (q) {
-          const filter = `%${q}%`;
-          const query = `
-            SELECT c.id, c.code, c.a_code, c.is_assigned, c.assigned_to, m.name as item_name, m.model, m.brand
-            FROM item_fixed_asset_codes c
-            LEFT JOIN item_masters m ON c.item_master_id = m.id
-            WHERE c.code LIKE ? OR c.a_code LIKE ? OR c.assigned_to LIKE ? OR m.name LIKE ?
-            ORDER BY c.id DESC LIMIT ? OFFSET ?
-          `;
+          let whereClauses = [];
+          let params = [];
+
+          if (q) {
+            whereClauses.push("(c.code LIKE ? OR c.a_code LIKE ? OR c.assigned_to LIKE ? OR m.name LIKE ? OR m.model LIKE ? OR m.brand LIKE ?)");
+            const filter = `%${q}%`;
+            params.push(filter, filter, filter, filter, filter, filter);
+          }
+
+          if (status === 'assigned') {
+            whereClauses.push("c.is_assigned = 1");
+          } else if (status === 'unassigned') {
+            whereClauses.push("c.is_assigned = 0");
+          }
+
+          if (categoryId) {
+            whereClauses.push("m.category_id = ?");
+            params.push(parseInt(categoryId, 10));
+          }
+
+          const whereSql = whereClauses.length > 0 ? " WHERE " + whereClauses.join(" AND ") : "";
+
           const countQuery = `
-            SELECT count(*) as total FROM item_fixed_asset_codes c
-            LEFT JOIN item_masters m ON c.item_master_id = m.id
-            WHERE c.code LIKE ? OR c.a_code LIKE ? OR c.assigned_to LIKE ? OR m.name LIKE ?
-          `;
-          const totalRes = await db.prepare(countQuery).bind(filter, filter, filter, filter).first();
-          const { results } = await db.prepare(query).bind(filter, filter, filter, filter, limit, offset).all();
-          return json({ success: true, total: totalRes ? totalRes.total : results.length, limit, offset, items: results });
-        } else {
-          const query = `
-            SELECT c.id, c.code, c.a_code, c.is_assigned, c.assigned_to, m.name as item_name, m.model, m.brand
+            SELECT count(*) as total
             FROM item_fixed_asset_codes c
             LEFT JOIN item_masters m ON c.item_master_id = m.id
+            ${whereSql}
+          `;
+          const countStmt = params.length > 0 ? db.prepare(countQuery).bind(...params) : db.prepare(countQuery);
+          const totalRes = await countStmt.first();
+
+          const dataQuery = `
+            SELECT c.id, c.code, c.a_code, c.is_assigned, c.assigned_to, c.created_at,
+                   m.name as item_name, m.model, m.brand, m.unit_price, m.unit_of_measure,
+                   cat.name as category_name
+            FROM item_fixed_asset_codes c
+            LEFT JOIN item_masters m ON c.item_master_id = m.id
+            LEFT JOIN item_categories cat ON m.category_id = cat.id
+            ${whereSql}
             ORDER BY c.id DESC LIMIT ? OFFSET ?
           `;
-          const totalRes = await db.prepare("SELECT count(*) as total FROM item_fixed_asset_codes").first();
-          const { results } = await db.prepare(query).bind(limit, offset).all();
+          const dataParams = [...params, limit, offset];
+          const { results } = await db.prepare(dataQuery).bind(...dataParams).all();
+
           return json({ success: true, total: totalRes ? totalRes.total : results.length, limit, offset, items: results });
         }
+
+        if (method === 'POST') {
+          const body = await request.json();
+          const { code, a_code, item_master_id, assigned_to } = body;
+          if (!code) {
+            return json({ success: false, error: 'Asset Code is required' }, 400);
+          }
+
+          const isAssigned = assigned_to && assigned_to.trim() ? 1 : 0;
+          await db.prepare(`
+            INSERT INTO item_fixed_asset_codes (code, a_code, item_master_id, is_assigned, assigned_to, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `).bind(code, a_code || null, item_master_id || 1, isAssigned, assigned_to || null).run();
+
+          return json({ success: true, message: 'Item created successfully' });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/assignments') {
+      try {
+        if (method === 'GET') {
+          const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 200);
+          const { results } = await db.prepare(`
+            SELECT a.id, a.assignment_no, a.assign_date, a.return_date, a.status, a.notes,
+                   e.employee_code, e.employee_name, b.name as branch_name
+            FROM asset_assignments a
+            LEFT JOIN employees e ON a.employee_id = e.id
+            LEFT JOIN branches b ON e.branch_id = b.id
+            ORDER BY a.id DESC LIMIT ?
+          `).bind(limit).all();
+          return json({ success: true, count: results.length, assignments: results });
+        }
+
+        if (method === 'POST') {
+          const body = await request.json();
+          const { employee_name, item_code } = body;
+          if (!employee_name || !item_code) {
+            return json({ success: false, error: 'Employee name and item code are required' }, 400);
+          }
+
+          await db.prepare(`
+            UPDATE item_fixed_asset_codes
+            SET is_assigned = 1, assigned_to = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE code = ? OR a_code = ?
+          `).bind(employee_name, item_code, item_code).run();
+
+          return json({ success: true, message: `Successfully assigned ${item_code} to ${employee_name}` });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/return') {
+      try {
+        if (method === 'POST') {
+          const body = await request.json();
+          const { item_code } = body;
+          if (!item_code) {
+            return json({ success: false, error: 'Item code is required' }, 400);
+          }
+
+          await db.prepare(`
+            UPDATE item_fixed_asset_codes
+            SET is_assigned = 0, assigned_to = NULL, updated_at = CURRENT_TIMESTAMP
+            WHERE code = ? OR a_code = ? OR id = ?
+          `).bind(item_code, item_code, item_code).run();
+
+          return json({ success: true, message: `Successfully marked ${item_code} as returned` });
+        }
+      } catch (e) {
+        return json({ success: false, error: e.message }, 500);
+      }
+    }
+
+    if (pathname === '/api/fixasset/grn') {
+      try {
+        const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 200);
+        const { results } = await db.prepare(`
+          SELECT g.id, g.grn_no, g.invoice_no, g.po_no, g.status, g.created_at,
+                 s.name as supplier_name, b.name as branch_name
+          FROM grns g
+          LEFT JOIN suppliers s ON g.supplier_id = s.id
+          LEFT JOIN branches b ON g.branch_id = b.id
+          ORDER BY g.id DESC LIMIT ?
+        `).bind(limit).all();
+        return json({ success: true, count: results.length, grn: results });
       } catch (e) {
         return json({ success: false, error: e.message }, 500);
       }

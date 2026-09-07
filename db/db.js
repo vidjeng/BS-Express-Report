@@ -458,53 +458,160 @@ export async function getFixAssetStats() {
       (SELECT count(*) FROM employees) as total_employees,
       (SELECT count(*) FROM branches) as total_branches,
       (SELECT count(*) FROM item_masters) as total_masters,
-      (SELECT count(*) FROM asset_assignments) as total_assignments;
+      (SELECT count(*) FROM asset_assignments) as total_assignments,
+      (SELECT count(*) FROM grns) as total_grn;
   `);
   return rows[0] || null;
 }
 
 export async function getFixAssetBranches() {
   if (!pool) return [];
-  const [rows] = await pool.query(`SELECT id, name, name_en, label FROM branches ORDER BY id ASC;`);
+  const [rows] = await pool.query(`
+    SELECT b.id, b.name, b.name_en, b.label,
+      (SELECT count(*) FROM employees e WHERE e.branch_id = b.id) as employee_count
+    FROM branches b
+    ORDER BY b.id ASC;
+  `);
   return rows;
 }
 
-export async function getFixAssetEmployees(limit = 100) {
+export async function getFixAssetDepartments() {
   if (!pool) return [];
-  const [rows] = await pool.query(`SELECT id, employee_code, employee_name, job_title, department_id, branch_id, status FROM employees ORDER BY id ASC LIMIT ?;`, [limit]);
+  const [rows] = await pool.query(`SELECT id, name, name_en, label FROM departments ORDER BY id ASC;`);
   return rows;
 }
 
-export async function getFixAssetItems(q = '', limit = 50, offset = 0) {
-  if (!pool) return { total: 0, items: [] };
+export async function getFixAssetCategories() {
+  if (!pool) return { categories: [], types: [] };
+  const [cats] = await pool.query(`SELECT id, name, name_en, label FROM item_categories ORDER BY id ASC;`);
+  const [types] = await pool.query(`SELECT id, name, name_en, label, category_id FROM item_types ORDER BY id ASC;`);
+  return { categories: cats, types };
+}
+
+export async function getFixAssetEmployees(q = '', branchId = null, limit = 100, offset = 0) {
+  if (!pool) return [];
+  let query = `
+    SELECT e.id, e.employee_code, e.employee_name, e.job_title, e.phone_number, e.email, e.status,
+           b.name as branch_name, d.name as department_name,
+           (SELECT count(*) FROM item_fixed_asset_codes c WHERE c.assigned_to = e.employee_name) as assigned_items_count
+    FROM employees e
+    LEFT JOIN branches b ON e.branch_id = b.id
+    LEFT JOIN departments d ON e.department_id = d.id
+  `;
+  const params = [];
+  const whereClauses = [];
+
   if (q) {
+    whereClauses.push("(e.employee_code LIKE ? OR e.employee_name LIKE ? OR e.job_title LIKE ?)");
     const filter = `%${q}%`;
-    const [countRows] = await pool.query(`
-      SELECT count(*) as total FROM item_fixed_asset_codes c
-      LEFT JOIN item_masters m ON c.item_master_id = m.id
-      WHERE c.code LIKE ? OR c.a_code LIKE ? OR c.assigned_to LIKE ? OR m.name LIKE ?;
-    `, [filter, filter, filter, filter]);
-
-    const [rows] = await pool.query(`
-      SELECT c.id, c.code, c.a_code, c.is_assigned, c.assigned_to, m.name as item_name, m.model, m.brand
-      FROM item_fixed_asset_codes c
-      LEFT JOIN item_masters m ON c.item_master_id = m.id
-      WHERE c.code LIKE ? OR c.a_code LIKE ? OR c.assigned_to LIKE ? OR m.name LIKE ?
-      ORDER BY c.id DESC LIMIT ? OFFSET ?;
-    `, [filter, filter, filter, filter, limit, offset]);
-
-    return { total: countRows[0]?.total || 0, items: rows };
-  } else {
-    const [countRows] = await pool.query(`SELECT count(*) as total FROM item_fixed_asset_codes;`);
-    const [rows] = await pool.query(`
-      SELECT c.id, c.code, c.a_code, c.is_assigned, c.assigned_to, m.name as item_name, m.model, m.brand
-      FROM item_fixed_asset_codes c
-      LEFT JOIN item_masters m ON c.item_master_id = m.id
-      ORDER BY c.id DESC LIMIT ? OFFSET ?;
-    `, [limit, offset]);
-
-    return { total: countRows[0]?.total || 0, items: rows };
+    params.push(filter, filter, filter);
   }
+  if (branchId) {
+    whereClauses.push("e.branch_id = ?");
+    params.push(parseInt(branchId, 10));
+  }
+
+  if (whereClauses.length > 0) {
+    query += " WHERE " + whereClauses.join(" AND ");
+  }
+
+  query += " ORDER BY e.id ASC LIMIT ? OFFSET ?;";
+  params.push(parseInt(limit, 10), parseInt(offset, 10));
+
+  const [rows] = await pool.query(query, params);
+  return rows;
+}
+
+export async function getFixAssetItems(q = '', status = 'all', categoryId = null, limit = 50, offset = 0) {
+  if (!pool) return { total: 0, items: [] };
+
+  const whereClauses = [];
+  const params = [];
+
+  if (q) {
+    whereClauses.push("(c.code LIKE ? OR c.a_code LIKE ? OR c.assigned_to LIKE ? OR m.name LIKE ? OR m.model LIKE ? OR m.brand LIKE ?)");
+    const filter = `%${q}%`;
+    params.push(filter, filter, filter, filter, filter, filter);
+  }
+
+  if (status === 'assigned') {
+    whereClauses.push("c.is_assigned = 1");
+  } else if (status === 'unassigned') {
+    whereClauses.push("c.is_assigned = 0");
+  }
+
+  if (categoryId) {
+    whereClauses.push("m.category_id = ?");
+    params.push(parseInt(categoryId, 10));
+  }
+
+  const whereSql = whereClauses.length > 0 ? " WHERE " + whereClauses.join(" AND ") : "";
+
+  const [countRows] = await pool.query(`
+    SELECT count(*) as total
+    FROM item_fixed_asset_codes c
+    LEFT JOIN item_masters m ON c.item_master_id = m.id
+    ${whereSql};
+  `, params);
+
+  const [rows] = await pool.query(`
+    SELECT c.id, c.code, c.a_code, c.is_assigned, c.assigned_to, c.created_at,
+           m.name as item_name, m.model, m.brand, m.unit_price, m.unit_of_measure,
+           cat.name as category_name
+    FROM item_fixed_asset_codes c
+    LEFT JOIN item_masters m ON c.item_master_id = m.id
+    LEFT JOIN item_categories cat ON m.category_id = cat.id
+    ${whereSql}
+    ORDER BY c.id DESC LIMIT ? OFFSET ?;
+  `, [...params, parseInt(limit, 10), parseInt(offset, 10)]);
+
+  return { total: countRows[0]?.total || 0, items: rows };
+}
+
+export async function getFixAssetAssignments(limit = 50) {
+  if (!pool) return [];
+  const [rows] = await pool.query(`
+    SELECT a.id, a.assignment_no, a.assign_date, a.return_date, a.status, a.notes,
+           e.employee_code, e.employee_name, b.name as branch_name
+    FROM asset_assignments a
+    LEFT JOIN employees e ON a.employee_id = e.id
+    LEFT JOIN branches b ON e.branch_id = b.id
+    ORDER BY a.id DESC LIMIT ?;
+  `, [parseInt(limit, 10)]);
+  return rows;
+}
+
+export async function assignFixAssetItem(employeeName, itemCode) {
+  if (!pool) return false;
+  await pool.query(`
+    UPDATE item_fixed_asset_codes
+    SET is_assigned = 1, assigned_to = ?, updated_at = NOW()
+    WHERE code = ? OR a_code = ?;
+  `, [employeeName, itemCode, itemCode]);
+  return true;
+}
+
+export async function returnFixAssetItem(itemCode) {
+  if (!pool) return false;
+  await pool.query(`
+    UPDATE item_fixed_asset_codes
+    SET is_assigned = 0, assigned_to = NULL, updated_at = NOW()
+    WHERE code = ? OR a_code = ?;
+  `, [itemCode, itemCode]);
+  return true;
+}
+
+export async function getFixAssetGrn(limit = 50) {
+  if (!pool) return [];
+  const [rows] = await pool.query(`
+    SELECT g.id, g.grn_no, g.invoice_no, g.po_no, g.status, g.created_at,
+           s.name as supplier_name, b.name as branch_name
+    FROM grns g
+    LEFT JOIN suppliers s ON g.supplier_id = s.id
+    LEFT JOIN branches b ON g.branch_id = b.id
+    ORDER BY g.id DESC LIMIT ?;
+  `, [parseInt(limit, 10)]);
+  return rows;
 }
 
 function safeParseJson(str, fallback) {
