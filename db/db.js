@@ -568,25 +568,32 @@ export async function deleteFixAssetType(id) {
 
 export async function getFixAssetSuppliers() {
   if (!pool) return [];
-  const [rows] = await pool.query(`SELECT id, name, phone, email, address, created_at FROM suppliers ORDER BY id ASC;`);
+  const [rows] = await pool.query(`
+    SELECT s.id, s.name, s.phone, s.email, s.address, s.contact_person, s.created_at,
+           COUNT(g.id) as grn_count
+    FROM suppliers s
+    LEFT JOIN grns g ON g.supplier_id = s.id
+    GROUP BY s.id, s.name, s.phone, s.email, s.address, s.contact_person, s.created_at
+    ORDER BY s.id ASC;
+  `);
   return rows;
 }
 
 export async function createFixAssetSupplier(data) {
   if (!pool) return false;
   const [res] = await pool.query(`
-    INSERT INTO suppliers (name, phone, email, address, created_at, updated_at)
-    VALUES (?, ?, ?, ?, NOW(), NOW())
-  `, [data.name, data.phone || null, data.email || null, data.address || null]);
+    INSERT INTO suppliers (name, phone, email, address, contact_person, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+  `, [data.name, data.phone || null, data.email || null, data.address || null, data.contact_person || null]);
   return res.insertId;
 }
 
 export async function updateFixAssetSupplier(data) {
   if (!pool) return false;
   await pool.query(`
-    UPDATE suppliers SET name = ?, phone = ?, email = ?, address = ?, updated_at = NOW()
+    UPDATE suppliers SET name = ?, phone = ?, email = ?, address = ?, contact_person = ?, updated_at = NOW()
     WHERE id = ?
-  `, [data.name, data.phone || null, data.email || null, data.address || null, data.id]);
+  `, [data.name, data.phone || null, data.email || null, data.address || null, data.contact_person || null, data.id]);
   return true;
 }
 

@@ -54,8 +54,8 @@
   --radius-full: 9999px;
 
   /* Typography */
-  --font-sans: 'Inter', 'Kantumruy Pro', system-ui, -apple-system, sans-serif;
-  --font-khmer: 'Kantumruy Pro', 'Battambang', system-ui, sans-serif;
+  --font-sans: 'Khmer OS Siemreap', 'Siemreap', 'Kantumruy Pro', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-khmer: 'Khmer OS Siemreap', 'Siemreap', 'Kantumruy Pro', 'Battambang', system-ui, sans-serif;
   --font-moul: 'Moul', serif;
   --font-mono: 'JetBrains Mono', monospace;
 
@@ -115,7 +115,7 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-khmer), var(--font-sans);
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   line-height: 1.6;
@@ -123,6 +123,10 @@ body {
   -webkit-font-smoothing: antialiased;
   position: relative;
   overflow-x: hidden;
+}
+
+input, select, textarea, button, optgroup, table {
+  font-family: var(--font-khmer), var(--font-sans);
 }
 
 /* Ambient Company Blue & Red Glow */

@@ -69,7 +69,7 @@ body.dark-mode {
   z-index: 9999;
   background: var(--fa-bg);
   color: var(--fa-fg);
-  font-family: 'Inter', 'Kantumruy Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Khmer OS Siemreap', 'Siemreap', 'Inter', 'Kantumruy Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow: hidden;
   display: none;
   flex-direction: row;
@@ -1086,4 +1086,402 @@ body.dark-mode {
 .fa-modal-card-lg {
   max-width: 720px;
 }
+
+/* ==========================================================================
+   SUPPLIERS MODULE ENHANCEMENTS (Professional Enterprise Design)
+   ========================================================================== */
+.fa-sup-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fa-sup-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.fa-sup-kpi-card {
+  background: var(--fa-card);
+  border: 1px solid var(--fa-border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.fa-sup-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.fa-sup-kpi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fa-sup-kpi-title {
+  font-size: 0.8rem;
+  color: var(--fa-muted-fg);
+  font-weight: 500;
+}
+
+.fa-sup-kpi-val {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--fa-fg);
+  line-height: 1.2;
+}
+
+.fa-sup-kpi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  width: fit-content;
+}
+
+.fa-sup-kpi-badge.blue {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.fa-sup-kpi-badge.green {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.fa-sup-kpi-badge.purple {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+}
+
+.fa-sup-kpi-badge.amber {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.fa-sup-kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fa-sup-kpi-icon.blue {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+.fa-sup-kpi-icon.green {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.fa-sup-kpi-icon.purple {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+
+.fa-sup-kpi-icon.amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+/* Filter pills */
+.fa-sup-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.fa-sup-pill {
+  border: 1px solid var(--fa-border);
+  background: var(--fa-bg);
+  color: var(--fa-muted-fg);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.fa-sup-pill:hover {
+  border-color: var(--fa-fg);
+  color: var(--fa-fg);
+}
+
+.fa-sup-pill.active {
+  background: var(--fa-fg);
+  color: var(--fa-bg);
+  border-color: var(--fa-fg);
+}
+
+.fa-sup-pill-count {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 6px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+}
+
+.fa-sup-pill.active .fa-sup-pill-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--fa-bg);
+}
+
+/* Company Cell with Avatar Initial */
+.fa-sup-company-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fa-sup-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: white;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.fa-sup-company-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fa-sup-company-name {
+  font-weight: 600;
+  color: var(--fa-fg);
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.fa-sup-company-name:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.fa-sup-company-meta {
+  font-size: 0.75rem;
+  color: var(--fa-muted-fg);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fa-sup-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Contact Links */
+.fa-sup-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--fa-fg);
+  text-decoration: none;
+  font-size: 0.84rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.fa-sup-link:hover {
+  background: var(--fa-muted);
+  color: #2563eb;
+}
+
+.fa-sup-grn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  font-weight: 600;
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.fa-sup-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.fa-sup-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--fa-border);
+  background: var(--fa-bg);
+  color: var(--fa-fg);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fa-sup-action-btn:hover {
+  background: var(--fa-muted);
+  border-color: var(--fa-fg);
+}
+
+.fa-sup-action-btn.view:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.fa-sup-action-btn.edit:hover {
+  border-color: #059669;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.fa-sup-action-btn.delete:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+/* Details Modal Styling */
+.fa-sup-details-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--fa-muted);
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.fa-sup-details-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.fa-sup-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .fa-sup-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fa-sup-detail-item {
+  background: var(--fa-bg);
+  border: 1px solid var(--fa-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.fa-sup-detail-label {
+  font-size: 0.74rem;
+  color: var(--fa-muted-fg);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.fa-sup-detail-value {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--fa-fg);
+  word-break: break-word;
+}
+
+/* Avatar Gradients & Table Utilities */
+.fa-sup-avatar-blue { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.fa-sup-avatar-purple { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+.fa-sup-avatar-emerald { background: linear-gradient(135deg, #059669, #047857); }
+.fa-sup-avatar-amber { background: linear-gradient(135deg, #d97706, #b45309); }
+.fa-sup-avatar-rose { background: linear-gradient(135deg, #e11d48, #be123c); }
+.fa-sup-avatar-cyan { background: linear-gradient(135deg, #0891b2, #0e7490); }
+.fa-sup-avatar-indigo { background: linear-gradient(135deg, #4f46e5, #4338ca); }
+
+.fa-col-w50 {
+  width: 50px;
+  text-align: center;
+}
+
+.fa-col-actions-right {
+  text-align: right;
+  width: 170px;
+}
+
+.fa-table-empty-cell {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--fa-muted-fg);
+  font-size: 0.92rem;
+}
+
+.fa-text-muted-cell {
+  color: var(--fa-muted-fg);
+}
+
+.fa-text-center {
+  text-align: center;
+}
+
+.fa-grn-count-zero {
+  opacity: 0.55;
+  background: var(--fa-muted);
+  color: var(--fa-muted-fg);
+}
+
+
 

@@ -39,6 +39,8 @@ class BSExpressFixAssetUI {
     this.grnList = [];
 
     this.searchDebounceTimer = null;
+    this.supplierFilter = 'all';
+    this.supplierSearchQuery = '';
     this.isInitialized = false;
   }
 
@@ -272,10 +274,11 @@ class BSExpressFixAssetUI {
     const supSearch = document.getElementById('fa-supplier-search-input');
     if (supSearch) {
       supSearch.addEventListener('input', (e) => {
-        const q = e.target.value.toLowerCase().trim();
-        this.renderSuppliersTable(this.suppliers.filter(s =>
-          (s.name || '').toLowerCase().includes(q) || (s.phone || '').includes(q)
-        ));
+        clearTimeout(this.searchDebounceTimer);
+        this.searchDebounceTimer = setTimeout(() => {
+          this.supplierSearchQuery = e.target.value.toLowerCase().trim();
+          this.applySupplierFilters();
+        }, 250);
       });
     }
 
@@ -1669,46 +1672,274 @@ class BSExpressFixAssetUI {
       const data = await res.json();
       if (data.success && data.suppliers) {
         this.suppliers = data.suppliers;
-        this.renderSuppliersTable(data.suppliers);
+        this.updateSupplierKpis(data.suppliers);
+        this.applySupplierFilters();
       }
     } catch (e) {}
+  }
+
+  updateSupplierKpis(suppliers) {
+    const total = suppliers.length;
+    const phoneCount = suppliers.filter(s => s.phone && s.phone.trim() !== '').length;
+    const emailCount = suppliers.filter(s => s.email && s.email.trim() !== '').length;
+    const grnCount = suppliers.reduce((acc, s) => acc + (parseInt(s.grn_count || 0, 10) || 0), 0);
+    const withGrnCount = suppliers.filter(s => (parseInt(s.grn_count || 0, 10) || 0) > 0).length;
+
+    const elTotal = document.getElementById('fa-kpi-sup-total');
+    const elPhone = document.getElementById('fa-kpi-sup-phone');
+    const elEmail = document.getElementById('fa-kpi-sup-email');
+    const elGrn = document.getElementById('fa-kpi-sup-grn');
+
+    if (elTotal) elTotal.textContent = total;
+    if (elPhone) elPhone.textContent = phoneCount;
+    if (elEmail) elEmail.textContent = emailCount;
+    if (elGrn) elGrn.textContent = grnCount;
+
+    const pillAll = document.getElementById('fa-pill-sup-all');
+    const pillPhone = document.getElementById('fa-pill-sup-phone');
+    const pillEmail = document.getElementById('fa-pill-sup-email');
+    const pillGrn = document.getElementById('fa-pill-sup-grn');
+
+    if (pillAll) pillAll.textContent = total;
+    if (pillPhone) pillPhone.textContent = phoneCount;
+    if (pillEmail) pillEmail.textContent = emailCount;
+    if (pillGrn) pillGrn.textContent = withGrnCount;
+  }
+
+  filterSuppliers(filterType) {
+    this.supplierFilter = filterType;
+    document.querySelectorAll('.fa-sup-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.getAttribute('data-sup-filter') === filterType);
+    });
+    this.applySupplierFilters();
+  }
+
+  applySupplierFilters() {
+    if (!this.suppliers) return;
+    let list = [...this.suppliers];
+
+    // Category filter
+    if (this.supplierFilter === 'has_phone') {
+      list = list.filter(s => s.phone && s.phone.trim() !== '');
+    } else if (this.supplierFilter === 'has_email') {
+      list = list.filter(s => s.email && s.email.trim() !== '');
+    } else if (this.supplierFilter === 'has_grn') {
+      list = list.filter(s => (parseInt(s.grn_count || 0, 10) || 0) > 0);
+    }
+
+    // Search query filter
+    if (this.supplierSearchQuery) {
+      const q = this.supplierSearchQuery;
+      list = list.filter(s =>
+        (s.name || '').toLowerCase().includes(q) ||
+        (s.contact_person || '').toLowerCase().includes(q) ||
+        (s.phone || '').toLowerCase().includes(q) ||
+        (s.email || '').toLowerCase().includes(q) ||
+        (s.address || '').toLowerCase().includes(q)
+      );
+    }
+
+    this.renderSuppliersTable(list);
+  }
+
+  getSupplierInitials(name) {
+    if (!name) return 'SP';
+    const words = name.trim().split(/\s+/);
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   }
 
   renderSuppliersTable(suppliers) {
     const tbody = document.getElementById('fa-suppliers-table-body');
     const sub = document.getElementById('fa-suppliers-subtitle');
-    if (sub) sub.textContent = `${suppliers.length} សរុប`;
+    if (sub) sub.textContent = `${suppliers.length} ដៃគូផ្គត់ផ្គង់`;
     if (!tbody) return;
+
     if (suppliers.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 40px; color: var(--fa-muted-fg);">គ្មានទិន្នន័យអ្នកផ្គត់ផ្គង់ទេ</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="fa-table-empty-cell">គ្មានទិន្នន័យអ្នកផ្គត់ផ្គង់ត្រូវគ្នានឹងការស្វែងរកទេ</td></tr>';
       return;
     }
-    tbody.innerHTML = suppliers.map((s, idx) => `
-      <tr>
-        <td style="color: var(--fa-muted-fg); width: 40px;">${idx + 1}</td>
-        <td class="font-medium">${this.escapeHtml(s.name || '')}</td>
-        <td>${this.escapeHtml(s.phone || '—')}</td>
-        <td>${this.escapeHtml(s.email || '—')}</td>
-        <td style="color: var(--fa-muted-fg);">${this.escapeHtml(s.address || '—')}</td>
-        <td>
-          <div style="display: flex; gap: 4px;">
-            <button type="button" class="fa-btn-ghost" onclick="window.fixAssetUI.openEditSupplierModal(${JSON.stringify(s).replace(/"/g, '&quot;')})" title="កែប្រែ">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;margin-right:4px;"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
-              កែប្រែ
-            </button>
-            <button type="button" class="fa-btn-ghost fa-btn-destructive" onclick="window.fixAssetUI.deleteSupplier(${s.id})" title="លុប">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;margin-right:4px;"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-              លុប
-            </button>
+
+    const colors = ['blue', 'purple', 'emerald', 'amber', 'rose', 'cyan', 'indigo'];
+
+    tbody.innerHTML = suppliers.map((s, idx) => {
+      const colorClass = `fa-sup-avatar-${colors[(s.id || idx) % colors.length]}`;
+      const initials = this.getSupplierInitials(s.name);
+      const grnCount = parseInt(s.grn_count || 0, 10) || 0;
+      const sJson = JSON.stringify(s).replace(/"/g, '&quot;');
+
+      return `
+        <tr>
+          <td class="fa-text-muted-cell fa-col-w50">${idx + 1}</td>
+          <td class="font-medium">
+            <div class="fa-sup-company-cell">
+              <div class="fa-sup-avatar ${colorClass}">${this.escapeHtml(initials)}</div>
+              <div class="fa-sup-company-info">
+                <div class="fa-sup-company-name" onclick="window.fixAssetUI.openSupplierDetailsModal(${s.id})" title="ចុចដើម្បីមើលព័ត៌មានលម្អិត">
+                  ${this.escapeHtml(s.name || '')}
+                </div>
+                <div class="fa-sup-company-meta">
+                  ${grnCount > 0 ? '<span class="fa-sup-verified-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> ដៃគូសកម្ម</span>' : '<span class="fa-text-muted-cell">ID: #' + s.id + '</span>'}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>${s.contact_person ? this.escapeHtml(s.contact_person) : '<span class="fa-text-muted-cell">—</span>'}</td>
+          <td>
+            ${s.phone ? `
+              <a href="tel:${this.escapeHtml(s.phone)}" class="fa-sup-link" title="Call">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span>${this.escapeHtml(s.phone)}</span>
+              </a>` : '<span class="fa-text-muted-cell">—</span>'}
+          </td>
+          <td>
+            ${s.email ? `
+              <a href="mailto:${this.escapeHtml(s.email)}" class="fa-sup-link" title="Email">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <span>${this.escapeHtml(s.email)}</span>
+              </a>` : '<span class="fa-text-muted-cell">—</span>'}
+          </td>
+          <td class="fa-text-muted-cell">${this.escapeHtml(s.address || '—')}</td>
+          <td class="fa-text-center">
+            <span class="fa-sup-grn-badge ${grnCount === 0 ? 'fa-grn-count-zero' : ''}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              <span>${grnCount}</span>
+            </span>
+          </td>
+          <td>
+            <div class="fa-sup-actions">
+              <button type="button" class="fa-sup-action-btn view" onclick="window.fixAssetUI.openSupplierDetailsModal(${s.id})" title="មើលលម្អិត">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span>លម្អិត</span>
+              </button>
+              <button type="button" class="fa-sup-action-btn edit" onclick="window.fixAssetUI.openEditSupplierModal(${sJson})" title="កែប្រែ">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
+                <span>កែប្រែ</span>
+              </button>
+              <button type="button" class="fa-sup-action-btn delete" onclick="window.fixAssetUI.deleteSupplier(${s.id})" title="លុប">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                <span>លុប</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  openSupplierDetailsModal(supplierId) {
+    const s = (this.suppliers || []).find(item => Number(item.id) === Number(supplierId));
+    if (!s) return;
+    const body = document.getElementById('fa-sup-details-body');
+    if (!body) return;
+
+    const colors = ['blue', 'purple', 'emerald', 'amber', 'rose', 'cyan', 'indigo'];
+    const colorClass = `fa-sup-avatar-${colors[(s.id || 0) % colors.length]}`;
+    const initials = this.getSupplierInitials(s.name);
+    const grnCount = parseInt(s.grn_count || 0, 10) || 0;
+
+    body.innerHTML = `
+      <div class="fa-sup-details-banner">
+        <div class="fa-sup-details-avatar ${colorClass}">${this.escapeHtml(initials)}</div>
+        <div>
+          <h2 class="fa-page-title">${this.escapeHtml(s.name || '')}</h2>
+          <div class="fa-sup-company-meta">
+            <span>កូដអ្នកផ្គត់ផ្គង់: <strong>#SUP-${String(s.id).padStart(4, '0')}</strong></span>
+            ${grnCount > 0 ? '<span class="fa-sup-verified-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> ដៃគូសកម្ម (Active Vendor)</span>' : ''}
           </div>
-        </td>
-      </tr>
-    `).join('');
+        </div>
+      </div>
+
+      <div class="fa-sup-details-grid">
+        <div class="fa-sup-detail-item">
+          <div class="fa-sup-detail-label">អ្នកតំណាង / ទំនាក់ទំនង</div>
+          <div class="fa-sup-detail-value">${s.contact_person ? this.escapeHtml(s.contact_person) : '<span class="fa-text-muted-cell">មិនទាន់បញ្ជាក់</span>'}</div>
+        </div>
+        <div class="fa-sup-detail-item">
+          <div class="fa-sup-detail-label">លេខទូរស័ព្ទផ្លូវការ</div>
+          <div class="fa-sup-detail-value">
+            ${s.phone ? `<a href="tel:${this.escapeHtml(s.phone)}" class="fa-sup-link">📞 ${this.escapeHtml(s.phone)}</a>` : '<span class="fa-text-muted-cell">មិនមាន</span>'}
+          </div>
+        </div>
+        <div class="fa-sup-detail-item">
+          <div class="fa-sup-detail-label">អ៊ីមែលក្រុមហ៊ុន</div>
+          <div class="fa-sup-detail-value">
+            ${s.email ? `<a href="mailto:${this.escapeHtml(s.email)}" class="fa-sup-link">✉️ ${this.escapeHtml(s.email)}</a>` : '<span class="fa-text-muted-cell">មិនមាន</span>'}
+          </div>
+        </div>
+        <div class="fa-sup-detail-item">
+          <div class="fa-sup-detail-label">ប្រតិបត្តិការទំនិញចូល (GRN)</div>
+          <div class="fa-sup-detail-value">
+            <span class="fa-sup-grn-badge ${grnCount === 0 ? 'fa-grn-count-zero' : ''}">📦 ${grnCount} ប័ណ្ណទទួលទំនិញ</span>
+          </div>
+        </div>
+        <div class="fa-sup-detail-item">
+          <div class="fa-sup-detail-label">អាសយដ្ឋានទីតាំង</div>
+          <div class="fa-sup-detail-value">${s.address ? this.escapeHtml(s.address) : '<span class="fa-text-muted-cell">មិនមាន</span>'}</div>
+        </div>
+        <div class="fa-sup-detail-item">
+          <div class="fa-sup-detail-label">កាលបរិច្ឆេទបង្កើតក្នុងប្រព័ន្ធ</div>
+          <div class="fa-sup-detail-value">${s.created_at ? this.escapeHtml(new Date(s.created_at).toLocaleDateString('km-KH')) : '—'}</div>
+        </div>
+      </div>
+    `;
+
+    const editBtn = document.getElementById('fa-sup-details-edit-btn');
+    if (editBtn) {
+      editBtn.onclick = () => {
+        this.closeSupplierDetailsModal();
+        this.openEditSupplierModal(s);
+      };
+    }
+
+    const modal = document.getElementById('fa-supplier-details-modal');
+    if (modal) modal.classList.add('active');
+  }
+
+  closeSupplierDetailsModal() {
+    const modal = document.getElementById('fa-supplier-details-modal');
+    if (modal) modal.classList.remove('active');
+  }
+
+  exportSuppliersCSV() {
+    if (!this.suppliers || this.suppliers.length === 0) {
+      return this.showToast('គ្មានទិន្នន័យអ្នកផ្គត់ផ្គង់សម្រាប់នាំចេញទេ!', 'warning');
+    }
+
+    const headers = ['#', 'កូដ', 'ឈ្មោះក្រុមហ៊ុន/អ្នកផ្គត់ផ្គង់', 'អ្នកតំណាង', 'លេខទូរស័ព្ទ', 'អ៊ីមែល', 'អាសយដ្ឋាន', 'ចំនួនទំនិញចូល (GRN)', 'កាលបរិច្ឆេទបង្កើត'];
+    const rows = this.suppliers.map((s, idx) => [
+      idx + 1,
+      `SUP-${String(s.id).padStart(4, '0')}`,
+      `"${(s.name || '').replace(/"/g, '""')}"`,
+      `"${(s.contact_person || '').replace(/"/g, '""')}"`,
+      `"${(s.phone || '').replace(/"/g, '""')}"`,
+      `"${(s.email || '').replace(/"/g, '""')}"`,
+      `"${(s.address || '').replace(/"/g, '""')}"`,
+      parseInt(s.grn_count || 0, 10) || 0,
+      `"${s.created_at ? new Date(s.created_at).toLocaleDateString('km-KH') : ''}"`
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `BS_Suppliers_${dateStr}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.showToast('បាននាំចេញឯកសារ CSV អ្នកផ្គត់ផ្គង់ដោយជោគជ័យ!', 'success');
   }
 
   openCreateSupplierModal() {
     document.getElementById('fa-modal-sup-id').value = '';
     document.getElementById('fa-modal-sup-name').value = '';
+    const contactEl = document.getElementById('fa-modal-sup-contact');
+    if (contactEl) contactEl.value = '';
     document.getElementById('fa-modal-sup-phone').value = '';
     document.getElementById('fa-modal-sup-email').value = '';
     document.getElementById('fa-modal-sup-addr').value = '';
@@ -1719,6 +1950,8 @@ class BSExpressFixAssetUI {
   openEditSupplierModal(s) {
     document.getElementById('fa-modal-sup-id').value = s.id;
     document.getElementById('fa-modal-sup-name').value = s.name || '';
+    const contactEl = document.getElementById('fa-modal-sup-contact');
+    if (contactEl) contactEl.value = s.contact_person || '';
     document.getElementById('fa-modal-sup-phone').value = s.phone || '';
     document.getElementById('fa-modal-sup-email').value = s.email || '';
     document.getElementById('fa-modal-sup-addr').value = s.address || '';
@@ -1734,12 +1967,14 @@ class BSExpressFixAssetUI {
   async saveSupplier() {
     const id = document.getElementById('fa-modal-sup-id').value;
     const name = document.getElementById('fa-modal-sup-name').value.trim();
+    const contactEl = document.getElementById('fa-modal-sup-contact');
+    const contact_person = contactEl ? contactEl.value.trim() : '';
     const phone = document.getElementById('fa-modal-sup-phone').value.trim();
     const email = document.getElementById('fa-modal-sup-email').value.trim();
     const address = document.getElementById('fa-modal-sup-addr').value.trim();
 
     if (!name) return this.showToast('សូមបញ្ចូលឈ្មោះអ្នកផ្គត់ផ្គង់!', 'warning');
-    const payload = { id, name, phone, email, address };
+    const payload = { id, name, contact_person, phone, email, address };
     const method = id ? 'PUT' : 'POST';
 
     try {

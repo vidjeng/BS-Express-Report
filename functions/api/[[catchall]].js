@@ -501,23 +501,43 @@ export async function onRequest(context) {
       try {
         if (method === 'GET') {
           try {
-            const { results } = await db.prepare("SELECT id, name, phone, email, address, created_at FROM suppliers ORDER BY id ASC").all();
+            const { results } = await db.prepare(`
+              SELECT s.id, s.name, s.phone, s.email, s.address, s.contact_person, s.created_at,
+                     COUNT(g.id) as grn_count
+              FROM suppliers s
+              LEFT JOIN grns g ON g.supplier_id = s.id
+              GROUP BY s.id, s.name, s.phone, s.email, s.address, s.contact_person, s.created_at
+              ORDER BY s.id ASC
+            `).all();
             return json({ success: true, count: results.length, suppliers: results });
           } catch (d1Err) {
-            return json({ success: true, count: fallbackData.suppliers.length, suppliers: fallbackData.suppliers, fallback: true });
+            try {
+              const { results } = await db.prepare("SELECT id, name, phone, email, address, contact_person, created_at FROM suppliers ORDER BY id ASC").all();
+              return json({ success: true, count: results.length, suppliers: results });
+            } catch (err2) {
+              return json({ success: true, count: fallbackData.suppliers.length, suppliers: fallbackData.suppliers, fallback: true });
+            }
           }
         }
         if (method === 'POST') {
           const body = await request.json();
-          const { name, phone, email, address } = body;
+          const { name, phone, email, address, contact_person } = body;
           if (!name) return json({ success: false, error: 'Supplier name required' }, 400);
-          await db.prepare("INSERT INTO suppliers (name, phone, email, address, created_at, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, phone || null, email || null, address || null).run();
+          try {
+            await db.prepare("INSERT INTO suppliers (name, phone, email, address, contact_person, created_at, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, phone || null, email || null, address || null, contact_person || null).run();
+          } catch (e) {
+            await db.prepare("INSERT INTO suppliers (name, phone, email, address, created_at, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(name, phone || null, email || null, address || null).run();
+          }
           return json({ success: true, message: 'Supplier created' });
         }
         if (method === 'PUT') {
           const body = await request.json();
-          const { id, name, phone, email, address } = body;
-          await db.prepare("UPDATE suppliers SET name = ?, phone = ?, email = ?, address = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, phone || null, email || null, address || null, id).run();
+          const { id, name, phone, email, address, contact_person } = body;
+          try {
+            await db.prepare("UPDATE suppliers SET name = ?, phone = ?, email = ?, address = ?, contact_person = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, phone || null, email || null, address || null, contact_person || null, id).run();
+          } catch (e) {
+            await db.prepare("UPDATE suppliers SET name = ?, phone = ?, email = ?, address = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, phone || null, email || null, address || null, id).run();
+          }
           return json({ success: true, message: 'Supplier updated' });
         }
         if (method === 'DELETE') {
