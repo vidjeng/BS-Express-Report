@@ -1,0 +1,8 @@
+name = "bs-express-report"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bs-express-db"
+database_id = "87582571-67de-42d6-8c66-feedaa908b6d"

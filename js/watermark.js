@@ -19,8 +19,8 @@ const WatermarkUtil = {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
 
-          // Limit max dimensions for performance and storage
-          const maxDim = 1200;
+          // Limit max dimensions for high performance and lightweight storage (enables unlimited uploads)
+          const maxDim = meta.maxDim || 960;
           let width = img.width;
           let height = img.height;
 
@@ -104,7 +104,8 @@ const WatermarkUtil = {
           ctx.fillText(line2, posX + padX + 6, posY + padY + fontSize + lineGap);
           ctx.restore();
 
-          resolve(canvas.toDataURL('image/jpeg', 0.88));
+          const quality = typeof meta.quality === 'number' ? meta.quality : 0.72;
+          resolve(canvas.toDataURL('image/jpeg', quality));
         };
         img.onerror = reject;
         img.src = e.target.result;

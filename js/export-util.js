@@ -11,6 +11,7 @@ const ExportUtil = {
   formatForTelegram(report, lang = 'km') {
     const divider = '━━━━━━━━━━━━━━━━━━━━━━';
     const branchName = window.bsApp?.getDisplayBranch ? window.bsApp.getDisplayBranch(report.branch, lang) : (report.branch || '-');
+    const roleName = window.bsApp?.getDisplayRole ? window.bsApp.getDisplayRole(report.position, lang) : (report.position || '');
     const cleanRole = roleName ? roleName.replace(/^\s*[\(（]\s*|\s*[\)）]\s*$/g, '').trim() : '';
     const roleSuffix = cleanRole ? ` (${cleanRole})` : '';
 
@@ -36,11 +37,22 @@ const ExportUtil = {
     const presNum = report.presentCount !== undefined && report.presentCount !== null && String(report.presentCount).trim() !== ''
       ? String(report.presentCount).replace(/\D/g, '')
       : '0';
-    const rawAbs = report.absentCount !== undefined && report.absentCount !== null ? String(report.absentCount).replace(/\D/g, '') : '';
-    const absNum = rawAbs !== '' ? parseInt(rawAbs, 10) : 0;
+    const formatAbsent = (val, isEn) => {
+      if (val === undefined || val === null) return isEn ? 'None' : 'គ្មាន';
+      const str = String(val).trim();
+      if (!str || str === '0' || str === '0 នាក់' || str.toLowerCase() === 'none' || str.toLowerCase() === '0 person' || str.toLowerCase() === '0 staff' || str === 'គ្មាន' || str === '-') {
+        return isEn ? 'None' : 'គ្មាន';
+      }
+      if (/^\d+$/.test(str)) {
+        const num = parseInt(str, 10);
+        if (num === 0) return isEn ? 'None' : 'គ្មាន';
+        return isEn ? (num === 1 ? '1 person' : `${num} persons`) : `${num} នាក់`;
+      }
+      return str;
+    };
 
     if (lang === 'en') {
-      const enAttendance = `Present ${presNum || '0'} staff | Absent: ${absNum > 0 ? absNum + ' person' : '0'}`;
+      const enAttendance = `Present ${presNum || '0'} staff | Absent: ${formatAbsent(report.absentCount, true)}`;
       return `🚚 *BS Express*
 📋 *Branch Daily Work Report*
 ${divider}
@@ -81,7 +93,7 @@ ${divider}
 🌅 *១. របាយការណ៍ពេលបើកដំណើរការ*
 • អ្នករាយការណ៍ពេលបើក: ${(report.openingReporterName || report.reporterName || '-')}${roleSuffix}
 • ម៉ោងបើកសាខា: ${report.openingTime || '-'}
-• វត្តមានបុគ្គលិក: វត្តមាន ${presNum || '0'} នាក់ | អវត្តមាន: ${absNum > 0 ? absNum + ' នាក់' : 'គ្មាន'}
+• វត្តមានបុគ្គលិក: វត្តមាន ${presNum || '0'} នាក់ | អវត្តមាន: ${formatAbsent(report.absentCount, false)}
 • អនាម័យសាខា: ${report.cleanlinessStatus || '-'}
 
 📦 *២. របាយការណ៍ប្រតិបត្តិការប្រចាំថ្ងៃ*
@@ -190,7 +202,7 @@ ${divider}
           text += `🏢 *${idx + 1}. Branch: ${branch}* (${byBranch[branch].length} issue${byBranch[branch].length > 1 ? 's' : ''})\n`;
           byBranch[branch].forEach((iss, iIdx) => {
             text += `   🔴 [${iIdx + 1}] ${iss.issue}\n`;
-            if (iss.note) text += `      👉 Plan/Note: ${iss.note}\n`;
+            if (iss.note) text += `      👉 Plan/Note: ${window.bsApp?.getDisplayNote ? window.bsApp.getDisplayNote(iss.note, 'en') : iss.note}\n`;
             text += `      👤 Reported: ${iss.reporterName || '-'} (${iss.position || '-'})\n`;
           });
           text += `\n`;
@@ -219,7 +231,7 @@ ${divider}
         text += `🏢 *${idx + 1}. សាខា៖ ${branch}* (${byBranch[branch].length} បញ្ហា)\n`;
         byBranch[branch].forEach((iss, iIdx) => {
           text += `   🔴 [${iIdx + 1}] ${iss.issue}\n`;
-          if (iss.note) text += `      👉 ផែនការដោះស្រាយ៖ ${iss.note}\n`;
+          if (iss.note) text += `      👉 ផែនការដោះស្រាយ៖ ${window.bsApp?.getDisplayNote ? window.bsApp.getDisplayNote(iss.note, 'km') : iss.note}\n`;
           text += `      👤 អ្នករាយការណ៍៖ ${iss.reporterName || '-'} (${iss.position || '-'})\n`;
         });
         text += `\n`;

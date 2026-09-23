@@ -5,8 +5,97 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BS Express - របាយការណ៍ការងារប្រចាំថ្ងៃ</title>
   <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="css/style.css?v=17.3">
-  <link rel="stylesheet" href="css/print.css?v=17.3" media="print">
+  <link rel="stylesheet" href="css/style.css?v=21.1">
+  <link rel="stylesheet" href="css/print.css?v=21.1" media="print">
+  <style>
+    /* High-Priority Autofill & Login Input Fix */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active,
+    .form-input:-webkit-autofill,
+    .form-input:-webkit-autofill:hover,
+    .form-input:-webkit-autofill:focus,
+    .form-input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #0e1628 inset !important;
+      box-shadow: 0 0 0 1000px #0e1628 inset !important;
+      -webkit-text-fill-color: #ffffff !important;
+      color: #ffffff !important;
+      caret-color: #3b82f6 !important;
+      border-color: #3b82f6 !important;
+      transition: background-color 50000s ease-in-out 0s;
+    }
+
+    [data-theme="light"] input:-webkit-autofill,
+    [data-theme="light"] input:-webkit-autofill:hover,
+    [data-theme="light"] input:-webkit-autofill:focus,
+    [data-theme="light"] input:-webkit-autofill:active,
+    [data-theme="light"] .form-input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+      box-shadow: 0 0 0 1000px #ffffff inset !important;
+      -webkit-text-fill-color: #0f172a !important;
+      color: #0f172a !important;
+      caret-color: #2563eb !important;
+      border-color: #2563eb !important;
+    }
+
+    #screen-login-username,
+    #screen-login-password,
+    #screen-reg-fullname,
+    #screen-reg-username,
+    #screen-reg-phone,
+    #screen-reg-password,
+    #screen-reg-confirm-password,
+    #login-username,
+    #login-password,
+    #reg-username,
+    #reg-password,
+    #reg-confirm-password {
+      background-color: #0e1628 !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+      caret-color: #3b82f6 !important;
+    }
+
+    #screen-login-username:focus,
+    #screen-login-password:focus,
+    #screen-reg-fullname:focus,
+    #screen-reg-username:focus,
+    #screen-reg-phone:focus,
+    #screen-reg-password:focus,
+    #screen-reg-confirm-password:focus,
+    #login-username:focus,
+    #login-password:focus,
+    #reg-username:focus,
+    #reg-password:focus,
+    #reg-confirm-password:focus {
+      background-color: #0a101f !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.35) !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+    }
+
+    [data-theme="light"] #screen-login-username,
+    [data-theme="light"] #screen-login-password,
+    [data-theme="light"] #screen-reg-fullname,
+    [data-theme="light"] #screen-reg-username,
+    [data-theme="light"] #screen-reg-phone,
+    [data-theme="light"] #screen-reg-password,
+    [data-theme="light"] #screen-reg-confirm-password,
+    [data-theme="light"] #login-username,
+    [data-theme="light"] #login-password,
+    [data-theme="light"] #reg-username,
+    [data-theme="light"] #reg-password,
+    [data-theme="light"] #reg-confirm-password {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      border: 1.5px solid #cbd5e1 !important;
+      caret-color: #2563eb !important;
+    }
+  </style>
   <!-- Google Fonts, Favicon & Chrome Manifest -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,7 +160,7 @@
 
       <!-- SIGN IN VIEW -->
       <div class="auth-panel active" id="auth-view-login">
-        <form id="screen-form-login" onsubmit="return false;">
+        <form id="screen-form-login" onsubmit="window.bsApp && window.bsApp.submitScreenLogin(); return false;">
           <div class="form-item">
             <label class="form-label" for="screen-login-username">
               <span data-i18n="labelUsername">ឈ្មោះគណនី</span>
@@ -126,7 +215,7 @@
 
       <!-- REGISTER VIEW -->
       <div class="auth-panel" id="auth-view-register">
-        <form id="screen-form-register" onsubmit="return false;">
+        <form id="screen-form-register" onsubmit="window.bsApp && window.bsApp.submitScreenRegister(); return false;">
           <div class="form-grid two-col">
             <div class="form-item">
               <label class="form-label" for="screen-reg-fullname">
@@ -215,13 +304,14 @@
           <button type="button" class="btn-text-link" data-i18n="tabLogin" onclick="window.bsApp && window.bsApp.switchAuthTab('login')">ចូលប្រើប្រព័ន្ធ</button>
         </p>
       </div>
+
     </div>
   </div>
 
   <!-- =========================================================================
        MAIN APPLICATION (REVEALED AFTER LOGIN OR CONTINUE)
        ========================================================================= -->
-  <div id="main-app-wrapper">
+  <div id="main-app-wrapper" style="display: none;">
 
     <!-- =========================================================================
          SHADCN TOP NAVIGATION BAR
@@ -277,6 +367,12 @@
 
         <!-- Right Utility Actions -->
         <div class="navbar-actions">
+          <!-- Cloud Database Live Status Badge (Only for Admin) -->
+          <div class="db-status-badge" id="db-status-indicator" title="ស្ថានភាព Database">
+            <span class="db-status-dot"></span>
+            <span class="db-status-label" id="db-status-label">Database...</span>
+          </div>
+
           <!-- Real-Time Clock Badge -->
           <div class="clock-badge" id="live-time-display" title="Current Local Time">
             <span class="clock-dot"></span>
@@ -515,8 +611,8 @@
                         <span data-i18n="labelOpeningTime">ម៉ោងបើកសាខា</span> <span class="badge-required">*</span>
                       </label>
                       <div class="input-with-action">
-                        <input type="text" id="form-opening-time" class="form-input form-time-input" placeholder="ឧ. 6:00Am" readonly required autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" title="ចុចដើម្បីជ្រើសរើសម៉ោង (24h/60m)" onclick="window.bsApp &amp;&amp; window.bsApp.openTimePicker('form-opening-time')">
-                        <button type="button" class="btn-input-action" id="btn-open-tp-opening" title="ជ្រើសរើសម៉ោងបើក (24h &amp; 60m)" onclick="window.bsApp &amp;&amp; window.bsApp.openTimePicker('form-opening-time')">
+                        <input type="text" id="form-opening-time" class="form-input form-time-input" placeholder="ឧ. 6:00Am" readonly required autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" title="ចុចដើម្បីជ្រើសរើសម៉ោង (24h/60m)" onclick="window.bsApp?.openTimePicker('form-opening-time')">
+                        <button type="button" class="btn-input-action" id="btn-open-tp-opening" title="ជ្រើសរើសម៉ោងបើក (24h &amp; 60m)" onclick="window.bsApp?.openTimePicker('form-opening-time')">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
@@ -535,10 +631,7 @@
 
                     <div class="form-item">
                       <label class="form-label" for="form-absent-count" data-i18n="labelAbsentCount">អវត្តមាន</label>
-                      <div class="input-with-suffix">
-                        <input type="number" id="form-absent-count" class="form-input" min="0" step="1" placeholder="0" autocomplete="off" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                        <span class="input-suffix-text" data-i18n="unitPerson">នាក់</span>
-                      </div>
+                      <input type="text" id="form-absent-count" class="form-input" placeholder="0" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                     </div>
                   </div>
 
@@ -554,12 +647,12 @@
                   <div class="form-item">
                     <label class="form-label">
                       <span data-i18n="labelOpeningPhoto">រូបថតអនាម័យសាខាពេលបើក</span>
-                      <span class="form-hint" data-i18n="labelPhotoRequiredNote">*បញ្ជាក់៖ ត្រូវផ្ញើររូបថត (ភ្ជាប់ម៉ោង និងកាលបរិច្ឆេទ)</span>
+                      <span class="form-hint" data-i18n="labelPhotoRequiredNote">*បញ្ជាក់៖ ត្រូវផ្ញើររូបថត (ភ្ជាប់ម៉ោង និងកាលបរិច្ឆេទ) • គ្មានដែនកំណត់ (Unlimited)</span>
                     </label>
                     <div class="shadcn-upload-box">
                       <input type="file" id="opening-photo-input" accept="image/*" multiple>
-                      <div class="upload-text-bold" data-i18n="uploadClickText">ចុចដើម្បីជ្រើសរើសរូបភាព ឬថតរូប</div>
-                      <div class="upload-text-muted" data-i18n="uploadOpeningHint">ប្រព័ន្ធនឹងបោះត្រា Watermark កាលបរិច្ឆេទ និងសាខាស្វ័យប្រវត្តិលើរូបភាព</div>
+                      <div class="upload-text-bold" data-i18n="uploadClickText">ចុចដើម្បីជ្រើសរើសរូបភាព ឬថតរូប (គ្មានដែនកំណត់)</div>
+                      <div class="upload-text-muted" data-i18n="uploadOpeningHint">ប្រព័ន្ធនឹងបោះត្រា Watermark កាលបរិច្ឆេទ និងសាខាស្វ័យប្រវត្តិ • អាចជ្រើសរើសរូបថតច្រើនសន្លឹកបាន</div>
                     </div>
                     <div id="opening-photo-preview" class="photo-preview-grid"></div>
                   </div>
@@ -655,8 +748,8 @@
                       <span data-i18n="labelClosingTime">ម៉ោងបិទសាខា</span> <span class="badge-required">*</span>
                     </label>
                     <div class="input-with-action">
-                      <input type="text" id="form-closing-time" class="form-input form-time-input" placeholder="ឧ. 11:00Pm" readonly required autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" title="ចុចដើម្បីជ្រើសរើសម៉ោង (24h/60m)" onclick="window.bsApp &amp;&amp; window.bsApp.openTimePicker('form-closing-time')">
-                      <button type="button" class="btn-input-action" id="btn-open-tp-closing" title="ជ្រើសរើសម៉ោងបិទ (24h &amp; 60m)" onclick="window.bsApp &amp;&amp; window.bsApp.openTimePicker('form-closing-time')">
+                      <input type="text" id="form-closing-time" class="form-input form-time-input" placeholder="ឧ. 11:00Pm" readonly required autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" title="ចុចដើម្បីជ្រើសរើសម៉ោង (24h/60m)" onclick="window.bsApp?.openTimePicker('form-closing-time')">
+                      <button type="button" class="btn-input-action" id="btn-open-tp-closing" title="ជ្រើសរើសម៉ោងបិទ (24h &amp; 60m)" onclick="window.bsApp?.openTimePicker('form-closing-time')">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                           <circle cx="12" cy="12" r="10"></circle>
                           <polyline points="12 6 12 12 16 14"></polyline>
@@ -669,12 +762,12 @@
                   <div class="form-item">
                     <label class="form-label">
                       <span data-i18n="labelClosingPhoto">រូបថតសុវត្ថិភាពឃ្លាំង/បញ្ញើពេលបិទសាខា</span>
-                      <span class="form-hint" data-i18n="labelPhotoRequiredNote">*បញ្ជាក់៖ ត្រូវផ្ញើររូបថត (ភ្ជាប់ម៉ោង និងកាលបរិច្ឆេទ)</span>
+                      <span class="form-hint" data-i18n="labelPhotoRequiredNote">*បញ្ជាក់៖ ត្រូវផ្ញើររូបថត (ភ្ជាប់ម៉ោង និងកាលបរិច្ឆេទ) • គ្មានដែនកំណត់ (Unlimited)</span>
                     </label>
                     <div class="shadcn-upload-box">
                       <input type="file" id="closing-photo-input" accept="image/*" multiple>
-                      <div class="upload-text-bold" data-i18n="uploadClosingClickText">ចុចដើម្បីជ្រើសរើសរូបភាព ឬថតរូបពេលបិទសាខា</div>
-                      <div class="upload-text-muted" data-i18n="uploadOpeningHint">ប្រព័ន្ធនឹងបោះត្រា Watermark កាលបរិច្ឆេទ និងសាខាស្វ័យប្រវត្តិលើរូបភាព</div>
+                      <div class="upload-text-bold" data-i18n="uploadClosingClickText">ចុចដើម្បីជ្រើសរើសរូបភាព ឬថតរូបពេលបិទសាខា (គ្មានដែនកំណត់)</div>
+                      <div class="upload-text-muted" data-i18n="uploadOpeningHint">ប្រព័ន្ធនឹងបោះត្រា Watermark កាលបរិច្ឆេទ និងសាខាស្វ័យប្រវត្តិ • អាចជ្រើសរើសរូបថតច្រើនសន្លឹកបាន</div>
                     </div>
                     <div id="closing-photo-preview" class="photo-preview-grid"></div>
                   </div>
@@ -892,11 +985,11 @@
           <p class="doc-bar-sub" data-i18n="docTopBarSub">ទម្រង់ស្តង់ដារសម្រាប់បោះពុម្ព (Print) ឬរក្សាទុកជា PDF</p>
         </div>
         <div class="flex-gap-2">
+          <button type="button" class="btn btn-outline btn-sm" id="btn-new-report-from-doc" onclick="window.bsApp.startNewReport()">
+            <span data-i18n="btnNewReport">+ របាយការណ៍ថ្មី</span>
+          </button>
           <button type="button" class="btn btn-outline btn-sm" id="btn-approve-current-doc" style="display:none;" onclick="window.bsApp.approveCurrentReportDoc()">
             <span id="approve-doc-btn-text">✓ អនុម័តរបាយការណ៍</span>
-          </button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="window.bsApp.switchTab('form-tab')">
-            <span data-i18n="btnEditData">កែសម្រួលទិន្នន័យ</span>
           </button>
           <button type="button" class="btn btn-secondary btn-sm" onclick="window.bsApp.openTelegramModal()">
             <span data-i18n="btnTelegramFormat">ចម្លងសម្រាប់ Telegram</span>
@@ -1024,17 +1117,6 @@
             </ul>
           </div>
 
-          <!-- Official Signatures Block -->
-          <div class="doc-signature-row">
-            <div class="doc-sign-box">
-              <div class="doc-sign-role" data-i18n="docSignRoleReporter">ប្រធានសាខា / អ្នករាយការណ៍</div>
-              <div class="doc-sign-name doc-val-name">ប៊ុនតា ភឿន</div>
-            </div>
-            <div class="doc-sign-box">
-              <div class="doc-sign-role" data-i18n="docSignRoleOps">នាយកដ្ឋានប្រតិបត្តិការ</div>
-              <div class="doc-sign-name" data-i18n="docSignNamePlaceholder">ហត្ថលេខា និងត្រា</div>
-            </div>
-          </div>
 
           <!-- Official Footer Address -->
           <div class="doc-footer">
@@ -1060,18 +1142,13 @@
       <div class="shadcn-card branch-analytics-card" id="card-branch-issues-graph">
         <div class="card-header card-header-flex-between">
           <div class="flex-align-center gap-2">
-            <div class="graph-icon-badge">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-            </div>
             <div>
               <h2 class="card-title" data-i18n="graphCardTitle">ក្រាហ្វិកខ្សែបន្ទាត់ស្ថិតិបញ្ហាប្រឈមតាមសាខា</h2>
               <p class="card-description" data-i18n="graphCardSub">ទិន្នន័យវិភាគបញ្ហាដែលបានដោះស្រាយ និងមិនទាន់ដោះស្រាយតាមសាខានីមួយៗ</p>
             </div>
           </div>
           <div class="flex-gap-2">
-            <button type="button" class="btn btn-outline btn-sm" id="btn-reload-all-branches" onclick="window.bsApp &amp;&amp; window.bsApp.reloadAllBranchData()" title="Reload All 27 Branches Data">
+            <button type="button" class="btn btn-outline btn-sm" id="btn-reload-all-branches" onclick="window.bsApp?.reloadAllBranchData()" title="Reload All 27 Branches Data">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
               </svg>
@@ -1081,7 +1158,7 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="graph-toggle-icon">
                 <polyline points="18 15 12 9 6 15"></polyline>
               </svg>
-              <span id="text-toggle-graph">បិទ/បើកក្រាហ្វ</span>
+              <span id="text-toggle-graph" data-i18n="btnToggleGraph">បិទ/បើកក្រាហ្វ</span>
             </button>
           </div>
         </div>
@@ -1110,7 +1187,7 @@
           <!-- Line Chart Legend & Actions -->
           <div class="graph-progress-wrap">
             <div class="graph-progress-labels">
-              <span class="graph-hint-text" data-i18n="graphClickFilterHint">💡 ចុចលើចំនុចសាខាលើក្រាហ្វិកបន្ទាត់ ដើម្បីច្រោះរបាយការណ៍សាខានោះភ្លាមៗ</span>
+              <span class="graph-hint-text" data-i18n="graphClickFilterHint">ចុចលើចំនុចសាខាលើក្រាហ្វិកបន្ទាត់ ដើម្បីច្រោះរបាយការណ៍សាខានោះភ្លាមៗ</span>
               <span class="graph-legend">
                 <span class="legend-item"><span class="legend-dot dot-total"></span> <span data-i18n="graphTotalIssues">បញ្ហាសរុប</span></span>
                 <span class="legend-item"><span class="legend-dot dot-resolved"></span> <span data-i18n="graphResolvedIssues">បានដោះស្រាយរួច</span></span>
@@ -1129,6 +1206,16 @@
         </div>
       </div>
 
+      <div class="shadcn-card issue-discussion-card" id="issue-discussion-card">
+        <div class="card-header">
+          <h2 class="card-title" data-i18n="issuesDiscussionTitle">បញ្ហាមិនទាន់ដោះស្រាយ</h2>
+          <p class="card-description" data-i18n="issuesDiscussionSub">Top Management អាច Comment និង User អាច Reply លើ Issue របស់ Report បាន</p>
+        </div>
+        <div class="card-content">
+          <div class="issues-grid" id="issues-grid-container"></div>
+        </div>
+      </div>
+
       <!-- Table Card -->
       <div class="shadcn-card">
         <div class="card-header card-header-flex-between">
@@ -1137,13 +1224,20 @@
             <p class="card-description" data-i18n="tableCardSub">ស្វែងរក ពិនិត្យមើលទម្រង់ A4 កែប្រែ ឬទាញយកទិន្នន័យ</p>
           </div>
           <div class="flex-gap-2 history-action-buttons">
+            <button type="button" class="btn btn-outline-danger btn-sm" id="btn-clear-all-reports" onclick="window.bsApp && window.bsApp.clearAllReports()" title="Delete All Reports">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span data-i18n="btnClearAllReports">លុបរបាយការណ៍ទាំងអស់</span>
+            </button>
             <button type="button" class="btn btn-primary btn-sm" id="btn-print-history" data-i18n="btnPrintHistory">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
                 <polyline points="6 9 6 2 18 2 18 9"></polyline>
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                 <rect x="6" y="14" width="12" height="8"></rect>
               </svg>
-              <span>បោះពុម្ព / Save as PDF</span>
+              <span data-i18n="btnPrintHistory">បោះពុម្ព / Save as PDF</span>
             </button>
           </div>
         </div>
@@ -1183,6 +1277,13 @@
             </select>
 
             <input type="date" id="filter-date" class="form-input">
+
+            <select id="sort-reports" class="form-input" title="តម្រៀបរបាយការណ៍ (Sort Reports)">
+              <option value="datetime-desc" data-i18n="sortDateTimeDesc">📅 ម៉ោង &amp; ថ្ងៃ (ថ្មីបំផុតមុន)</option>
+              <option value="datetime-asc" data-i18n="sortDateTimeAsc">📅 ម៉ោង &amp; ថ្ងៃ (ចាស់បំផុតមុន)</option>
+              <option value="branch-asc" data-i18n="sortBranchAsc">🏢 សាខា (A → Z / ក → អ)</option>
+              <option value="branch-desc" data-i18n="sortBranchDesc">🏢 សាខា (Z → A / អ → ក)</option>
+            </select>
           </div>
 
           <!-- Quick Filter Chips with Live Count Badges -->
@@ -1191,7 +1292,7 @@
               <span data-i18n="filterAllReports">ទាំងអស់</span>
               <span class="chip-count-pill" id="chip-count-all">0</span>
             </button>
-            <button type="button" class="history-filter-chip chip-unresolved" data-history-filter="unresolved">
+            <button type="button" class="history-filter-chip chip-unresolved" data-history-filter="unresolved" data-issue-feature="true">
               <span data-i18n="filterUnresolved">🔴 បញ្ហាមិនទាន់ដោះស្រាយ</span>
               <span class="chip-count-pill pill-unresolved" id="chip-count-unresolved">0</span>
             </button>
@@ -1214,11 +1315,18 @@
             <table class="reports-table">
               <thead>
                 <tr>
-                  <th data-i18n="thBranch">សាខា</th>
-                  <th data-i18n="thDate">កាលបរិច្ឆេទ</th>
+                  <th class="sortable-th" id="th-sort-branch" title="ចុចដើម្បីតម្រៀបតាមសាខា (Click to sort by Branch)">
+                    <span data-i18n="thBranch">សាខា</span>
+                    <span class="sort-icon" id="sort-icon-branch"></span>
+                  </th>
+                  <th class="sortable-th active-sort" id="th-sort-date" title="ចុចដើម្បីតម្រៀបតាមកាលបរិច្ឆេទ &amp; ម៉ោង (Click to sort by Date &amp; Time)">
+                    <span data-i18n="thDate">កាលបរិច្ឆេទ &amp; ម៉ោង</span>
+                    <span class="sort-icon" id="sort-icon-date"> ▼</span>
+                  </th>
                   <th data-i18n="thReporter">អ្នករាយការណ៍ / តួនាទី</th>
                   <th data-i18n="thAttendance">វត្តមានបុគ្គលិក</th>
                   <th data-i18n="thWorkStatus">ស្ថានភាពការងារ</th>
+                  <th data-i18n="thIssues" data-issue-feature="true">បញ្ហាមិនទាន់ដោះស្រាយ</th>
                   <th data-i18n="thPhotos">រូបថត</th>
                   <th data-i18n="thStatus">ស្ថានភាព</th>
                   <th class="text-right" data-i18n="thActions">សកម្មភាព</th>
@@ -1420,10 +1528,18 @@
 
       <div class="modal-header users-modal-header">
         <div class="users-modal-title-wrap">
-          <div class="admin-shield-icon">🛡️</div>
+          <div class="admin-shield-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span class="shield-pulse-dot"></span>
+          </div>
           <div>
-            <h3 class="users-modal-title">បញ្ជីគណនី និងលេខសម្ងាត់អ្នកប្រើប្រាស់</h3>
-            <p class="users-modal-sub">ផ្ទាំងត្រួតពិនិត្យសម្រាប់ System Administrator ពិនិត្យ Username, Password និង Role</p>
+            <div class="users-title-row">
+              <h3 class="users-modal-title">បញ្ជីគណនី និងលេខសម្ងាត់អ្នកប្រើប្រាស់</h3>
+              <span class="users-header-badge" id="users-header-badge">0 គណនី</span>
+            </div>
+            <p class="users-modal-sub">ផ្ទាំងត្រួតពិនិត្យ និងគ្រប់គ្រងគណនីបុគ្គលិក • Credential Vault &amp; Role Management</p>
           </div>
         </div>
         <button type="button" class="modal-close-btn" id="btn-close-users-modal" title="Close">&times;</button>
@@ -1434,26 +1550,34 @@
         <!-- Filter and Search Toolbar -->
         <div class="users-toolbar-row">
           <div class="users-search-input-wrap">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-ico">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="search-ico">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="search-users-input" class="form-input form-input-sm" placeholder="ស្វែងរកតាម ឈ្មោះ, Username ឬ តួនាទី...">
-            <button type="button" class="search-clear-btn" id="btn-clear-search-users" style="display: none;">&times;</button>
+            <input type="text" id="search-users-input" class="form-input" placeholder="ស្វែងរកតាម ឈ្មោះ, Username, តួនាទី ឬ សាខា...">
+            <button type="button" class="search-clear-btn" id="btn-clear-search-users" style="display: none;" title="Clear search">&times;</button>
+          </div>
+
+          <!-- Quick Role Filters -->
+          <div class="users-role-filters" id="users-role-filters">
+            <button type="button" class="user-filter-chip active" data-filter-role="all">ទាំងអស់</button>
+            <button type="button" class="user-filter-chip" data-filter-role="admin">🛡️ Admin</button>
+            <button type="button" class="user-filter-chip" data-filter-role="manager">🏢 ប្រធានសាខា</button>
+            <button type="button" class="user-filter-chip" data-filter-role="staff">👥 បុគ្គលិក</button>
           </div>
 
           <div class="users-toolbar-actions">
-            <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-all-passwords">
-              <span id="label-toggle-all-pwd">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: -2px;">
+            <button type="button" class="btn btn-secondary btn-sm btn-action-toggle-pwd" id="btn-toggle-all-passwords">
+              <span id="label-toggle-all-pwd" class="label-toggle-all-pwd-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
-                <span>បង្ហាញ Password ទាំងអស់</span>
+                <span>បង្ហាញ Password</span>
               </span>
             </button>
-            <button type="button" class="btn btn-primary btn-sm" id="btn-show-add-user-form">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: -1px;">
+            <button type="button" class="btn btn-primary btn-sm btn-action-add-user" id="btn-show-add-user-form">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
@@ -1465,57 +1589,68 @@
         <!-- Inline Quick Add User Form (Collapsible) -->
         <div class="admin-quick-add-panel" id="admin-quick-add-panel" style="display: none;">
           <div class="quick-add-header">
-            <h4 class="quick-add-title">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: -2px;">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <line x1="20" y1="8" x2="20" y2="14"></line>
-                <line x1="23" y1="11" x2="17" y2="11"></line>
-              </svg>
-              <span>បង្កើតគណនីអ្នកប្រើប្រាស់ថ្មី</span>
-            </h4>
+            <div class="quick-add-title-wrap">
+              <div class="quick-add-icon-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="20" y1="8" x2="20" y2="14"></line>
+                  <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+              </div>
+              <div>
+                <h4 class="quick-add-title">បង្កើតគណនីអ្នកប្រើប្រាស់ថ្មី (Create New User Account)</h4>
+                <p class="quick-add-desc">បញ្ចូលព័ត៌មានលម្អិតដើម្បីបង្កើតគណនីចូលប្រើប្រព័ន្ធសម្រាប់បុគ្គលិកថ្មី</p>
+              </div>
+            </div>
+            <button type="button" class="btn-close-quick-add" id="btn-close-quick-add-x" title="Close form">&times;</button>
           </div>
           <form id="form-admin-add-user" onsubmit="return false;">
-            <div class="form-grid four-col">
+            <div class="form-grid three-col">
               <div class="form-item">
-                <label class="form-label">ឈ្មោះពេញ *</label>
-                <input type="text" id="admin-add-fullname" class="form-input form-input-sm" placeholder="ឧ. ប៊ុនតា ភឿន" required>
+                <label class="form-label">ឈ្មោះពេញ (Full Name) <span class="badge-required">*</span></label>
+                <input type="text" id="admin-add-fullname" class="form-input" placeholder="ឧ. ប៊ុនតា ភឿន" required autocomplete="off">
               </div>
               <div class="form-item">
-                <label class="form-label">Username *</label>
-                <input type="text" id="admin-add-username" class="form-input form-input-sm" placeholder="ឧ. bunta_sr" required>
+                <label class="form-label">ឈ្មោះគណនី (Username) <span class="badge-required">*</span></label>
+                <input type="text" id="admin-add-username" class="form-input" placeholder="ឧ. bunta_sr" required autocomplete="off">
               </div>
               <div class="form-item">
-                <label class="form-label">លេខសម្ងាត់ *</label>
-                <input type="text" id="admin-add-password" class="form-input form-input-sm" placeholder="ឧ. 123" required>
+                <label class="form-label">លេខសម្ងាត់ (Password) <span class="badge-required">*</span></label>
+                <input type="text" id="admin-add-password" class="form-input" placeholder="ឧ. 123456" required autocomplete="off">
               </div>
+            </div>
+            <div class="form-grid three-col mt-2">
               <div class="form-item">
-                <label class="form-label">តួនាទី *</label>
-                <select id="admin-add-role" class="form-input form-input-sm">
-                  <option value="ប្រធានសាខា">ប្រធានសាខា</option>
-                  <option value="អនុប្រធានសាខា">អនុប្រធានសាខា</option>
-                  <option value="បុគ្គលិកប្រតិបត្តិការ" selected>បុគ្គលិកប្រតិបត្តិការ</option>
-                  <option value="ផ្នែកសេវាអតិថិជន">ផ្នែកសេវាអតិថិជន</option>
+                <label class="form-label">តួនាទី (Role) <span class="badge-required">*</span></label>
+                <select id="admin-add-role" class="form-input">
+                  <option value="ប្រធានសាខា">ប្រធានសាខា (Branch Manager)</option>
+                  <option value="អនុប្រធានសាខា">អនុប្រធានសាខា (Deputy Manager)</option>
+                  <option value="បុគ្គលិកប្រតិបត្តិការ" selected>បុគ្គលិកប្រតិបត្តិការ (Operations Staff)</option>
+                  <option value="ផ្នែកសេវាអតិថិជន">ផ្នែកសេវាអតិថិជន (Customer Service)</option>
                   <option value="នាយកដ្ឋានប្រតិបត្តិការ (Admin)">នាយកដ្ឋានប្រតិបត្តិការ (Admin)</option>
                   <option value="គណៈគ្រប់គ្រងជាន់ខ្ពស់ (Top Management)">គណៈគ្រប់គ្រងជាន់ខ្ពស់</option>
                 </select>
               </div>
-            </div>
-            <div class="form-grid two-col mt-2">
               <div class="form-item">
-                <label class="form-label">សាខាដែលបម្រើការ *</label>
-                <select id="admin-add-branch" class="form-input form-input-sm">
+                <label class="form-label">សាខាដែលបម្រើការ (Branch) <span class="badge-required">*</span></label>
+                <select id="admin-add-branch" class="form-input">
                   <!-- Populated via JS -->
                 </select>
               </div>
               <div class="form-item">
-                <label class="form-label">លេខទូរស័ព្ទ</label>
-                <input type="tel" id="admin-add-phone" class="form-input form-input-sm" placeholder="ឧ. 012 345 678">
+                <label class="form-label">លេខទូរស័ព្ទ (Phone Number)</label>
+                <input type="tel" id="admin-add-phone" class="form-input" placeholder="ឧ. 012 345 678" autocomplete="off">
               </div>
             </div>
             <div class="quick-add-footer">
               <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-add-user">បោះបង់</button>
-              <button type="submit" class="btn btn-primary btn-sm">រក្សាទុកគណនី</button>
+              <button type="submit" class="btn btn-primary btn-sm btn-save-user-submit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>រក្សាទុកគណនី</span>
+              </button>
             </div>
           </form>
         </div>
@@ -1525,13 +1660,14 @@
           <table class="users-directory-table">
             <thead>
               <tr>
-                <th style="min-width: 190px;">ឈ្មោះ &amp; AVATAR</th>
-                <th style="min-width: 140px;">USERNAME</th>
-                <th style="min-width: 170px;">PASSWORD</th>
-                <th style="min-width: 160px;">តួនាទី</th>
-                <th style="min-width: 140px;">សាខា</th>
-                <th style="min-width: 130px;">លេខទូរស័ព្ទ</th>
-                <th style="min-width: 120px;" class="text-right">សកម្មភាព</th>
+                <th class="col-user">បុគ្គលិក (EMPLOYEE)</th>
+                <th class="col-username">USERNAME</th>
+                <th class="col-password">PASSWORD</th>
+                <th class="col-role">តួនាទី (ROLE)</th>
+                <th class="col-branch">សាខា (BRANCH)</th>
+                <th class="col-phone">លេខទូរស័ព្ទ</th>
+                <th class="col-created">កាលបរិច្ឆេទបង្កើត</th>
+                <th class="col-actions text-right">សកម្មភាព</th>
               </tr>
             </thead>
             <tbody id="users-table-body">
@@ -1543,10 +1679,128 @@
       </div>
 
       <div class="modal-footer users-modal-footer">
-        <span class="users-count-summary" id="users-count-summary">សរុប 0 គណនី</span>
-        <button type="button" class="btn btn-secondary btn-sm" id="btn-close-users-modal-footer">បិទផ្ទាំង</button>
+        <div class="users-footer-meta">
+          <span class="users-count-badge">
+            <span class="users-count-indicator"></span>
+            <span class="users-count-summary" id="users-count-summary">សរុប 0 គណនី</span>
+          </span>
+          <span class="users-security-note">🔒 សុវត្ថិភាពខ្ពស់ • ភ្ជាប់ផ្ទាល់ជាមួយ MySQL Database</span>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm btn-close-users-mgr" id="btn-close-users-modal-footer">បិទផ្ទាំង</button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       USER ACCOUNT CREATION SUMMARY MODAL (SHOWS ALL DATA WHEN CREATED)
+       ========================================================================= -->
+  <div class="modal-overlay" id="user-created-modal">
+    <div class="modal-card user-created-card">
+      <div class="user-created-header">
+        <div class="user-created-icon-wrap">
+          <div class="user-created-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+          </div>
+          <div class="user-created-pulse"></div>
+        </div>
+        <h3 class="user-created-title" id="user-created-title">បានបង្កើតគណនីថ្មីជោគជ័យ!</h3>
+        <p class="user-created-sub" id="user-created-sub">ទិន្នន័យគណនីត្រូវបានរក្សាទុកក្នុង MySQL Database រួចរាល់</p>
+      </div>
+
+      <div class="user-created-body">
+        <div class="user-created-grid" id="user-created-grid">
+          <!-- Filled dynamically via JS -->
+        </div>
+
+        <div class="user-created-actions">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-new-user-info">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>ចម្លងព័ត៌មានគណនី (Copy)</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-close-created-modal">
+            <span>យល់ព្រម / បន្ត</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ADMIN ONLY: EDIT USER ROLE MODAL
+       ========================================================================= -->
+  <div class="modal-overlay" id="edit-user-role-modal">
+    <div class="modal-card edit-user-role-card">
+      <div class="modal-header">
+        <div class="edit-role-header-title">
+          <div class="edit-role-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <line x1="19" y1="8" x2="19" y2="14"></line>
+              <line x1="22" y1="11" x2="16" y2="11"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title">កែប្រែតួនាទីអ្នកប្រើប្រាស់ (Edit User Role)</h3>
+            <p class="modal-subtitle">កំណត់ ឬផ្លាស់ប្តូរសិទ្ធិតួនាទីរបស់បុគ្គលិកក្នុងប្រព័ន្ធ</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" id="btn-close-edit-role-modal" title="Close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Target User Info Banner -->
+        <div class="edit-role-user-banner">
+          <div class="edit-role-user-avatar" id="edit-role-avatar">U</div>
+          <div class="edit-role-user-details">
+            <div class="edit-role-user-name" id="edit-role-user-fullname">--</div>
+            <div class="edit-role-user-meta">
+              <span class="edit-role-user-username" id="edit-role-user-uname">@user</span>
+              <span class="edit-role-meta-sep">•</span>
+              <span class="edit-role-user-branch" id="edit-role-user-branch">សាខា</span>
+            </div>
+          </div>
+        </div>
+
+        <form id="form-edit-user-role" onsubmit="return false;">
+          <input type="hidden" id="edit-role-user-id" value="">
+          <div class="form-item mt-3">
+            <label class="form-label" for="edit-role-select">
+              <span>ជ្រើសរើសតួនាទីថ្មី (New Role)</span>
+              <span class="badge-required">*</span>
+            </label>
+            <select id="edit-role-select" class="form-input" required>
+              <option value="ប្រធានសាខា">ប្រធានសាខា (Branch Manager)</option>
+              <option value="អនុប្រធានសាខា">អនុប្រធានសាខា (Deputy Manager)</option>
+              <option value="បុគ្គលិកប្រតិបត្តិការ">បុគ្គលិកប្រតិបត្តិការ (Operations Staff)</option>
+              <option value="ផ្នែកសេវាអតិថិជន">ផ្នែកសេវាអតិថិជន (Customer Service)</option>
+              <option value="នាយកដ្ឋានប្រតិបត្តិការ (Admin)">នាយកដ្ឋានប្រតិបត្តិការ (Admin)</option>
+              <option value="គណៈគ្រប់គ្រងជាន់ខ្ពស់ (Top Management)">គណៈគ្រប់គ្រងជាន់ខ្ពស់ (Top Management)</option>
+            </select>
+            <p class="form-help-text" id="edit-role-help-text">
+              🛡️ ការផ្លាស់ប្តូរតួនាទីនឹងមានប្រសិទ្ធភាពភ្លាមៗ និងធ្វើសមកាលកម្មទៅកាន់ Database
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-edit-role">បោះបង់</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-save-edit-role">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>រក្សាទុកតួនាទី (Save Role)</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1594,7 +1848,7 @@
         </div>
         <button type="button" class="modal-close-btn">&times;</button>
       </div>
-      
+
       <div class="modal-body time-picker-body">
         <!-- Interactive Digital Clock Header -->
         <div class="time-picker-display-banner">
@@ -1619,12 +1873,12 @@
         <div class="time-quick-presets-wrap">
           <span class="tp-preset-label">ម៉ោងរហ័ស:</span>
           <div class="time-quick-presets" id="tp-quick-presets-container">
-            <button type="button" class="tp-preset-chip" data-tp-hour="6" data-tp-min="0" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(6, 0)">06:00 AM</button>
-            <button type="button" class="tp-preset-chip" data-tp-hour="6" data-tp-min="30" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(6, 30)">06:30 AM</button>
-            <button type="button" class="tp-preset-chip" data-tp-hour="7" data-tp-min="0" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(7, 0)">07:00 AM</button>
-            <button type="button" class="tp-preset-chip" data-tp-hour="7" data-tp-min="30" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(7, 30)">07:30 AM</button>
-            <button type="button" class="tp-preset-chip" data-tp-hour="8" data-tp-min="0" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(8, 0)">08:00 AM</button>
-            <button type="button" class="tp-preset-chip" data-tp-hour="23" data-tp-min="0" onclick="window.bsApp &amp;&amp; window.bsApp.selectAndConfirmTime(23, 0)">11:00 PM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="6" data-tp-min="0" onclick="window.bsApp?.selectAndConfirmTime(6, 0)">06:00 AM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="6" data-tp-min="30" onclick="window.bsApp?.selectAndConfirmTime(6, 30)">06:30 AM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="7" data-tp-min="0" onclick="window.bsApp?.selectAndConfirmTime(7, 0)">07:00 AM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="7" data-tp-min="30" onclick="window.bsApp?.selectAndConfirmTime(7, 30)">07:30 AM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="8" data-tp-min="0" onclick="window.bsApp?.selectAndConfirmTime(8, 0)">08:00 AM</button>
+            <button type="button" class="tp-preset-chip" data-tp-hour="23" data-tp-min="0" onclick="window.bsApp?.selectAndConfirmTime(23, 0)">11:00 PM</button>
           </div>
         </div>
 
@@ -1642,7 +1896,7 @@
               </span>
               <span class="tp-matrix-hint">00 ដល់ 23</span>
             </div>
-            
+
             <div class="tp-hours-grid" id="tp-hours-grid">
               <!-- Dynamically populated 24 buttons (00-23 in clean 6x4 matrix) -->
             </div>
@@ -1682,7 +1936,7 @@
       </div>
 
       <div class="modal-footer time-picker-footer">
-        <button type="button" class="btn btn-outline btn-sm" id="btn-tp-now" onclick="window.bsApp &amp;&amp; window.bsApp.setTimePickerToNow()">
+        <button type="button" class="btn btn-outline btn-sm" id="btn-tp-now" onclick="window.bsApp?.setTimePickerToNow()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
@@ -1691,7 +1945,7 @@
         </button>
         <div class="flex-gap-2">
           <button type="button" class="btn btn-secondary btn-sm modal-close-trigger" data-i18n="btnCancel">បោះបង់</button>
-          <button type="button" class="btn btn-primary btn-sm" id="btn-tp-confirm" onclick="window.bsApp &amp;&amp; window.bsApp.confirmTimePickerSelection()">
+          <button type="button" class="btn btn-primary btn-sm" id="btn-tp-confirm" onclick="window.bsApp?.confirmTimePickerSelection()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
@@ -1716,17 +1970,17 @@
             </svg>
           </div>
         </div>
-        
+
         <h3 class="time-complete-title" id="time-complete-title" data-i18n="timeCompleteTitle">បានជ្រើសរើសម៉ោងជោគជ័យ!</h3>
         <p class="time-complete-sub" id="time-complete-sub" data-i18n="timeCompleteSub">ទិន្នន័យម៉ោងត្រូវបានបញ្ចូលក្នុងរបាយការណ៍រួចរាល់</p>
-        
+
         <div class="time-complete-badge-box">
           <div class="time-complete-label" id="time-complete-label">ម៉ោងបើកសាខា</div>
           <div class="time-complete-value" id="time-complete-value">06:00 AM</div>
           <div class="time-complete-24h" id="time-complete-24h">24H: 06:00</div>
         </div>
 
-        <button type="button" class="btn btn-primary btn-lg time-complete-ok-btn" id="btn-time-complete-ok" onclick="window.bsApp &amp;&amp; window.bsApp.closeTimeCompleteModal()">
+        <button type="button" class="btn btn-primary btn-lg time-complete-ok-btn" id="btn-time-complete-ok" onclick="window.bsApp?.closeTimeCompleteModal()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
@@ -1739,12 +1993,12 @@
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- Application Logic Scripts (Chrome local file &amp; server compatible) -->
-  <script src="js/i18n.js?v=17.3"></script>
-  <script src="js/storage.js?v=17.3"></script>
-  <script src="js/watermark.js?v=17.3"></script>
-  <script src="js/export-util.js?v=17.3"></script>
-  <script src="js/app.js?v=17.3"></script>
+  <!-- Application Logic Scripts (Chrome local file & server compatible) -->
+  <script src="js/i18n.js?v=21.1"></script>
+  <script src="js/storage.js?v=21.1"></script>
+  <script src="js/watermark.js?v=21.1"></script>
+  <script src="js/export-util.js?v=21.1"></script>
+  <script src="js/app.js?v=21.1"></script>
 
 </body>
 </html>

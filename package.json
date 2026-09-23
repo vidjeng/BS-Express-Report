@@ -5,10 +5,15 @@
   "description": "BS Express Daily Work Report Web Application",
   "scripts": {
     "start": "node server.js",
-    "deploy": "wrangler deploy",
-    "preview": "wrangler dev"
+    "deploy": "wrangler pages deploy dist --project-name bs-express-report",
+    "preview": "wrangler pages dev dist",
+    "tunnel": ".\\cloudflared.exe tunnel --url http://localhost:3000"
   },
   "devDependencies": {
     "wrangler": "^4.127.1"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "mysql2": "^3.24.3"
   }
 }

@@ -8,3 +8,9 @@ node_modules/
 !.dev.vars.example
 .env*
 !.env.example
+
+# Large binaries & build outputs
+*.exe
+cloudflared.exe
+dist/
+scratch/

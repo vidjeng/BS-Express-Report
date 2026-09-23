@@ -1,0 +1,57 @@
+[
+  {
+    "id": "user_vid",
+    "username": "vid",
+    "password": "123",
+    "fullName": "Vid (System Admin)",
+    "role": "អ្នកគ្រប់គ្រងប្រព័ន្ធ (Admin)",
+    "roleId": "sys_admin",
+    "branch": "ការិយាល័យកណ្ដាល",
+    "phone": "010 888 999",
+    "createdAt": "2026-08-01T08:00:00.000Z"
+  },
+  {
+    "id": "user_admin_root",
+    "username": "admin",
+    "password": "123",
+    "fullName": "System Administrator",
+    "role": "System Administrator (គ្រប់គ្រងប្រព័ន្ធ)",
+    "roleId": "sys_admin",
+    "branch": "ការិយាល័យកណ្ដាល",
+    "phone": "010 888 999",
+    "createdAt": "2026-08-01T08:00:00.000Z"
+  },
+  {
+    "id": "user_rithjengdavid",
+    "username": "rithjengdavid",
+    "password": "123",
+    "fullName": "Rith Jeng David",
+    "role": "អ្នកគ្រប់គ្រងប្រព័ន្ធ (System Administrator)",
+    "roleId": "sys_admin",
+    "branch": "ការិយាល័យកណ្ដាល",
+    "phone": "010 888 999",
+    "createdAt": "2026-08-01T08:00:00.000Z"
+  },
+  {
+    "id": "user_sysadmin",
+    "username": "sysadmin",
+    "password": "123",
+    "fullName": "System Administrator",
+    "role": "System Administrator (គ្រប់គ្រងប្រព័ន្ធ)",
+    "roleId": "sys_admin",
+    "branch": "ការិយាល័យកណ្ដាល",
+    "phone": "010 888 999",
+    "createdAt": "2026-08-01T08:00:00.000Z"
+  },
+  {
+    "id": "user_1787124671318",
+    "username": "vif",
+    "password": "123",
+    "fullName": "vif",
+    "role": "គណៈគ្រប់គ្រងជាន់ខ្ពស់ (Top Management)",
+    "roleId": "top_management",
+    "branch": "ការិយាល័យកណ្តាល",
+    "phone": "123",
+    "createdAt": "2026-08-19T07:31:11.318Z"
+  }
+]
